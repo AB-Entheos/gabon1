@@ -1,0 +1,17 @@
+[Unit]
+Description=HEC Emergency Fund — Celery worker
+After=network.target redis-server.service
+
+[Service]
+Type=notify
+User=hec
+Group=hec
+WorkingDirectory=/opt/hec/backend
+Environment="PATH=/opt/hec/backend/.venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=hec_fund.settings.prod"
+ExecStart=/opt/hec/backend/.venv/bin/celery -A hec_fund worker -l info
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

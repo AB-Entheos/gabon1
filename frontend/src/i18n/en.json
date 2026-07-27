@@ -1,0 +1,450 @@
+{
+  "app": {
+    "name": "HEC Emergency Fund",
+    "tagline": "From the herd to the cheque"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "cases": "Cases",
+    "new_case": "New case",
+    "queue": "Committee",
+    "stages": "Committee",
+    "audit": "Audit",
+    "reports": "Reports",
+    "forms": "Form definitions",
+    "payments": "Payments",
+    "users": "Users",
+    "closed": "Closed",
+    "logout": "Log out"
+  },
+  "common": {
+    "refresh": "Refresh",
+    "saving": "Saving…"
+  },
+  "online": {
+    "label": "Online",
+    "offline": "Offline"
+  },
+  "table": {
+    "id": "ID",
+    "event": "Event",
+    "case": "Case",
+    "actor": "Actor",
+    "role": "Role",
+    "when": "When",
+    "notes": "Notes",
+    "uid": "UID",
+    "claimant": "Claimant",
+    "amount": "Amount",
+    "actions": "Actions",
+    "name": "Name",
+    "email": "Email",
+    "lang": "Language",
+    "2fa": "2FA",
+    "active": "Active",
+    "type": "Type",
+    "reported": "Reported",
+    "closed_at": "Closed",
+    "accelerated_benefit": "First aid"
+  },
+  "dash": {
+    "cb": {
+      "title": "CB workspace",
+      "subtitle": "Open new cases, upload evidence, submit incident reports."
+    },
+    "ab": {
+      "title": "AB Entheos — Step 2",
+      "subtitle": "Operational validation. May release first-aid (20%) for urgent cases."
+    },
+    "wcs": {
+      "title": "WCS — Step 3",
+      "subtitle": "Technical partner review."
+    },
+    "dgfc": {
+      "title": "DGFC — Step 4",
+      "subtitle": "Faune & contrôle review."
+    },
+    "minister": {
+      "title": "Minister — Step 3",
+      "subtitle": "Terminal ministerial approval."
+    },
+    "unknown_role": "Unknown role",
+    "recent": "Recent cases",
+    "queue": {
+      "title": "My queue",
+      "empty": "No cases at your step right now."
+    }
+  },
+  "case_type": {
+    "medical": "Medical (injury)",
+    "burial": "Burial (death)"
+  },
+  "crop": {
+    "manioc": "Cassava",
+    "banane": "Plantain / banana",
+    "mais": "Maize",
+    "arachide": "Groundnut",
+    "macabo": "Cocoyam",
+    "autre": "Other"
+  },
+  "new_case": {
+    "title": "New case",
+    "subtitle": "Create a draft case. The incident form is filled in next.",
+    "type": "Case type",
+    "claimant_name": "Claimant full name",
+    "claimant_phone": "Claimant phone",
+    "incident_at": "Incident date & time",
+    "urgent": "Urgent medical need",
+    "urgent_hint": "enables 20% accelerated benefit release at Step 1",
+    "create": "Create draft",
+    "crop_section": "Crop damage details",
+    "crop_type": "Crop type",
+    "area_destroyed_ha": "Area destroyed (ha)",
+    "estimated_loss_xaf": "Estimated loss (FCFA)",
+    "crop_ceiling_hint": "Crop-damage ceiling is 400,000 FCFA."
+  },
+  "closed": {
+    "ready": {
+      "title": "Ready to close",
+      "subtitle": "Cases already approved. Closing confirms the recipient has received the funds and marks the case terminal.",
+      "empty": "No approved cases waiting to be closed."
+    },
+    "archive": {
+      "title": "Closed cases archive",
+      "subtitle": "Terminal — funds disbursed and receipt acknowledged.",
+      "empty": "No closed cases yet."
+    },
+    "mark": "Mark as closed",
+    "modal": {
+      "title": "Close case",
+      "body": "This will mark",
+      "terminal": "as terminal (CLOSED).",
+      "warning": "No further transitions will be allowed.",
+      "notes": "Closing notes (optional)",
+      "confirm": "Confirm close"
+    }
+  },
+  "login": {
+    "eyebrow": "HEC Emergency Fund · Gabon",
+    "subtitle_mobile": "Sign in to continue",
+    "headline": "HEC Emergency Fund.",
+    "tagline": "Seamless payment service for human–elephant conflict compensation.",
+    "welcome": "Welcome back",
+    "signin_hint": "Sign in with your @hec.local account.",
+    "sign_in": "Sign in",
+    "signing_in": "Signing in…",
+    "demo": {
+      "_": "Demo accounts (password:",
+      "cb": "Field reporter (no 2FA)",
+      "ab": "AB Entheos (2FA)",
+      "wcs": "Technical partner",
+      "dgfc": "Faune & contrôle",
+      "dgfap": "Amount-decider",
+      "minister": "Final approval",
+      "admin": "Form publisher, audit, payments",
+      "superadmin": "User CRUD, system settings"
+    }
+  },
+  "pipeline": {
+    "title": "Approval pipeline",
+    "step_of": "Step {step} of {total}",
+    "step_cb": "CB",
+    "step_ab": "AB Entheos",
+    "step_wcs": "WCS",
+    "step_dgfc": "DGFC",
+    "step_dgfap": "DGFAP",
+    "step_technical": "Technical team",
+    "step_minister": "Minister",
+    "stage_cb": "CB",
+    "stage_ab": "AB Entheos",
+    "stage_wcs": "WCS",
+    "stage_dgfc": "DGFC",
+    "stage_dgfap": "DGFAP",
+    "stage_technical": "Technical team",
+    "stage_minister": "Minister",
+    "state": {
+      "done": "done",
+      "current": "in review",
+      "future": "pending",
+      "rejected": "rejected"
+    },
+    "status": {
+      "closed": "Closed · all steps complete",
+      "approved": "Approved",
+      "rejected": "Rejected at step {step}"
+    },
+    "accelerated_benefit_released": "Accelerated benefit released (20% of ceiling)."
+  },
+  "case": {
+    "timeline": {
+      "title": "Activity",
+      "count": "{n} events",
+      "empty": "No activity yet.",
+      "step_change": "step {from} → {to}",
+      "at_step": "step {step}",
+      "event": {
+        "CREATED": "Created",
+        "SUBMITTED": "Incident submitted",
+        "VERIFIED": "Verified in the field",
+        "ADVANCED": "Advanced",
+        "REJECTED": "Rejected",
+        "DEFERRED": "Deferred",
+        "AMOUNT_SET": "Amount set",
+        "AMOUNT_PROPOSED": "Amount proposed by DGFC",
+        "AMOUNT_AUTHORIZED": "Amount authorized by DGFAP",
+        "ACCELERATED_BENEFIT_RELEASED": "Accelerated benefit released",
+        "APPROVED": "Final approval",
+        "CLOSED": "Case closed",
+        "COMMENT": "Comment"
+      },
+      "dgfc_proposed_amount": "DGFC Proposed Amount",
+      "dgfap_authorized_amount": "DGFAP Authorized Amount"
+    },
+    "comments": "Add a comment",
+    "comment_placeholder": "Add a comment (visible to all approvers)…",
+    "comment_required": "Comment is required.",
+    "not_found": "Case not found.",
+    "next_approver": "Next approver",
+    "metadata": "Details",
+    "phone": "Phone",
+    "upload_evidence": "Upload evidence (camera)",
+    "files": {
+      "title": "Case files",
+      "subtitle": "Supporting material uploaded to this case.",
+      "required_title": "Required case files",
+      "required_subtitle": "Upload the mandatory supporting documents for this case.",
+      "completed": "completed",
+      "slot_completed": "Completed",
+      "slot_pending": "Pending",
+      "upload_section_title": "Upload a required file",
+      "upload_section_help": "Choose the document type below, then upload the file.",
+      "required_slot": "Required document",
+      "selected_file_type": "File type",
+      "upload_button": "Upload selected required file",
+      "type": "Type"
+    },
+    "village": "Village",
+    "sla": "SLA",
+    "amount": "Amount",
+    "created_by": "Created by",
+    "rejected_note": "This case was rejected. Contact AB Entheos for next steps.",
+    "approved_msg": "Approved. Awaiting payment confirmation.",
+    "closed_msg": "Case closed.",
+    "fill_form_hint": "Fill the form on the left, then submit below.",
+    "verify": "Verify incident",
+    "terminal_approve": "Final approve",
+    "amount_label": "Authorized amount (FCFA)",
+    "reason_label": "Reason / breakdown",
+    "reason_placeholder": "Hospital + 2 weeks salary + transport",
+    "set_amount": "Authorize amount",
+    "authorize_amount": "Authorize amount",
+    "verify_and_send": "Verify & Send to Minister",
+    "advance_to_minister": "Advance to Minister",
+    "reject_placeholder": "Reason for rejection (required)",
+    "admin_hint": "As an administrator you can view this case and add comments, but cannot act on it. Only the current approver role ({role}) can advance.",
+    "actions": {
+      "title": "Actions",
+      "defer": "Defer to previous step",
+      "defer_help": "Send the case back one level for clarification or extra evidence. A comment is required.",
+      "yours": "Stage {step} is yours to advance",
+      "amount_decider": "You are the amount-decider. Review the proposed amount, authorize or propose a new amount, then verify.",
+      "amount_proposer": "You are the amount proposer. Propose an amount before advancing.",
+      "dgfc_proposed": "DGFC Proposed Amount",
+      "dgfc_propose_amount": "Propose amount",
+      "dgfc_propose_hint": "Propose a draft amount for DGFAP to authorize. This is not yet locked.",
+      "dgfap_authorize_amount": "Authorize amount",
+      "dgfap_authorize_hint": "Authorize the final amount. This locks the amount for the rest of the chain.",
+      "propose_amount": "Propose amount",
+      "advance_to_dgfap": "Advance to DGFAP"
+    },
+    "defer_modal": {
+      "title": "Defer this case",
+      "body": "The case will move back to step {to} ({role}) so they can add more context.",
+      "notes_label": "Why are you deferring? (required)",
+      "notes_placeholder": "e.g. Please attach the village chief's statement before we can approve.",
+      "confirm": "Send back",
+      "cancel": "Cancel"
+    },
+    "deferred_title": "Deferred — awaiting clarification",
+    "deferred_body": "The previous approver sent this back to step {step} ({role}). Add a comment or update the case, then click Resume.",
+    "resume_btn": "Resume review",
+    "deferred_banner": "Deferred from step {from} by {actor} — awaiting clarification.",
+    "gallery": {
+      "title": "Evidence gallery",
+      "subtitle": "All photos and attachments, grouped by who uploaded them.",
+      "empty": "No attachments yet.",
+      "by": "Uploaded by",
+      "open": "Open",
+      "download": "Download",
+      "files": "files"
+    },
+    "status_label": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Submitted",
+      "VERIFIED": "Verified",
+      "AT_APPROVAL": "At approval",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CLOSED": "Closed",
+      "DEFERRED": "Deferred"
+    },
+    "accelerated_benefit_release": "Release accelerated benefit (20%)",
+    "accelerated_benefit": "First-aid"
+  },
+  "theme": {
+    "toggle_to_dark": "Switch to dark mode",
+    "toggle_to_light": "Switch to light mode"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "SUBMITTED": "Submitted",
+    "VERIFIED": "Verified",
+    "AT_APPROVAL": "At approval",
+    "APPROVED": "Approved",
+    "REJECTED": "Rejected",
+    "CLOSED": "Closed",
+    "DEFERRED": "Deferred",
+    "ACCELERATED_BENEFIT_RELEASED": "Accelerated benefit released"
+  },
+  "role": {
+    "CB": "Chef de Brigade",
+    "AB": "AB Entheos",
+    "WCS": "WCS",
+    "DGFC": "DGFC",
+    "DGFAP": "DGFAP",
+    "MINISTER": "Minister",
+    "ADMIN": "Administrator"
+  },
+  "admin": {
+    "nav": "Admin",
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "Immutable record of every action on every case.",
+      "section": {
+        "title": "Recent events",
+        "body": "The audit stream surfaces every state transition, comment, and upload with actor, role, IP and payload hash."
+      }
+    },
+    "reports": {
+      "title": "Reports",
+      "subtitle": "Quarterly and annual summaries, exportable as PDF and XLSX.",
+      "section": {
+        "title": "Latest reports",
+        "body": "Generate, download and archive quarterly + annual reports. Includes totals, median time-to-approve, and accelerated benefit disbursements."
+      }
+    },
+    "forms": {
+      "title": "Form definitions",
+      "subtitle": "Publish and version the JSON-schema based intake forms used at each stage.",
+      "section": {
+        "title": "Published forms",
+        "body": "Each form has a slug, version, JSON schema and a bilingual title. Publishing a new version snapshots the previous one."
+      }
+    },
+    "payments": {
+      "title": "Payments",
+      "subtitle": "Export approved amounts to CSV / SEPA and push to Moov / Airtel Money.",
+      "section": {
+        "title": "Pending disbursements",
+        "body": "Filter by approver, case type and amount. Confirm payment once the recipient has received the funds."
+      }
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "Super-admin only: create users, assign roles, reset 2FA, impersonate.",
+      "section": {
+        "title": "Roster",
+        "body": "Manage CBs, approvers, administrators and super-admins. Two-factor enrolment is mandatory for everyone except CB."
+      }
+    },
+    "stages": {
+      "title": "Approval committee",
+      "subtitle": "End-to-end overview of every active case across the six approval stages.",
+      "section": {
+        "title": "Pipeline view",
+        "body": "Cases grouped by current approval stage. Click any card to open the case workspace."
+      }
+    },
+    "closed": {
+      "title": "Closed cases",
+      "subtitle": "Approve payments, mark cases as closed, and review the terminal archive."
+    }
+  },
+  "audit": {
+    "filter": {
+      "case_uid": "Case UID",
+      "actor": "Actor email",
+      "event_type": "Event type",
+      "search": "Search"
+    },
+    "results": "events",
+    "empty": "No events match."
+  },
+  "reports": {
+    "year": "Year",
+    "quarter": "Quarter",
+    "format": "Format",
+    "quarterly": {
+      "title": "Quarterly report",
+      "subtitle": "Cases reported this quarter, by status, step and amount."
+    },
+    "annual": {
+      "title": "Annual report",
+      "subtitle": "Full-year summary across all cases."
+    },
+    "download_quarterly": "Download quarterly",
+    "download_annual": "Download annual"
+  },
+  "forms": {
+    "list": {
+      "title": "Published form definitions",
+      "subtitle": "JSON-schema forms used at each approval stage. New versions snapshot the previous."
+    },
+    "slug": "Slug",
+    "version": "Version",
+    "title": "Title",
+    "scope": "Role scope",
+    "status": "Status",
+    "published": "Published",
+    "empty": "No published forms yet."
+  },
+  "payments": {
+    "export": {
+      "title": "Export approved disbursements",
+      "subtitle": "Generate a CSV or SEPA file for institutional providers (banks, mobile money operators)."
+    },
+    "approved": {
+      "title": "Approved cases",
+      "subtitle": "Send via mobile money or mark as paid."
+    },
+    "mobile": {
+      "title": "Send via mobile money",
+      "provider": "Provider",
+      "phone": "Recipient phone",
+      "send": "Send"
+    },
+    "selected": "selected",
+    "none_approved": "No approved cases awaiting payment."
+  },
+  "users": {
+    "search": "Search email",
+    "search_btn": "Search",
+    "add": "Add user",
+    "new": "New user",
+    "edit": "Edit user",
+    "email": "Email",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "role": "Role",
+    "phone": "Phone",
+    "lang": "Language",
+    "active": "Active",
+    "password": "Password (leave blank to auto-generate)",
+    "empty": "No users.",
+    "confirm_delete": "Delete this user?"
+  },
+  "stages": {
+    "title": "Approval stages overview",
+    "subtitle": "Cases grouped by current stage."
+  }
+}

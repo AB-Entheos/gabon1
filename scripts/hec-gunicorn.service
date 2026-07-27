@@ -1,0 +1,22 @@
+[Unit]
+Description=HEC Emergency Fund — Gunicorn
+After=network.target
+
+[Service]
+Type=notify
+User=hec
+Group=hec
+WorkingDirectory=/opt/hec/backend
+Environment="PATH=/opt/hec/backend/.venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=hec_fund.settings.prod"
+ExecStart=/opt/hec/backend/.venv/bin/gunicorn hec_fund.wsgi:application \
+    --workers 4 \
+    --bind 127.0.0.1:8001 \
+    --access-logfile /var/log/hec/gunicorn.access.log \
+    --error-logfile  /var/log/hec/gunicorn.error.log \
+    --log-level info
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,3 @@
+HEC · Case {{ case.uid }} · step {{ step }}
+Claimant: {{ case.claimant_name }} ({{ case.case_type }})
+Open: http://localhost:5173/cases/{{ case.uid }}

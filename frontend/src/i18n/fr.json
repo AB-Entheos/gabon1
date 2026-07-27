@@ -1,0 +1,450 @@
+{
+  "app": {
+    "name": "Fonds d'urgence HEC",
+    "tagline": "Du troupeau au chèque"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "cases": "Dossiers",
+    "new_case": "Nouveau dossier",
+    "queue": "Comité",
+    "stages": "Comité",
+    "audit": "Audit",
+    "reports": "Rapports",
+    "forms": "Définitions de formulaires",
+    "payments": "Paiements",
+    "users": "Utilisateurs",
+    "closed": "Clôturés",
+    "logout": "Déconnexion"
+  },
+  "common": {
+    "refresh": "Actualiser",
+    "saving": "Enregistrement…"
+  },
+  "online": {
+    "label": "En ligne",
+    "offline": "Hors ligne"
+  },
+  "table": {
+    "id": "ID",
+    "event": "Événement",
+    "case": "Dossier",
+    "actor": "Auteur",
+    "role": "Rôle",
+    "when": "Quand",
+    "notes": "Notes",
+    "uid": "UID",
+    "claimant": "Requérant",
+    "amount": "Montant",
+    "actions": "Actions",
+    "name": "Nom",
+    "email": "Email",
+    "lang": "Langue",
+    "2fa": "2FA",
+    "active": "Actif",
+    "type": "Type",
+    "reported": "Signalé",
+    "closed_at": "Clôturé",
+    "accelerated_benefit": "Premiers soins"
+  },
+  "dash": {
+    "cb": {
+      "title": "Espace CB",
+      "subtitle": "Ouvrir de nouveaux dossiers, téléverser les preuves, soumettre les rapports d'incident."
+    },
+    "ab": {
+      "title": "AB Entheos — Étape 2",
+      "subtitle": "Validation opérationnelle. Peut débloquer les premiers soins (20%) pour les cas urgents."
+    },
+    "wcs": {
+      "title": "WCS — Étape 3",
+      "subtitle": "Revue du partenaire technique."
+    },
+    "dgfc": {
+      "title": "DGFC — Étape 4",
+      "subtitle": "Revue faune & contrôle."
+    },
+    "minister": {
+      "title": "Ministre — Étape 3",
+      "subtitle": "Approbation ministérielle terminale."
+    },
+    "unknown_role": "Rôle inconnu",
+    "recent": "Dossiers récents",
+    "queue": {
+      "title": "Ma file",
+      "empty": "Aucun dossier à votre étape pour l'instant."
+    }
+  },
+  "case_type": {
+    "medical": "Médical (blessure)",
+    "burial": "Funéraire (décès)"
+  },
+  "crop": {
+    "manioc": "Manioc",
+    "banane": "Banane plantain",
+    "mais": "Maïs",
+    "arachide": "Arachide",
+    "macabo": "Macabo",
+    "autre": "Autre"
+  },
+  "new_case": {
+    "title": "Nouveau dossier",
+    "subtitle": "Créer un brouillon. Le formulaire d'incident sera rempli ensuite.",
+    "type": "Type de dossier",
+    "claimant_name": "Nom du requérant",
+    "claimant_phone": "Téléphone du requérant",
+    "incident_at": "Date et heure de l'incident",
+    "urgent": "Besoin médical urgent",
+    "urgent_hint": "déclenche les premiers soins (20%) à l'étape 1",
+    "create": "Créer le brouillon",
+    "crop_section": "Détails des dégâts aux cultures",
+    "crop_type": "Type de culture",
+    "area_destroyed_ha": "Superficie détruite (ha)",
+    "estimated_loss_xaf": "Perte estimée (FCFA)",
+    "crop_ceiling_hint": "Plafond dégâts aux cultures : 400 000 FCFA."
+  },
+  "closed": {
+    "ready": {
+      "title": "À clôturer",
+      "subtitle": "Dossiers déjà approuvés. La clôture confirme la réception des fonds et rend le dossier terminal.",
+      "empty": "Aucun dossier approuvé en attente de clôture."
+    },
+    "archive": {
+      "title": "Archives des dossiers clôturés",
+      "subtitle": "Terminaux — fonds versés et accusé de réception enregistré.",
+      "empty": "Aucun dossier clôturé."
+    },
+    "mark": "Clôturer",
+    "modal": {
+      "title": "Clôturer le dossier",
+      "body": "Ceci marquera",
+      "terminal": "comme terminal (CLÔTURÉ).",
+      "warning": "Aucune transition ne sera plus autorisée.",
+      "notes": "Notes de clôture (optionnel)",
+      "confirm": "Confirmer la clôture"
+    }
+  },
+  "login": {
+    "eyebrow": "Fonds d'urgence HEC · Gabon",
+    "subtitle_mobile": "Connectez-vous pour continuer",
+    "headline": "Fonds d'urgence HEC.",
+    "tagline": "Service de paiement fluide pour la compensation des conflits homme–éléphant.",
+    "welcome": "Bon retour",
+    "signin_hint": "Connectez-vous avec votre compte @hec.local.",
+    "sign_in": "Connexion",
+    "signing_in": "Connexion…",
+    "demo": {
+      "_": "Comptes de démo (mot de passe :",
+      "cb": "Rapporteur terrain (sans 2FA)",
+      "ab": "AB Entheos (2FA)",
+      "wcs": "Partenaire technique",
+      "dgfc": "Faune & contrôle",
+      "dgfap": "Décideur de montant",
+      "minister": "Approbation finale",
+      "admin": "Publication de formulaires, audit, paiements",
+      "superadmin": "Gestion utilisateurs, paramètres système"
+    }
+  },
+  "pipeline": {
+    "title": "Circuit d'approbation",
+    "step_of": "Étape {step} sur {total}",
+    "step_cb": "CB",
+    "step_ab": "AB Entheos",
+    "step_wcs": "WCS",
+    "step_dgfc": "DGFC",
+    "step_dgfap": "DGFAP",
+    "step_technical": "Équipe technique",
+    "step_minister": "Ministre",
+    "stage_cb": "CB",
+    "stage_ab": "AB Entheos",
+    "stage_wcs": "WCS",
+    "stage_dgfc": "DGFC",
+    "stage_dgfap": "DGFAP",
+    "stage_technical": "Équipe technique",
+    "stage_minister": "Ministre",
+    "state": {
+      "done": "validé",
+      "current": "en cours",
+      "future": "à venir",
+      "rejected": "rejeté"
+    },
+    "status": {
+      "closed": "Clôturé · toutes les étapes terminées",
+      "approved": "Approuvé",
+      "rejected": "Rejeté à l'étape {step}"
+    },
+    "accelerated_benefit_released": "Avance accélérée débloquée (20% du plafond)."
+  },
+  "case": {
+    "timeline": {
+      "title": "Activité",
+      "count": "{n} événements",
+      "empty": "Aucune activité pour l'instant.",
+      "step_change": "étape {from} → {to}",
+      "at_step": "étape {step}",
+      "event": {
+        "CREATED": "Dossier créé",
+        "SUBMITTED": "Incident soumis",
+        "VERIFIED": "Vérifié sur le terrain",
+        "ADVANCED": "Transmis",
+        "REJECTED": "Rejeté",
+        "DEFERRED": "Renvoyé",
+        "AMOUNT_SET": "Montant fixé",
+        "AMOUNT_PROPOSED": "Montant proposé par le DGFC",
+        "AMOUNT_AUTHORIZED": "Montant autorisé par le DGFAP",
+        "ACCELERATED_BENEFIT_RELEASED": "Avance accélérée débloquée",
+        "APPROVED": "Approbation finale",
+        "CLOSED": "Dossier clôturé",
+        "COMMENT": "Commentaire"
+      },
+      "dgfc_proposed_amount": "Montant proposé par le DGFC",
+      "dgfap_authorized_amount": "Montant autorisé par le DGFAP"
+    },
+    "comments": "Ajouter un commentaire",
+    "comment_placeholder": "Ajouter un commentaire (visible par tous les approbateurs)…",
+    "comment_required": "Un commentaire est requis.",
+    "not_found": "Dossier introuvable.",
+    "next_approver": "Prochain approbateur",
+    "metadata": "Détails",
+    "phone": "Téléphone",
+    "upload_evidence": "Téléverser une preuve (caméra)",
+    "files": {
+      "title": "Fichiers du dossier",
+      "subtitle": "Documents complémentaires téléchargés pour ce dossier.",
+      "required_title": "Fichiers requis",
+      "required_subtitle": "Téléversez les documents de preuve obligatoires pour ce dossier.",
+      "completed": "terminé",
+      "slot_completed": "Terminé",
+      "slot_pending": "En attente",
+      "upload_section_title": "Téléversez un fichier requis",
+      "upload_section_help": "Choisissez le type de document ci-dessous, puis téléversez le fichier.",
+      "required_slot": "Document requis",
+      "selected_file_type": "Type de fichier",
+      "upload_button": "Téléverser le fichier requis sélectionné",
+      "type": "Type"
+    },
+    "village": "Village",
+    "sla": "SLA",
+    "amount": "Montant",
+    "created_by": "Créé par",
+    "rejected_note": "Ce dossier a été rejeté. Contactez AB Entheos pour la suite.",
+    "approved_msg": "Approuvé. En attente de confirmation de paiement.",
+    "closed_msg": "Dossier clôturé.",
+    "fill_form_hint": "Remplissez le formulaire à gauche, puis soumettez ci-dessous.",
+    "verify": "Vérifier l'incident",
+    "terminal_approve": "Approbation finale",
+    "amount_label": "Montant autorisé (FCFA)",
+    "reason_label": "Motif / détail",
+    "reason_placeholder": "Hôpital + 2 semaines de salaire + transport",
+    "set_amount": "Autoriser le montant",
+    "authorize_amount": "Autoriser le montant",
+    "verify_and_send": "Vérifier et envoyer au Ministre",
+    "advance_to_minister": "Transmettre au Ministre",
+    "reject_placeholder": "Motif du rejet (requis)",
+    "admin_hint": "En tant qu'administrateur vous pouvez consulter ce dossier et ajouter des commentaires, mais pas agir dessus. Seul le rôle approbateur actuel ({role}) peut avancer.",
+    "actions": {
+      "title": "Actions",
+      "defer": "Renvoyer à l'étape précédente",
+      "defer_help": "Renvoyer le dossier d'un niveau pour clarification ou preuve supplémentaire. Un commentaire est obligatoire.",
+      "yours": "L'étape {step} vous attend pour approbation",
+      "amount_decider": "Vous êtes le décideur de montant. Révisez le montant proposé, autorisez ou proposez un nouveau montant, puis vérifiez.",
+      "amount_proposer": "Vous êtes le proposant de montant. Proposez un montant avant d'avancer.",
+      "dgfc_proposed": "Montant proposé par le DGFC",
+      "dgfc_propose_amount": "Proposer le montant",
+      "dgfc_propose_hint": "Proposer un montant provisoire pour que le DGFAP l'autorise. Ce n'est pas encore verrouillé.",
+      "dgfap_authorize_amount": "Autoriser le montant",
+      "dgfap_authorize_hint": "Autoriser le montant final. Cela verrouille le montant pour le reste de la chaîne.",
+      "propose_amount": "Proposer le montant",
+      "advance_to_dgfap": "Transmettre au DGFAP"
+    },
+    "defer_modal": {
+      "title": "Renvoyer ce dossier",
+      "body": "Le dossier passera à l'étape {to} ({role}) pour ajout de contexte.",
+      "notes_label": "Pourquoi renvoyez-vous ? (obligatoire)",
+      "notes_placeholder": "ex. Veuillez joindre l'attestation du chef de village avant approbation.",
+      "confirm": "Renvoyer",
+      "cancel": "Annuler"
+    },
+    "deferred_title": "Renvoyé — en attente de clarification",
+    "deferred_body": "L'approbateur précédent a renvoyé le dossier à l'étape {step} ({role}). Ajoutez un commentaire ou mettez le dossier à jour, puis cliquez sur Reprendre.",
+    "resume_btn": "Reprendre la revue",
+    "deferred_banner": "Renvoyé de l'étape {from} par {actor} — en attente de clarification.",
+    "gallery": {
+      "title": "Galerie de preuves",
+      "subtitle": "Photos et pièces jointes, regroupées par auteur.",
+      "empty": "Aucune pièce jointe pour l'instant.",
+      "by": "Téléversé par",
+      "open": "Ouvrir",
+      "download": "Télécharger",
+      "files": "fichiers"
+    },
+    "status_label": {
+      "DRAFT": "Brouillon",
+      "SUBMITTED": "Soumis",
+      "VERIFIED": "Vérifié",
+      "AT_APPROVAL": "En approbation",
+      "APPROVED": "Approuvé",
+      "REJECTED": "Rejeté",
+      "CLOSED": "Clôturé",
+      "DEFERRED": "Renvoyé"
+    },
+    "accelerated_benefit": "Premiers soins",
+    "accelerated_benefit_release": "Débloquer l'avance accélérée (20%)"
+  },
+  "theme": {
+    "toggle_to_dark": "Passer en mode sombre",
+    "toggle_to_light": "Passer en mode clair"
+  },
+  "status": {
+    "DRAFT": "Brouillon",
+    "SUBMITTED": "Soumis",
+    "VERIFIED": "Vérifié",
+    "AT_APPROVAL": "En approbation",
+    "APPROVED": "Approuvé",
+    "REJECTED": "Rejeté",
+    "CLOSED": "Clôturé",
+    "DEFERRED": "Renvoyé",
+    "ACCELERATED_BENEFIT_RELEASED": "Premiers soins débloqués"
+  },
+  "role": {
+    "CB": "Chef de Brigade",
+    "AB": "AB Entheos",
+    "WCS": "WCS",
+    "DGFC": "DGFC",
+    "DGFAP": "DGFAP",
+    "MINISTER": "Ministre",
+    "ADMIN": "Administrateur"
+  },
+  "admin": {
+    "nav": "Administration",
+    "audit": {
+      "title": "Journal d'audit",
+      "subtitle": "Enregistrement immuable de chaque action sur chaque dossier.",
+      "section": {
+        "title": "Événements récents",
+        "body": "Le flux d'audit affiche chaque transition d'état, commentaire et téléversement avec auteur, rôle, IP et empreinte du payload."
+      }
+    },
+    "reports": {
+      "title": "Rapports",
+      "subtitle": "Synthèses trimestrielles et annuelles, exportables en PDF et XLSX.",
+      "section": {
+        "title": "Derniers rapports",
+        "body": "Générer, télécharger et archiver les rapports trimestriels + annuels. Inclut les totaux, le temps médian d'approbation et les premiers soins débloqués."
+      }
+    },
+    "forms": {
+      "title": "Définitions de formulaires",
+      "subtitle": "Publier et versionner les formulaires JSON-schema utilisés à chaque étape.",
+      "section": {
+        "title": "Formulaires publiés",
+        "body": "Chaque formulaire a un slug, une version, un schéma JSON et un titre bilingue. La publication d'une nouvelle version archive la précédente."
+      }
+    },
+    "payments": {
+      "title": "Paiements",
+      "subtitle": "Exporter les montants approuvés en CSV / SEPA et pousser vers Moov / Airtel Money.",
+      "section": {
+        "title": "Décaissements en attente",
+        "body": "Filtrer par approbateur, type de dossier et montant. Confirmer le paiement une fois les fonds reçus par le bénéficiaire."
+      }
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "subtitle": "Réservé super-admin : créer des utilisateurs, attribuer les rôles, réinitialiser la 2FA, impersonifier.",
+      "section": {
+        "title": "Effectif",
+        "body": "Gérer les CB, approbateurs, administrateurs et super-admins. L'authentification à deux facteurs est obligatoire pour tous sauf les CB."
+      }
+    },
+    "stages": {
+      "title": "Comité d'approbation",
+      "subtitle": "Vue de bout en bout de chaque dossier actif à travers les six étapes d'approbation.",
+      "section": {
+        "title": "Vue pipeline",
+        "body": "Dossiers regroupés par étape d'approbation courante. Cliquez une carte pour ouvrir le dossier."
+      }
+    },
+    "closed": {
+      "title": "Dossiers clôturés",
+      "subtitle": "Approuver les paiements, clôturer les dossiers et consulter l'archive terminale."
+    }
+  },
+  "audit": {
+    "filter": {
+      "case_uid": "UID du dossier",
+      "actor": "Email de l'auteur",
+      "event_type": "Type d'événement",
+      "search": "Rechercher"
+    },
+    "results": "événements",
+    "empty": "Aucun événement ne correspond."
+  },
+  "reports": {
+    "year": "Année",
+    "quarter": "Trimestre",
+    "format": "Format",
+    "quarterly": {
+      "title": "Rapport trimestriel",
+      "subtitle": "Dossiers signalés ce trimestre, par statut, étape et montant."
+    },
+    "annual": {
+      "title": "Rapport annuel",
+      "subtitle": "Synthèse annuelle sur tous les dossiers."
+    },
+    "download_quarterly": "Télécharger trimestriel",
+    "download_annual": "Télécharger annuel"
+  },
+  "forms": {
+    "list": {
+      "title": "Définitions de formulaires publiées",
+      "subtitle": "Formulaires JSON-schema utilisés à chaque étape. Les nouvelles versions archivent les précédentes."
+    },
+    "slug": "Slug",
+    "version": "Version",
+    "title": "Titre",
+    "scope": "Rôles",
+    "status": "Statut",
+    "published": "Publié",
+    "empty": "Aucun formulaire publié."
+  },
+  "payments": {
+    "export": {
+      "title": "Exporter les décaissements approuvés",
+      "subtitle": "Générer un fichier CSV ou SEPA pour les prestataires institutionnels (banques, opérateurs mobile money)."
+    },
+    "approved": {
+      "title": "Dossiers approuvés",
+      "subtitle": "Envoyer via mobile money ou marquer comme payé."
+    },
+    "mobile": {
+      "title": "Envoyer via mobile money",
+      "provider": "Opérateur",
+      "phone": "Téléphone du destinataire",
+      "send": "Envoyer"
+    },
+    "selected": "sélectionnés",
+    "none_approved": "Aucun dossier approuvé en attente de paiement."
+  },
+  "users": {
+    "search": "Rechercher email",
+    "search_btn": "Rechercher",
+    "add": "Ajouter",
+    "new": "Nouvel utilisateur",
+    "edit": "Modifier utilisateur",
+    "email": "Email",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "role": "Rôle",
+    "phone": "Téléphone",
+    "lang": "Langue",
+    "active": "Actif",
+    "password": "Mot de passe (laisser vide pour générer)",
+    "empty": "Aucun utilisateur.",
+    "confirm_delete": "Supprimer cet utilisateur ?"
+  },
+  "stages": {
+    "title": "Aperçu des étapes d'approbation",
+    "subtitle": "Dossiers regroupés par étape courante."
+  }
+}

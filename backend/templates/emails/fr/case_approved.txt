@@ -1,0 +1,16 @@
+Subject: Dossier {{ case.uid }} en attente d'approbation — Étape {{ step }}
+
+Bonjour,
+
+Un nouveau dossier d'indemnisation HEC est arrivé à l'étape {{ step }} et nécessite votre examen.
+
+Requérant :    {{ case.claimant_name }}
+Type :         {{ case.case_type }}
+Incident le :  {{ case.incident_at }}
+Signalé le :   {{ case.reported_at }}
+SLA :          {{ case.sla_deadline|default:"-" }}
+
+Ouvrir le dossier dans le tableau de bord :
+http://localhost:5173/cases/{{ case.uid }}
+
+Fonds d'urgence HEC

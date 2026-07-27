@@ -1,0 +1,12 @@
+# Ignore everything except what we need
+*
+!backend/
+!scripts/
+!Dockerfile
+!docker-compose.yml
+!nginx.conf
+!README.md
+!Emergency_Sys_Gabon.code-workspace
+!frontend/
+!compliance/
+!docs/

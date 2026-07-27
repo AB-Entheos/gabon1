@@ -1,0 +1,3 @@
+HEC · Dossier {{ case.uid }} · étape {{ step }}
+Requérant : {{ case.claimant_name }} ({{ case.case_type }})
+Ouvrir : http://localhost:5173/cases/{{ case.uid }}

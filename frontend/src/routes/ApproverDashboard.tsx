@@ -1,0 +1,90 @@
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
+import { Inbox } from "lucide-react";
+import { useListCasesQuery } from "@/api/hecApi";
+import type { RootState } from "@/store";
+import { StatusChip } from "@/components/StatusChip";
+import { formatDate } from "@/api/format";
+import type { Case } from "@/api/hecApi";
+
+export default function ApproverDashboard({
+  step,
+  title,
+  subtitle,
+}: {
+  step: 2 | 3 | 4 | 6;
+  title: string;
+  subtitle: string;
+}) {
+  const { t } = useTranslation();
+  const lang = useSelector((s: RootState) => s.auth.language);
+  const { data, isLoading } = useListCasesQuery();
+  const queue = (data?.results ?? []).filter(
+    (c) => c.status === "AT_APPROVAL" && c.current_step === step
+  );
+
+  return (
+    <div className="space-y-6">
+      <header>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          {t("nav.queue")}
+        </div>
+        <h1 className="mt-1 text-3xl font-bold text-slate-900">{title}</h1>
+        <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+      </header>
+
+      <section className="card p-0">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+          <h2 className="text-base font-semibold text-slate-900">
+            <Inbox size={16} className="mr-2 inline text-slate-400" />
+            {t("dash.queue.title", "My queue")} · <span className="font-bold text-emerald-700">{queue.length}</span>
+          </h2>
+        </div>
+        {isLoading && <div className="p-5 text-slate-500">{t("common.loading", "Loading…")}</div>}
+        {queue.length === 0 && (
+          <div className="p-10 text-center text-slate-500">
+            {t("dash.queue.empty", "No cases at your step right now.")}
+          </div>
+        )}
+        {queue.length > 0 && <QueueTable cases={queue} lang={lang} />}
+      </section>
+    </div>
+  );
+}
+
+function QueueTable({ cases, lang }: { cases: Case[]; lang: "en" | "fr" }) {
+  const { t } = useTranslation();
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <tr>
+            <th className="px-5 py-3">UID</th>
+            <th className="px-5 py-3">{t("table.claimant", "Claimant")}</th>
+            <th className="px-5 py-3">{t("table.type", "Type")}</th>
+            <th className="px-5 py-3">{t("table.incident", "Incident")}</th>
+            <th className="px-5 py-3">{t("table.sla", "SLA")}</th>
+            <th className="px-5 py-3">{t("table.status", "Status")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cases.map((c) => (
+            <tr key={c.uid} className="border-t border-slate-100 hover:bg-slate-50">
+              <td className="px-5 py-3 font-mono text-xs">
+                <Link to={`/cases/${c.uid}`} className="font-bold text-emerald-700 hover:underline">
+                  {c.uid.slice(0, 8)}…
+                </Link>
+              </td>
+              <td className="px-5 py-3 font-medium text-slate-900">{c.claimant_name}</td>
+              <td className="px-5 py-3 text-slate-500">{c.case_type}</td>
+              <td className="px-5 py-3 text-slate-500">{formatDate(c.incident_at, lang)}</td>
+              <td className="px-5 py-3 text-slate-500">{formatDate(c.sla_deadline, lang)}</td>
+              <td className="px-5 py-3"><StatusChip status={c.status} lang={lang} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

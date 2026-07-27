@@ -1,0 +1,60 @@
+Bad Request: /api/v1/forms/cb-incident-report/v1/submissions/
+Bad Request: /api/v1/forms/cb-incident-report/v1/submissions/
+Bad Request: /api/v1/forms/cb-incident-report/v1/submissions/
+Bad Request: /api/v1/forms/cb-incident-report/v1/submissions/
+Forbidden: /api/v1/forms/cb-incident-report/v1/submissions/
+Forbidden: /api/v1/forms/cb-incident-report/v1/submissions/
+Bad Request: /api/v1/admin/forms/
+Bad Request: /api/v1/admin/forms/
+
+=== Schema validation: legacy label:'string' -> bilingual ===
+  legacy label: 'Name'
+  promoted to : {'en': 'Name', 'fr': 'Name'}
+
+Schema validation: rejects bad field type
+  rejected: Field 'x': type 'weird' not in ['checkbox', 'date', 'datetime', 'email', 'file', 'multiselect', 'number', 'radio', 'section', 'select', 'signature', 'static', 'tel', 'text', 'textarea', 'time'].
+
+Schema validation: rejects select without options
+  rejected: Field 'x': 'select' requires non-empty 'options' list.
+
+Schema validation: rejects duplicate field ids
+  rejected: Duplicate field id: 'x'.
+
+=== REST: list forms (CB only sees CB-scoped forms) ===
+  CB sees 1 form(s): ['cb-incident-report']
+  Get cb-incident-report: cb-incident-report v1 status=PUBLISHED
+
+=== Submit a valid form payload ===
+  Case created: 6726e2d2ΓÇª
+  Submission created: id=3 form=cb-incident-report@1
+
+=== Reject invalid payload (missing required) ===
+  rejected: ["Payload validation failed: (root): 'claimant_name' is a required property"]
+
+=== Reject out-of-range number ===
+  rejected: ['Payload validation failed: elephant_count: 999 is greater than the maximum of 20']
+
+=== AB cannot submit a CB-scoped form ===
+  AB-against-CB-form: Your role cannot submit this form.
+
+=== Uploads: presign -> PUT -> finish ===
+  fake jpeg: 93 bytes
+  presigned: key=40af84f4d79-elephant-photo.jpgΓÇª  expires_in=900s
+  PUT status: 200 body[:80]=b'{"key": "cases/6726e2d2-7ddb-4a5a-b5d4-01a64728f4ea/4ea0a40af84f4d79-elephant-ph'
+  sha256 match: 7cdf48b90ce96988ΓÇª
+  attachment registered: id=3 sha256[:16]=7cdf48b90ce96988ΓÇª
+
+=== List submissions for case ===
+  1 submission(s) for case 6726e2d2ΓÇª
+  attachment: {'id': 3, 'filename': 'elephant-photo.jpg', 'mime': 'image/jpeg', 'size_bytes': 93, 'scan_status': 'PENDING'}
+
+=== Admin publishes a new (versioned) form ===
+  published: verification v4 scope=AB,DGFC
+  re-publish bumps version: v5
+
+=== Admin publish fails on bad schema ===
+  rejected empty fields: ['Schema must have at least one field.']
+
+============================================================
+Phase 3 + 4 verification: ALL CHECKS PASSED
+============================================================

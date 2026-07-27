@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			".\\venv\\Scripts\\python.exe": true,
+			"/^cd \"c:\\\\Users\\\\markj\\\\Documents\\\\Emergency_Sys_Gabon\\\\frontend\" ; node node_modules\\\\typescript\\\\bin\\\\tsc -p tsconfig\\.app\\.json --noEmit ; \"ExitCode=\\$LASTEXITCODE\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			}
+		},
+		"github.copilot.chat.anthropic.tools.websearch.enabled": true
+	}
+}

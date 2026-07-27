@@ -1,0 +1,103 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        // Corporate white-background palette anchored on Gabon flag colors.
+        // Primary = Gabon green, Secondary = Gabon yellow, Accent = Gabon blue.
+        primary: {
+          DEFAULT: "#009E60",
+          dark:    "#007A4A",
+          light:   "#34B580",
+          50:  "#ECFDF5",
+          100: "#D1FAE5",
+          500: "#009E60",
+          600: "#009E60",
+          700: "#047857",
+        },
+        secondary: {
+          DEFAULT: "#FCD116",
+          dark:    "#D9B100",
+          light:   "#FDD835",
+          50:  "#FEFCE8",
+          100: "#FEF9C3",
+        },
+        accent: {
+          DEFAULT: "#3A75C4",
+          dark:    "#2E5C9C",
+          light:   "#5A92D6",
+          50:  "#EFF6FF",
+          100: "#DBEAFE",
+        },
+        info:    "#3A75C4",
+        success: "#009E60",
+        warning: "#FCD116",
+        error:   "#DC2626",
+        slate: {
+          50:  "#F8FAFC",
+          100: "#F1F5F9",
+          200: "#E2E8F0",
+          300: "#CBD5E1",
+          400: "#94A3B8",
+          500: "#64748B",
+          600: "#475569",
+          700: "#334155",
+          800: "#1E293B",
+          900: "#0F172A",
+        },
+        grey: {
+          200: "#E2E8F0",
+          300: "#CBD5E1",
+          400: "#94A3B8",
+          500: "#64748B",
+          600: "#475569",
+          700: "#334155",
+          800: "#1E293B",
+          900: "#0F172A",
+        },
+        role: {
+          cb: "#009E60",
+          ab: "#3A75C4",
+          wcs: "#FCD116",
+          dgfc: "#7C3AED",
+          dgfap: "#D97706",
+          minister: "#DC2626",
+          admin: "#64748B",
+          super_admin: "#0F172A",
+        },
+      },
+      fontFamily: {
+        sans: [
+          "Inter",
+          "Public Sans",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+      },
+      borderRadius: {
+        DEFAULT: "8px",
+        lg: "12px",
+        xl: "16px",
+      },
+      boxShadow: {
+        card: "0 1px 3px 0 rgba(15,23,42,0.06), 0 1px 2px -1px rgba(15,23,42,0.04)",
+        hover: "0 4px 12px -2px rgba(15,23,42,0.08), 0 2px 4px -2px rgba(15,23,42,0.04)",
+      },
+      fontSize: {
+        h1: ["36px", { lineHeight: "1.2", fontWeight: "700" }],
+        h2: ["30px", { lineHeight: "1.25", fontWeight: "700" }],
+        h3: ["24px", { lineHeight: "1.3", fontWeight: "700" }],
+        h4: ["20px", { lineHeight: "1.4", fontWeight: "700" }],
+        h5: ["16px", { lineHeight: "1.4", fontWeight: "700" }],
+        h6: ["14px", { lineHeight: "1.5", fontWeight: "700" }],
+      },
+    },
+  },
+  plugins: [],
+};
