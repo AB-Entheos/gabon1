@@ -20,9 +20,12 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
           script: |
             set -e
             cd ${{ env.DEPLOY_PATH }}
+            git fetch origin main
+            git reset --hard origin/main
 
             echo "==> Pulling latest code..."
             git pull --ff-only
