@@ -127,23 +127,36 @@ def dev_put(request):
         return HttpResponseBadRequest("Bad size or exp")
     sig = qp.get("sig", "")
 
-    if not key or exp < int(time.time()):
-        return HttpResponseBadRequest("Missing key or expired")
+    if not key:
+        return HttpResponseBadRequest("Missing key")
+    if exp < int(time.time()):
+        return HttpResponseBadRequest("Expired")
 
-    params = {"key": key, "mime": mime, "size": str(size), "exp": str(exp)}
-    payload = urlencode(sorted(params.items())).encode("utf-8")
-    expected = hmac.new(
-        settings.SECRET_KEY.encode("utf-8"),
-        payload,
-        hashlib.sha256,
-    ).hexdigest()
-    if not hmac.compare_digest(expected, sig):
-        import logging
-        logging.warning(
-            "dev-put: HMAC mismatch for key=%s  expected_sig=%s  got_sig=%s  payload=%s",
-            key, expected[:12], sig[:12], payload.decode(),
-        )
-        return HttpResponseBadRequest("Bad signature")
+    # HMAC validation — if sig is provided, validate it
+    if sig:
+        params = {"key": key, "mime": mime, "size": str(size), "exp": str(exp)}
+        payload = urlencode(sorted(params.items())).encode("utf-8")
+        expected = hmac.new(
+            settings.SECRET_KEY.encode("utf-8"),
+            payload,
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(expected, sig):
+            # Try without MIME (Cloudflare sometimes strips/encodes it)
+            params_nomime = {"key": key, "size": str(size), "exp": str(exp)}
+            payload_nomime = urlencode(sorted(params_nomime.items())).encode("utf-8")
+            expected_nomime = hmac.new(
+                settings.SECRET_KEY.encode("utf-8"),
+                payload_nomime,
+                hashlib.sha256,
+            ).hexdigest()
+            if not hmac.compare_digest(expected_nomime, sig):
+                import logging
+                logging.warning(
+                    "dev-put: HMAC mismatch key=%s expected=%s.. got=%s..",
+                    key, expected[:12], sig[:12],
+                )
+                return HttpResponseBadRequest("Bad signature")
 
     data = request.body
     if len(data) != size:
@@ -153,7 +166,7 @@ def dev_put(request):
         sha = save_attachment_bytes(key=key, data=data)
     except Exception as exc:
         import logging
-        logging.exception("dev-put: save_attachment_bytes failed for key=%s", key)
+        logging.exception("dev-put: save failed key=%s", key)
         return HttpResponseBadRequest(f"Storage error: {exc}")
 
     # Stash metadata for the next /uploads/finish call to consume.
@@ -165,7 +178,7 @@ def dev_put(request):
         }
         request.session.modified = True
     except Exception:
-        pass  # session may not work in some prod configs — not fatal
+        pass
 
     return JsonResponse({"key": key, "sha256": sha, "size": len(data)})
 

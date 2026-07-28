@@ -79,7 +79,6 @@ def presign_put(*, key: str, mime: str, size: int) -> tuple[str, str, int]:
     secret = settings.SECRET_KEY
     params = {
         "key": key,
-        "mime": mime,
         "size": str(size),
         "exp": str(expires_at),
     }
@@ -89,6 +88,7 @@ def presign_put(*, key: str, mime: str, size: int) -> tuple[str, str, int]:
         hashlib.sha256,
     ).hexdigest()
     params["sig"] = sig
+    params["mime"] = mime  # not in HMAC — just passed through
     url = f"/api/v1/uploads/dev-put?{urlencode(params)}"
     return url, time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(expires_at)), expires_in
 
