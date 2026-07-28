@@ -23,8 +23,8 @@ jobs:
           script: |
             set -e
 
-            echo "==> Configuring git..."
-            sudo git config --global --add safe.directory ${{ env.DEPLOY_PATH }}
+            echo "==> Configuring git safe directory..."
+            git config --global --add safe.directory '*'
 
             cd ${{ env.DEPLOY_PATH }}
             git fetch origin main
