@@ -85,13 +85,19 @@ jobs:
             sudo docker compose up -d
 
             echo "==> Waiting for health check..."
-            sleep 5
+            sleep 15
+            for i in 1 2 3 4 5 6; do
+              if curl -fsS http://localhost:8000/api/v1/health > /dev/null 2>&1; then
+                echo "✅ Backend healthy"
+                break
+              fi
+              echo "  Attempt $i failed, waiting 10s..."
+              sleep 10
+            done
 
-            if curl -fsS http://localhost:8000/api/v1/health > /dev/null 2>&1; then
-              echo "✅ Backend healthy"
-            else
+            if ! curl -fsS http://localhost:8000/api/v1/health > /dev/null 2>&1; then
               echo "❌ Backend health check failed"
-              sudo docker compose logs backend --tail=20
+              sudo docker compose logs backend --tail=30
               exit 1
             fi
 
