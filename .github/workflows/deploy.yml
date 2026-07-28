@@ -20,15 +20,15 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script_stop: true
           script: |
             set -e
+
+            echo "==> Configuring git..."
+            sudo git config --global --add safe.directory ${{ env.DEPLOY_PATH }}
+
             cd ${{ env.DEPLOY_PATH }}
             git fetch origin main
             git reset --hard origin/main
-
-            echo "==> Pulling latest code..."
-            git pull --ff-only
 
             echo "==> Building frontend (Bun)..."
             docker compose run --rm frontend-builder
