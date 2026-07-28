@@ -120,7 +120,7 @@ services:
       retries: 3
 
   frontend-builder:
-    image: oven/bun:1-bookworm-slim
+    image: oven/bun:1-slim
     working_dir: /build
     volumes:
       - ./frontend:/build
