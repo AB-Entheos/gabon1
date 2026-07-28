@@ -55,11 +55,11 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Create .env from example if missing
+            # .env is gitignored so reset won't touch it.
+            # Create it from example on first deploy only.
             if [ ! -f .env ]; then
               echo "==> Creating .env from .env.example..."
               cp .env.example .env
-              # Generate a random SECRET_KEY
               SECRET_VAL=$(openssl rand -hex 32)
               sed -i "s|SECRET_KEY=.*|SECRET_KEY=$SECRET_VAL|" .env
               sed -i "s|DJANGO_SETTINGS_MODULE=.*|DJANGO_SETTINGS_MODULE=hec_fund.settings.prod|" .env
