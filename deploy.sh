@@ -68,6 +68,10 @@ $COMPOSE_CMD run --rm backend python manage.py migrate --noinput
 $COMPOSE_CMD run --rm backend python manage.py compilemessages || true
 $COMPOSE_CMD run --rm backend python manage.py collectstatic --noinput
 
+echo "[4.5/9] Ensure files directory is writable by container user (hec, UID 1000)"
+mkdir -p "$REPO_DIR/backend/files"
+chown -R 1000:1000 "$REPO_DIR/backend/files" || true
+
 echo "[5/9] Restart services"
 $COMPOSE_CMD down
 $COMPOSE_CMD up -d
