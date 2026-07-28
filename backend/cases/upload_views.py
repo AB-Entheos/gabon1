@@ -131,12 +131,18 @@ def dev_put(request):
         return HttpResponseBadRequest("Missing key or expired")
 
     params = {"key": key, "mime": mime, "size": str(size), "exp": str(exp)}
+    payload = urlencode(sorted(params.items())).encode("utf-8")
     expected = hmac.new(
         settings.SECRET_KEY.encode("utf-8"),
-        urlencode(sorted(params.items())).encode("utf-8"),
+        payload,
         hashlib.sha256,
     ).hexdigest()
     if not hmac.compare_digest(expected, sig):
+        import logging
+        logging.warning(
+            "dev-put: HMAC mismatch for key=%s  expected_sig=%s  got_sig=%s  payload=%s",
+            key, expected[:12], sig[:12], payload.decode(),
+        )
         return HttpResponseBadRequest("Bad signature")
 
     data = request.body
