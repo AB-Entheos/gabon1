@@ -42,7 +42,7 @@ RUN apt-get update \
         curl \
         netcat-openbsd \
  && rm -rf /var/lib/apt/lists/* \
- && groupadd --system hec && useradd --system --gid hec --home /app hec
+ && groupadd --system -g 1000 hec && useradd --system -u 1000 --gid hec --home /app hec
 
 WORKDIR /app
 
