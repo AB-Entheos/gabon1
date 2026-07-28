@@ -144,10 +144,16 @@ class Command(BaseCommand):
             action="store_true",
             help="Delete all demo (@hec.local) users before seeding.",
         )
+        parser.add_argument(
+            "--set-passwords",
+            action="store_true",
+            help="Regenerate random passwords for all users. Only use on first deploy.",
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
         wipe_demo = options["wipe_demo"]
+        set_passwords = options["set_passwords"]
 
         # ── Optional: wipe demo data ─────────────────────────────────────
         if wipe_demo:
@@ -209,9 +215,17 @@ class Command(BaseCommand):
                     },
                 )
 
-            if not created:
-                # Update existing user to production values
+            if created:
+                # Brand new user — set password
                 password = _random_password()
+                user.set_password(password)
+                user.save(update_fields=["password"])
+                credentials.append((email, role, password))
+                self.stdout.write(self.style.SUCCESS(
+                    f"  ✅ {role:12s} {email:40s}  village={village.name if village else '-':12s}  (CREATED)"
+                ))
+            else:
+                # Update existing user to production values
                 changed = False
                 if user.email != email:
                     user.email = email
@@ -237,12 +251,14 @@ class Command(BaseCommand):
                     changed = True
                 if changed:
                     user.save()
-                # Always set a fresh password
-                user.set_password(password)
-                user.save(update_fields=["password"])
-                credentials.append((email, role, password))
+                if set_passwords:
+                    password = _random_password()
+                    user.set_password(password)
+                    user.save(update_fields=["password"])
+                    credentials.append((email, role, password))
+                status_label = "UPDATED" if changed else "OK"
                 self.stdout.write(self.style.SUCCESS(
-                    f"  ✅ {role:12s} {email:40s}  village={village.name if village else '-':12s}  (UPDATED)"
+                    f"  ✅ {role:12s} {email:40s}  village={village.name if village else '-':12s}  ({status_label})"
                 ))
 
         # ── Bilingual CB incident form ───────────────────────────────────
