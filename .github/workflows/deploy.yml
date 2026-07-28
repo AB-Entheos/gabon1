@@ -32,24 +32,33 @@ jobs:
             # Ensure docker is in PATH for ubuntu user
             export PATH="$PATH:/usr/bin:/usr/local/bin:/snap/bin"
 
+            # Install docker & compose if missing
+            if ! command -v docker &> /dev/null; then
+              echo "==> Installing Docker..."
+              sudo apt-get update -qq
+              sudo apt-get install -y -qq docker.io docker-compose-v2
+              sudo usermod -aG docker $USER
+              sudo systemctl enable --now docker
+            fi
+
             cd ${{ env.DEPLOY_PATH }}
             git fetch origin main
             git reset --hard origin/main
 
             echo "==> Building frontend (Bun)..."
-            docker compose run --rm frontend-builder
+            sudo docker compose run --rm frontend-builder
 
             echo "==> Building backend image..."
-            docker compose build backend
+            sudo docker compose build backend
 
             echo "==> Running migrations..."
-            docker compose run --rm backend python manage.py migrate --noinput
-            docker compose run --rm backend python manage.py compilemessages || true
-            docker compose run --rm backend python manage.py collectstatic --noinput
+            sudo docker compose run --rm backend python manage.py migrate --noinput
+            sudo docker compose run --rm backend python manage.py compilemessages || true
+            sudo docker compose run --rm backend python manage.py collectstatic --noinput
 
             echo "==> Restarting services..."
-            docker compose down
-            docker compose up -d
+            sudo docker compose down
+            sudo docker compose up -d
 
             echo "==> Waiting for health check..."
             sleep 5
@@ -58,9 +67,9 @@ jobs:
               echo "✅ Backend healthy"
             else
               echo "❌ Backend health check failed"
-              docker compose logs backend --tail=20
+              sudo docker compose logs backend --tail=20
               exit 1
             fi
 
             echo "==> Deploy complete!"
-            docker compose ps
+            sudo docker compose ps
