@@ -1,0 +1,17 @@
+Subject: Bienvenue sur le Fonds d'urgence HEC
+
+Bonjour {{ user.first_name|default:user.email }},
+
+Votre compte a été créé sur la plateforme du Fonds d'urgence HEC.
+
+Détails du compte :
+- Email : {{ user.email }}
+- Rôle : {{ user.get_role_display }}
+- Langue préférée : {{ user.get_preferred_language_display }}
+
+Vous pouvez maintenant vous connecter au tableau de bord :
+http://localhost:5173/login
+
+Pour toute question, veuillez contacter votre administrateur.
+
+Fonds d'urgence HEC

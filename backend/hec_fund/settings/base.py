@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "audit",
     "reports",
     "payments",
+    "notifications",
 ]
 
 MIDDLEWARE = [

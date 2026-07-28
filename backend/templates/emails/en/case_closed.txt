@@ -1,0 +1,16 @@
+Subject: Case {{ case.uid }} has been closed
+
+Hello,
+
+Your HEC compensation case has been closed after successful payment.
+
+Case details:
+- Case ID: {{ case.uid }}
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+- Amount authorized: {{ case.amount_authorized|default:"-" }} XAF
+
+You can view the full case history in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

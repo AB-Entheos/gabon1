@@ -340,7 +340,7 @@ def transition(
     # this fires synchronously inside the same request.
     try:
         from approvals.notifications import schedule_notifications
-        schedule_notifications(case, from_step=from_step)
+        schedule_notifications(case, from_step=from_step, action=action, actor=actor)
     except Exception:
         # Notifications must NEVER block a state transition. Swallow errors.
         pass

@@ -1,0 +1,14 @@
+Subject: Dossier {{ case.uid }} vérifié — étape {{ step }}
+
+Bonjour,
+
+Un dossier a été vérifié et se trouve maintenant à l'étape {{ step }} de la chaîne d'approbation.
+
+Détails du dossier :
+- Requérant : {{ case.claimant_name }}
+- Type : {{ case.get_case_type_display }}
+
+Ouvrir le dossier dans le tableau de bord :
+http://localhost:5173/cases/{{ case.uid }}
+
+Fonds d'urgence HEC

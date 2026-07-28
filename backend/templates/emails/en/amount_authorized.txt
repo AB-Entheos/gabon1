@@ -1,0 +1,17 @@
+Subject: Amount authorized for case {{ case.uid }} — final approval needed
+
+Hello,
+
+An amount has been authorized for HEC compensation case {{ case.uid }}.
+
+Case details:
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+- Amount authorized: {{ amount_xaf }} XAF
+
+This case now requires your final approval.
+
+Open the case in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

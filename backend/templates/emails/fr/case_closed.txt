@@ -1,0 +1,16 @@
+Subject: Dossier {{ case.uid }} a été clôturé
+
+Bonjour,
+
+Votre dossier d'indemnisation HEC a été clôturé après un paiement réussi.
+
+Détails du dossier :
+- ID du dossier : {{ case.uid }}
+- Requérant : {{ case.claimant_name }}
+- Type : {{ case.get_case_type_display }}
+- Montant autorisé : {{ case.amount_authorized|default:"-" }} FCFA
+
+Vous pouvez consulter l'historique complet du dossier dans le tableau de bord :
+http://localhost:5173/cases/{{ case.uid }}
+
+Fonds d'urgence HEC

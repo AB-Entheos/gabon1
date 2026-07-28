@@ -1,0 +1,14 @@
+Subject: Case {{ case.uid }} verified — step {{ step }}
+
+Hello,
+
+A case has been verified and is now at step {{ step }} of the approval chain.
+
+Case details:
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+
+Open the case in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

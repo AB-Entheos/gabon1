@@ -1,0 +1,17 @@
+Subject: Case {{ case.uid }} deferred — clarification needed
+
+Hello,
+
+Your HEC compensation case has been deferred and sent back for clarification.
+
+Case details:
+- Case ID: {{ case.uid }}
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+
+Please review the case, address any comments, and re-submit when ready.
+
+Open the case in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

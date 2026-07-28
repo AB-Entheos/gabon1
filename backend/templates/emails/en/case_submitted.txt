@@ -1,0 +1,17 @@
+Subject: Case {{ case.uid }} submitted — awaiting verification
+
+Hello,
+
+A new HEC compensation case has been submitted and is awaiting verification.
+
+Case details:
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+- Incident at: {{ case.incident_at }}
+
+Please verify the case details and proceed with the approval chain.
+
+Open the case in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

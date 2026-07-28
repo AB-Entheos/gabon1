@@ -145,6 +145,14 @@ def list_users(request):
     if password:
         u.set_password(password)
     u.save()
+
+    # Send welcome email to the newly created user.
+    try:
+        from notifications.service import send_account_created
+        send_account_created(user=u)
+    except Exception:
+        pass  # Notifications must never block user creation.
+
     return Response(_AdminUserSerializer(u).data, status=status.HTTP_201_CREATED)
 
 
@@ -177,3 +185,46 @@ def user_detail(request, pk):
         u.set_password(password)
     u.save()
     return Response(_AdminUserSerializer(u).data)
+
+
+# ---- Password reset (admin-initiated) ----------------------------------------
+
+
+class _PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+@extend_schema(request=_PasswordResetSerializer, responses={200: dict})
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsSuperAdmin])
+def admin_password_reset(request):
+    """Admin initiates a password reset for a user.
+
+    Generates a random password, sets it, and emails the user their
+    new credentials. In a real deployment you'd issue a reset-token
+    link instead; this is the MVP approach.
+    """
+    email = request.data.get("email", "").strip().lower()
+    if not email:
+        return Response({"detail": "email is required."}, status=400)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"detail": "No user with that email."}, status=404)
+
+    new_password = User.objects.make_random_password(length=14)
+    user.set_password(new_password)
+    user.save(update_fields=["password"])
+
+    try:
+        from notifications.service import send_password_reset
+        frontend_url = getattr(request, "build_absolute_uri", lambda: "http://localhost:5173")("/")
+        send_password_reset(
+            user=user,
+            reset_url=frontend_url,
+        )
+    except Exception:
+        pass  # Notifications must never block the reset.
+
+    return Response({"detail": f"Password reset email sent to {user.email}."})

@@ -1,0 +1,18 @@
+Subject: Nouveau dossier d'indemnisation HEC soumis
+
+Bonjour,
+
+Un nouveau dossier d'indemnisation a été soumis sur la plateforme du Fonds d'urgence HEC.
+
+Détails du dossier :
+- ID du dossier : {{ case.uid }}
+- Requérant : {{ case.claimant_name }}
+- Type : {{ case.get_case_type_display }}
+- Village : {{ case.village|default:"-" }}
+- Incident le : {{ case.incident_at }}
+- Signalé le : {{ case.reported_at }}
+
+Ouvrir le dossier dans le tableau de bord :
+http://localhost:5173/cases/{{ case.uid }}
+
+Fonds d'urgence HEC

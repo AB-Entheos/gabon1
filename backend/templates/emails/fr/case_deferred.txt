@@ -1,0 +1,17 @@
+Subject: Dossier {{ case.uid }} différé — clarification nécessaire
+
+Bonjour,
+
+Votre dossier d'indemnisation HEC a été différé et renvoyé pour clarification.
+
+Détails du dossier :
+- ID du dossier : {{ case.uid }}
+- Requérant : {{ case.claimant_name }}
+- Type : {{ case.get_case_type_display }}
+
+Veuillez revoir le dossier, traiter les commentaires et resoumettre le dossier une fois prêt.
+
+Ouvrir le dossier dans le tableau de bord :
+http://localhost:5173/cases/{{ case.uid }}
+
+Fonds d'urgence HEC

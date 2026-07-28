@@ -7,16 +7,7 @@ import type { AppDispatch } from "@/store";
 import { setCredentials } from "@/store/authSlice";
 import type { AuthUser as User } from "@/store/authSlice";
 
-const DEMO_ACCOUNTS = [
-  { email: "cb.libreville@hec.local",  role: "CB",          lang: "fr", noteKey: "cb" },
-  { email: "ab@hec.local",             role: "AB",          lang: "fr", noteKey: "ab" },
-  { email: "wcs@hec.local",            role: "WCS",         lang: "fr", noteKey: "wcs" },
-  { email: "dgfc@hec.local",           role: "DGFC",        lang: "fr", noteKey: "dgfc" },
-  { email: "dgfap@hec.local",          role: "DGFAP",       lang: "fr", noteKey: "dgfap" },
-  { email: "minister@hec.local",       role: "MINISTER",    lang: "fr", noteKey: "minister" },
-  { email: "admin@hec.local",          role: "ADMIN",       lang: "en", noteKey: "admin" },
-  { email: "superadmin@hec.local",     role: "SUPER_ADMIN", lang: "en", noteKey: "superadmin" },
-];
+
 
 function GabonFlag() {
   return (
@@ -32,8 +23,8 @@ export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const [email, setEmail] = useState("cb.libreville@hec.local");
-  const [password, setPassword] = useState("HEC-Dev-2026!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -65,10 +56,7 @@ export default function Login() {
     }
   }
 
-  function quickLogin(em: string) {
-    setEmail(em);
-    setPassword("HEC-Dev-2026!");
-  }
+
 
   return (
     <div className="grid min-h-full grid-cols-1 lg:grid-cols-2 bg-slate-50 dark:bg-slate-950">
@@ -126,8 +114,13 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Partner logos at the bottom — MINEF → AB Entheos → WCS */}
+        {/* Partner logos at the bottom — CAFI → MINEF → AB Entheos → WCS */}
         <div className="relative z-10 flex items-end justify-between">
+          <img
+            src="/img/CAFI-LOGO.png"
+            alt="CAFI"
+            style={{ height: "64px", width: "auto", maxWidth: "120px", objectFit: "contain" }}
+          />
           <div
             className="flex items-center justify-center rounded-lg bg-white shadow-md"
             style={{ height: "96px", width: "96px", padding: "8px" }}
@@ -165,7 +158,7 @@ export default function Login() {
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("login.welcome", "Welcome back")}</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("login.signin_hint", "Sign in with your @hec.local account.")}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("login.signin_hint", "Sign in with your @ab-entheos.co.ke account.")}</p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
@@ -203,31 +196,7 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-8">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {t("login.demo._", "Demo accounts (password:")} <code className="font-mono text-slate-700 dark:text-slate-300">HEC-Dev-2026!</code>)
-              </div>
-              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-            </div>
-            <ul className="space-y-1.5">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <li key={acc.email}>
-                  <button
-                    type="button"
-                    onClick={() => quickLogin(acc.email)}
-                    className="group flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-left hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/30"
-                  >
-                    <div>
-                      <div className="font-mono text-xs text-slate-700 dark:text-slate-200">{acc.email}</div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{t(`login.demo.${acc.noteKey}`, acc.noteKey)}</div>
-                    </div>
-                    <span className="chip bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">{acc.role}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+
         </div>
       </div>
     </div>

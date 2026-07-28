@@ -12,17 +12,20 @@ from django.db import transaction
 from . import tasks
 
 
-def schedule_notifications(case, from_step: int | None) -> None:
+def schedule_notifications(case, from_step: int | None, action: str = "", actor=None) -> None:
     """Enqueue the right notification(s) for a state change."""
+    from notifications import service as notify
+
     if case.status == "AT_APPROVAL":
         tasks.notify_approver.delay(str(case.uid))
     elif case.status == "REJECTED":
-        # Optional: notify CB. For now we log + emit a status event only.
-        pass
+        notify.send_case_rejected(case=case, actor=actor)
+    elif case.status == "DEFERRED":
+        notify.send_case_deferred(case=case, actor=actor)
     elif case.status == "APPROVED":
         tasks.notify_approver.delay(str(case.uid))
     elif case.status == "CLOSED":
-        pass
+        notify.send_case_closed(case=case, actor=actor)
 
 
 def schedule_accelerated_benefit(case, amount_xaf: int) -> None:

@@ -254,7 +254,16 @@ class CaseViewSet(ModelViewSet):
             raise serializers.ValidationError(
                 {"detail": "Only CB can open new cases."}
             )
-        serializer.save(created_by=u)
+        case = serializer.save(created_by=u)
+
+        # Send new-claim notification to admin/approver roles.
+        try:
+            from notifications.service import send_new_claim
+            send_new_claim(case=case)
+        except Exception:
+            pass  # Notifications must never block case creation.
+
+        return case
 
     @with_idempotency
     def create(self, request, *args, **kwargs):

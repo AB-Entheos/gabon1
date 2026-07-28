@@ -1,0 +1,15 @@
+Subject: Amount proposed for case {{ case.uid }}
+
+Hello,
+
+An amount has been proposed for HEC compensation case {{ case.uid }}.
+
+Case details:
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+- Amount proposed: {{ amount_xaf }} XAF
+
+Please review and authorize the amount in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

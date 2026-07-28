@@ -1,0 +1,18 @@
+Subject: New HEC compensation case submitted
+
+Hello,
+
+A new compensation case has been submitted on the HEC Emergency Fund platform.
+
+Case details:
+- Case ID: {{ case.uid }}
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+- Village: {{ case.village|default:"-" }}
+- Incident at: {{ case.incident_at }}
+- Reported at: {{ case.reported_at }}
+
+Open the case in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

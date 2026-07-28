@@ -1,0 +1,17 @@
+Subject: Case {{ case.uid }} has been rejected
+
+Hello,
+
+Your HEC compensation case has been rejected.
+
+Case details:
+- Case ID: {{ case.uid }}
+- Claimant: {{ case.claimant_name }}
+- Type: {{ case.get_case_type_display }}
+
+Please review the case and address any issues. You may re-submit the case after making the necessary corrections.
+
+Open the case in the dashboard:
+http://localhost:5173/cases/{{ case.uid }}
+
+HEC Emergency Fund

@@ -1,0 +1,15 @@
+Subject: Montant proposé pour le dossier {{ case.uid }}
+
+Bonjour,
+
+Un montant a été proposé pour le dossier d'indemnisation HEC {{ case.uid }}.
+
+Détails du dossier :
+- Requérant : {{ case.claimant_name }}
+- Type : {{ case.get_case_type_display }}
+- Montant proposé : {{ amount_xaf }} FCFA
+
+Veuillez revoir et autoriser le montant dans le tableau de bord :
+http://localhost:5173/cases/{{ case.uid }}
+
+Fonds d'urgence HEC

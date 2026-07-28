@@ -1,0 +1,17 @@
+Subject: Welcome to the HEC Emergency Fund
+
+Hello {{ user.first_name|default:user.email }},
+
+Your account has been created on the HEC Emergency Fund platform.
+
+Account details:
+- Email: {{ user.email }}
+- Role: {{ user.get_role_display }}
+- Preferred language: {{ user.get_preferred_language_display }}
+
+You can now log in to the dashboard:
+http://localhost:5173/login
+
+If you have any questions, please contact your administrator.
+
+HEC Emergency Fund
