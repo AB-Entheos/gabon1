@@ -89,6 +89,9 @@ jobs:
             sudo docker compose run --rm backend python manage.py compilemessages || true
             sudo docker compose run --rm backend python manage.py collectstatic --noinput
 
+            echo "==> Seeding demo data (idempotent)..."
+            sudo docker compose run --rm backend python manage.py seed_demo_data || true
+
             echo "==> Restarting services..."
             sudo docker compose down
             sudo docker compose up -d
