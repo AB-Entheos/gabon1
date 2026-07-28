@@ -113,9 +113,19 @@ def save_attachment_bytes(*, key: str, data: bytes) -> str:
         from storages.backends.s3boto3 import S3Boto3Storage
         S3Boto3Storage().save(key, __import__("io").BytesIO(data))
     else:
-        path = _dev_local_root() / key
+        root = _dev_local_root()
+        path = root / key
         path.parent.mkdir(parents=True, exist_ok=True)
+        # Ensure the hec user can write (Docker container runs as hec)
+        try:
+            os.chmod(path.parent, 0o775)
+        except OSError:
+            pass
         path.write_bytes(data)
+        try:
+            os.chmod(path, 0o664)
+        except OSError:
+            pass
     return sha
 
 

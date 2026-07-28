@@ -143,13 +143,24 @@ def dev_put(request):
     if len(data) != size:
         return HttpResponseBadRequest(f"Body size {len(data)} != declared {size}")
 
-    sha = save_attachment_bytes(key=key, data=data)
+    try:
+        sha = save_attachment_bytes(key=key, data=data)
+    except Exception as exc:
+        import logging
+        logging.exception("dev-put: save_attachment_bytes failed for key=%s", key)
+        return HttpResponseBadRequest(f"Storage error: {exc}")
+
     # Stash metadata for the next /uploads/finish call to consume.
-    request.session["pending_attachment_meta"] = {
-        "key": key,
-        "description": description,
-        "uploaded_by_name": uploaded_by_name,
-    }
+    try:
+        request.session["pending_attachment_meta"] = {
+            "key": key,
+            "description": description,
+            "uploaded_by_name": uploaded_by_name,
+        }
+        request.session.modified = True
+    except Exception:
+        pass  # session may not work in some prod configs — not fatal
+
     return JsonResponse({"key": key, "sha256": sha, "size": len(data)})
 
 

@@ -54,7 +54,7 @@ COPY backend/ /app/
 COPY scripts/ /app/scripts/
 
 # Static & media will be mounted from a volume in compose
-RUN mkdir -p /app/staticfiles /app/media
+RUN mkdir -p /app/staticfiles /app/media /app/files
 RUN chown -R hec:hec /app
 USER hec
 

@@ -42,20 +42,34 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@hec.example.
 CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = config("REDIS_URL", default="redis://localhost:6379/0")
 
-STORAGES = {
-    "default": {"BACKEND": "storages.backends.s3.S3Storage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
-}
-
-AWS_S3_ENDPOINT_URL = config("S3_ENDPOINT_URL", default=None)
+# S3 config (optional — if no endpoint/key, fall back to local filesystem)
+AWS_S3_ENDPOINT_URL = config("S3_ENDPOINT_URL", default=None) or None
 AWS_STORAGE_BUCKET_NAME = config("S3_BUCKET", default="hec-attachments")
-AWS_S3_REGION_NAME = config("S3_REGION", default="eu-west-1")
-AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
-AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
+AWS_S3_REGION_NAME = config("S3_REGION", default="eu-central-1")
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="") or None
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="") or None
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = True
 AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+
+# Use S3 only when endpoint + credentials are provided; otherwise local filesystem
+_use_s3 = bool(AWS_STORAGE_BUCKET_NAME and (AWS_S3_ENDPOINT_URL or AWS_ACCESS_KEY_ID))
+
+if _use_s3:
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+else:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+    # Ensure local files directory exists
+    from pathlib import Path
+    _files_dir = BASE_DIR / "files"
+    _files_dir.mkdir(parents=True, exist_ok=True)
 
 MEDICAL_CEILING_XAF = config("MEDICAL_CEILING_XAF", default=2_000_000, cast=int)
 BURIAL_CEILING_XAF = config("BURIAL_CEILING_XAF", default=1_500_000, cast=int)
