@@ -96,14 +96,15 @@ def presign_put(*, key: str, mime: str, size: int) -> tuple[str, str, int]:
 def new_attachment_key(*, case_uid: str, filename: str, file_type: str | None = None) -> str:
     """Generate a collision-resistant S3 key for a new attachment.
 
-    Local layout (dev): {case_short}/evidence/{uuid}-{filename} or
-                        {case_short}/case-files/{uuid}-{filename}
-    where case_short is the first 8 hex chars of the case UUID.
+    Local layout: {case_uid}/evidence/{uuid}-{filename} or
+                  {case_uid}/case-files/{uuid}-{filename}
+
+    Each case gets its own directory with two sub-folders so uploads are
+    neatly organized on the local filesystem (and mirrored in S3).
     """
     safe = "".join(c for c in filename if c.isalnum() or c in {".", "-", "_"})[:128] or "file"
-    case_short = str(case_uid).replace("-", "")[:8]
     folder = "case-files" if file_type else "evidence"
-    return f"{case_short}/{folder}/{uuid.uuid4().hex[:16]}-{safe}"
+    return f"{case_uid}/{folder}/{uuid.uuid4().hex[:16]}-{safe}"
 
 
 def save_attachment_bytes(*, key: str, data: bytes) -> str:

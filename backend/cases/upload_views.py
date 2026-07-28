@@ -82,6 +82,13 @@ def presign(request):
     key = new_attachment_key(case_uid=str(case.uid), filename=filename, file_type=file_type)
     url, expires_at, expires_in = presign_put(key=key, mime=mime, size=size)
     if not is_s3_backend() and url.startswith("/api/v1/uploads/dev-put"):
+        # Ensure both evidence/ and case-files/ directories exist for this case
+        # so the folder structure is visible on disk even before both are used.
+        from pathlib import Path
+        from cases.uploads import _dev_local_root
+        root = _dev_local_root()
+        (root / str(case.uid) / "evidence").mkdir(parents=True, exist_ok=True)
+        (root / str(case.uid) / "case-files").mkdir(parents=True, exist_ok=True)
         from urllib.parse import urlencode
         extra = {}
         if (request.data.get("description") or "").strip():
