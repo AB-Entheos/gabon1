@@ -199,7 +199,6 @@ def summary(request):
             "approved": Case.objects.filter(status=Case.Status.APPROVED).count(),
             "closed": Case.objects.filter(status=Case.Status.CLOSED).count(),
             "rejected": Case.objects.filter(status=Case.Status.REJECTED).count(),
-            "accelerated_benefit_released": Case.objects.filter(accelerated_benefit_released=True).count(),
             "events_total": Event.objects.count(),
             "events_this_month": Event.objects.filter(occurred_at__gte=month_start).count(),
         }

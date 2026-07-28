@@ -54,7 +54,6 @@ def cases_stages(request):
             "approved": qs.filter(status=Case.Status.APPROVED).count(),
             "closed": qs.filter(status=Case.Status.CLOSED).count(),
             "rejected": qs.filter(status=Case.Status.REJECTED).count(),
-            "accelerated_benefit_released": qs.filter(accelerated_benefit_released=True).count(),
             "total": qs.count(),
         }
     )
