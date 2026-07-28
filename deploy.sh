@@ -50,7 +50,7 @@ $COMPOSE_CMD up -d
 
 echo "[6/8] Health check"
 sleep 5
-curl -fsS http://localhost:8000/api/v1/health | tee /dev/stderr
+curl -fsS http://localhost/api/v1/health | tee /dev/stderr
 echo
 
 echo "[7/8] Seed (idempotent — only runs if SEED=1)"
