@@ -134,7 +134,7 @@ def dev_put(request):
 
     # HMAC validation — if sig is provided, validate it
     if sig:
-        params = {"key": key, "mime": mime, "size": str(size), "exp": str(exp)}
+        params = {"key": key, "size": str(size), "exp": str(exp)}
         payload = urlencode(sorted(params.items())).encode("utf-8")
         expected = hmac.new(
             settings.SECRET_KEY.encode("utf-8"),
@@ -142,21 +142,12 @@ def dev_put(request):
             hashlib.sha256,
         ).hexdigest()
         if not hmac.compare_digest(expected, sig):
-            # Try without MIME (Cloudflare sometimes strips/encodes it)
-            params_nomime = {"key": key, "size": str(size), "exp": str(exp)}
-            payload_nomime = urlencode(sorted(params_nomime.items())).encode("utf-8")
-            expected_nomime = hmac.new(
-                settings.SECRET_KEY.encode("utf-8"),
-                payload_nomime,
-                hashlib.sha256,
-            ).hexdigest()
-            if not hmac.compare_digest(expected_nomime, sig):
-                import logging
-                logging.warning(
-                    "dev-put: HMAC mismatch key=%s expected=%s.. got=%s..",
-                    key, expected[:12], sig[:12],
-                )
-                return HttpResponseBadRequest("Bad signature")
+            import logging
+            logging.warning(
+                "dev-put: HMAC mismatch key=%s expected=%s.. got=%s..",
+                key, expected[:12], sig[:12],
+            )
+            return HttpResponseBadRequest("Bad signature")
 
     data = request.body
     if len(data) != size:
