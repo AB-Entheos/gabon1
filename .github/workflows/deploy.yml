@@ -29,6 +29,9 @@ jobs:
             echo "==> Configuring git safe directory..."
             git config --global --add safe.directory '*'
 
+            # Ensure docker is in PATH for ubuntu user
+            export PATH="$PATH:/usr/bin:/usr/local/bin:/snap/bin"
+
             cd ${{ env.DEPLOY_PATH }}
             git fetch origin main
             git reset --hard origin/main
