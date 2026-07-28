@@ -23,6 +23,9 @@ jobs:
           script: |
             set -e
 
+            echo "==> Fixing repository ownership..."
+            sudo chown -R $USER:$(id -gn) ${{ env.DEPLOY_PATH }}
+
             echo "==> Configuring git safe directory..."
             git config --global --add safe.directory '*'
 
