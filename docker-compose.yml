@@ -126,7 +126,7 @@ services:
       - ./frontend:/build
       - frontend-dist:/build/dist
       - node-modules:/build/node_modules
-    command: sh -c "bun install --frozen-lockfile && bun run build && cp -r dist/* /build/dist/"
+    command: sh -c "bun install --frozen-lockfile && bunx vite build && cp -r dist/* /build/dist/"
 
 volumes:
   db-data:
