@@ -152,8 +152,18 @@ def dev_put(request):
             # Don't reject — presign already authenticated the user
 
     data = request.body
+    if len(data) == 0:
+        return HttpResponseBadRequest("Empty request body")
+    # Warn on size mismatch but don't reject — reverse proxies (Cloudflare,
+    # nginx) may rewrite Content-Length or use chunked transfer encoding,
+    # causing the declared size (from the presign step) to differ from the
+    # actual body length.  We persist the *actual* bytes either way.
     if len(data) != size:
-        return HttpResponseBadRequest(f"Body size {len(data)} != declared {size}")
+        import logging
+        logging.warning(
+            "dev-put: body size mismatch — declared %d, got %d (key=%s)",
+            size, len(data), key,
+        )
 
     try:
         sha = save_attachment_bytes(key=key, data=data)
@@ -173,7 +183,7 @@ def dev_put(request):
     except Exception:
         pass
 
-    return JsonResponse({"key": key, "sha256": sha, "size": len(data)})
+    return JsonResponse({"key": key, "sha256": sha, "size": len(data), "description": description, "uploaded_by_name": uploaded_by_name})
 
 
 @extend_schema(responses=_FinishResponseSerializer)
