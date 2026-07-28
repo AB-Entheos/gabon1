@@ -51,6 +51,15 @@ jobs:
               echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
             fi
 
+            # Open firewall ports if ufw is active
+            if sudo ufw status | grep -q "active"; then
+              echo "==> Opening firewall ports..."
+              sudo ufw allow 80/tcp
+              sudo ufw allow 443/tcp
+              sudo ufw allow 3001/tcp
+              sudo ufw reload
+            fi
+
             cd ${{ env.DEPLOY_PATH }}
             git fetch origin main
             git reset --hard origin/main
