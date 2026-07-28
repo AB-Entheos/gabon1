@@ -187,38 +187,41 @@ class Command(BaseCommand):
             email = f"{email_local}@{PROD_DOMAIN}"
             village = village_by_slug.get(village_slug) if village_slug else None
 
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    "username": email_local,
-                    "role": role,
-                    "preferred_language": lang,
-                    "first_name": first,
-                    "last_name": last,
-                    "village": village,
-                    "is_2fa_enabled": False,
-                    "is_staff": role in ("ADMIN", "SUPER_ADMIN"),
-                    "is_superuser": role == "SUPER_ADMIN",
-                },
-            )
-
-            if created:
-                password = _random_password()
-                user.set_password(password)
-                user.save()
-                credentials.append((email, role, password))
-                self.stdout.write(self.style.SUCCESS(
-                    f"  ✅ {role:12s} {email:40s}  village={village.name if village else '-':12s}  (CREATED)"
-                ))
+            # Try email first, then fall back to username (handles demo→prod migration)
+            user = User.objects.filter(email=email).first()
+            if user is None:
+                user = User.objects.filter(username=email_local).first()
+            if user is not None:
+                created = False
             else:
-                # Update role/village if changed
+                user, created = User.objects.get_or_create(
+                    email=email,
+                    defaults={
+                        "username": email_local,
+                        "role": role,
+                        "preferred_language": lang,
+                        "first_name": first,
+                        "last_name": last,
+                        "village": village,
+                        "is_2fa_enabled": False,
+                        "is_staff": role in ("ADMIN", "SUPER_ADMIN"),
+                        "is_superuser": role == "SUPER_ADMIN",
+                    },
+                )
+
+            if not created:
+                # Update existing user to production values
+                password = _random_password()
                 changed = False
-                target_village_id = village.pk if village else None
-                if getattr(user, "village_id", None) != target_village_id:
-                    user.village = village
+                if user.email != email:
+                    user.email = email
                     changed = True
                 if user.role != role:
                     user.role = role
+                    changed = True
+                target_village_id = village.pk if village else None
+                if getattr(user, "village_id", None) != target_village_id:
+                    user.village = village
                     changed = True
                 if user.is_staff != (role in ("ADMIN", "SUPER_ADMIN")):
                     user.is_staff = role in ("ADMIN", "SUPER_ADMIN")
@@ -226,11 +229,21 @@ class Command(BaseCommand):
                 if user.is_superuser != (role == "SUPER_ADMIN"):
                     user.is_superuser = role == "SUPER_ADMIN"
                     changed = True
+                if user.first_name != first:
+                    user.first_name = first
+                    changed = True
+                if user.last_name != last:
+                    user.last_name = last
+                    changed = True
                 if changed:
-                    user.save(update_fields=["village", "role", "is_staff", "is_superuser"])
-                self.stdout.write(
-                    f"  ⏭  {role:12s} {email:40s}  village={village.name if village else '-':12s}  (EXISTS)"
-                )
+                    user.save()
+                # Always set a fresh password
+                user.set_password(password)
+                user.save(update_fields=["password"])
+                credentials.append((email, role, password))
+                self.stdout.write(self.style.SUCCESS(
+                    f"  ✅ {role:12s} {email:40s}  village={village.name if village else '-':12s}  (UPDATED)"
+                ))
 
         # ── Bilingual CB incident form ───────────────────────────────────
         from django.utils.text import slugify
