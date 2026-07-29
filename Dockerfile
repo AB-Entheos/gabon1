@@ -54,6 +54,7 @@ RUN apt-get update \
         curl \
         netcat-openbsd \
         gosu \
+        gettext \
  && rm -rf /var/lib/apt/lists/* \
  && gosu nobody true \
  && groupadd --system -g 1000 hec && useradd --system -u 1000 --gid hec --home /app hec
@@ -76,6 +77,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Do NOT set USER hec here — the entrypoint runs as root to fix
 # bind-mount permissions, then drops to hec via gosu.
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 EXPOSE 8000
 
