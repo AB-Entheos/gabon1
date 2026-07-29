@@ -67,7 +67,12 @@
   "dash": {
     "cb": {
       "title": "Espace rapporteur terrain",
-      "subtitle": "Ouvrir de nouveaux dossiers, televerser des preuves, soumettre les rapports d'incident. Pour les CB (Chef de Brigade) et DP (Delegue Provincial)."
+      "subtitle": "Ouvrir de nouveaux dossiers, televerser des preuves, soumettre les rapports d'incident. Pour les CB (Chef de Brigade) et DP (Delegue Provincial).",
+      "kpi": {
+        "drafts": "Brouillons",
+        "in_progress": "En cours",
+        "closed": "Clôturés"
+      }
     },
     "ab": {
       "title": "AB Entheos — Étape 2",
@@ -192,7 +197,7 @@
     "eyebrow": "Fonds d'urgence HEC · Gabon",
     "subtitle_mobile": "Connectez-vous pour continuer",
     "headline": "Fonds d'urgence HEC.",
-    "tagline": "Service de paiement fluide pour la compensation des conflits homme–éléphant.",
+    "tagline": "Service fluide pour les conflits homme–éléphant.",
     "welcome": "Bon retour",
     "signin_hint": "Connectez-vous avec votre compte @hec.local.",
     "sign_in": "Connexion",
@@ -210,7 +215,8 @@
       "minister": "Approbation finale",
       "admin": "Publication de formulaires, audit, paiements",
       "superadmin": "Gestion utilisateurs, paramètres système"
-    }
+    },
+    "forgot_password": "Mot de passe oublié ?"
   },
   "pipeline": {
     "title": "Circuit d'approbation",
@@ -629,5 +635,33 @@
   "stages": {
     "title": "Aperçu des étapes d'approbation",
     "subtitle": "Dossiers regroupés par étape courante."
+  },
+  "profile": {
+    "title": "Mon profil",
+    "subtitle": "Gérer les paramètres de votre compte",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "phone_placeholder": "Optionnel",
+    "language": "Langue préférée",
+    "lang_en": "English",
+    "lang_fr": "Français",
+    "saved": "Profil mis à jour avec succès !",
+    "saving": "Enregistrement…",
+    "save": "Enregistrer",
+    "change_password": "Changer le mot de passe"
+  },
+  "password": {
+    "mismatch": "Les mots de passe ne correspondent pas.",
+    "too_short": "Le mot de passe doit comporter au moins 12 caractères.",
+    "change_required": "Changez votre mot de passe",
+    "first_login": "Vous devez changer votre mot de passe temporaire pour continuer.",
+    "changed": "Mot de passe changé avec succès !",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmer le nouveau mot de passe",
+    "saving": "Enregistrement…",
+    "save": "Enregistrer le mot de passe"
   }
 }

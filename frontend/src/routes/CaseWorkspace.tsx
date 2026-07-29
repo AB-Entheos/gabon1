@@ -46,7 +46,7 @@ export default function CaseWorkspace() {
   const [setAmount] = useSetAmountMutation();
   const [submitCase] = useSubmitCaseMutation();
   const [progressiveMissingSlots, setProgressiveMissingSlots] = useState<string[] | null>(null);
-  const [progressiveWarning, setProgressiveWarning] = useState<string | null>(null);
+  const [, setProgressiveWarning] = useState<string | null>(null);
 
   if (isLoading) return <div className="p-6 text-slate-500">{t("common.loading")}</div>;
   if (!caseData) return <div className="p-6 text-rose-600">{t("case.not_found", "Case not found.")}</div>;
@@ -65,9 +65,9 @@ export default function CaseWorkspace() {
 
   return (
     <div className="space-y-6">
-      <div className="card p-5">
-        <div className="flex items-start justify-between">
-          <div>
+      <div className="card p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
             <Link to="/" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700">
               <ArrowLeft size={12} /> {t("common.back", "Back")}
             </Link>
@@ -91,7 +91,7 @@ export default function CaseWorkspace() {
       {/* KYC Details Section */}
       <div className="card p-5">
         <h2 className="mb-3 text-lg font-semibold text-slate-800">{t("case.kyc.title", "Claimant Details")}</h2>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
           <DetailRow label={t("case.kyc.name", "Full name")} value={caseData.claimant_name} />
           <DetailRow label={t("case.kyc.phone", "Phone")} value={caseData.claimant_phone} />
           <DetailRow label={t("case.kyc.id_type", "ID type")} value={caseData.claimant_id_type} />

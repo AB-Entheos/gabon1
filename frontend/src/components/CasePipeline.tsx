@@ -87,7 +87,7 @@ export default function CasePipeline({
     <div className="card p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-slate-900">{t("pipeline.title", "Approval pipeline")}</h2>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500 hidden sm:inline">
           {caseData.status === "CLOSED"
             ? t("pipeline.status.closed", `Closed · all ${totalSteps} steps complete`).replace("{n}", String(totalSteps))
             : caseData.status === "APPROVED"
@@ -100,7 +100,8 @@ export default function CasePipeline({
                   : "—"}
         </span>
       </div>
-      <ol className="flex items-start gap-0">
+      <div className="overflow-x-auto">
+      <ol className="flex items-start gap-0 min-w-[480px] sm:min-w-0">
         {STEPS.map((s, i) => {
           const v = isMinister ? visualStateFor3(s.n, caseData) : visualStateFor6(s.n, caseData);
           const isLast = i === STEPS.length - 1;
@@ -153,6 +154,7 @@ export default function CasePipeline({
           );
         })}
       </ol>
+      </div>
     </div>
   );
 }

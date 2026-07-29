@@ -134,7 +134,7 @@ export default function NewCase() {
           <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="input" />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t("new_case.id_type", "ID type")} required>
             <select value={idType} onChange={(e) => setIdType(e.target.value as any)} className="input">
               <option value="NATIONAL_ID">{t("id_type.national_id", "National ID")}</option>
@@ -149,7 +149,7 @@ export default function NewCase() {
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t("new_case.date_of_birth", "Date of birth")}>
             <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className="input" />
           </Field>
@@ -168,7 +168,7 @@ export default function NewCase() {
           <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="input" placeholder={t("new_case.address_placeholder", "Full address of the claimant")} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t("new_case.village_name_text", "Village name")} required>
             <input
               type="text"

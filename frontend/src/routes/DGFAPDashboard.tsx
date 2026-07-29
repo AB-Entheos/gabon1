@@ -72,43 +72,80 @@ function KpiCard({ label, value, color }: { label: string; value: number; color:
 function AmountTable({ cases, lang }: { cases: Case[]; lang: "en" | "fr" }) {
   const { t } = useTranslation();
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-          <tr>
-            <th className="px-5 py-3">UID</th>
-            <th className="px-5 py-3">{t("table.claimant")}</th>
-            <th className="px-5 py-3">{t("table.type")}</th>
-            <th className="px-5 py-3 text-right">{t("table.proposed", "Proposed")}</th>
-            <th className="px-5 py-3 text-right">{t("table.amount", "Authorized")}</th>
-            <th className="px-5 py-3">{t("table.status")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cases.map((c) => (
-            <tr key={c.uid} className="border-t border-slate-100 hover:bg-slate-50">
-              <td className="px-5 py-3 font-mono text-xs">
-                <Link to={`/cases/${c.uid}`} className="font-bold text-emerald-700 hover:underline">
-                  {c.uid.slice(0, 8)}…
-                </Link>
-              </td>
-              <td className="px-5 py-3 font-medium text-slate-900">{c.claimant_name}</td>
-              <td className="px-5 py-3 text-slate-500">{c.case_type}</td>
-              <td className="px-5 py-3 text-right font-mono text-sm text-blue-700">
-                {(c as any).amount_proposed ? formatXAF(Number((c as any).amount_proposed), lang) : "—"}
-              </td>
-              <td className="px-5 py-3 text-right font-mono font-semibold text-slate-900">
-                {c.amount_authorized ? formatXAF(Number(c.amount_authorized), lang) : (
-                  <span className="inline-flex items-center gap-1 text-amber-600">
-                    <AlertCircle size={12} /> {t("common.pending", "pending")}
-                  </span>
-                )}
-              </td>
-              <td className="px-5 py-3"><StatusChip status={c.status} lang={lang} /></td>
+    <>
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr>
+              <th className="px-5 py-3">UID</th>
+              <th className="px-5 py-3">{t("table.claimant")}</th>
+              <th className="px-5 py-3">{t("table.type")}</th>
+              <th className="px-5 py-3 text-right">{t("table.proposed", "Proposed")}</th>
+              <th className="px-5 py-3 text-right">{t("table.amount", "Authorized")}</th>
+              <th className="px-5 py-3">{t("table.status")}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {cases.map((c) => (
+              <tr key={c.uid} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-5 py-3 font-mono text-xs">
+                  <Link to={`/cases/${c.uid}`} className="font-bold text-emerald-700 hover:underline">
+                    {c.uid.slice(0, 8)}…
+                  </Link>
+                </td>
+                <td className="px-5 py-3 font-medium text-slate-900">{c.claimant_name}</td>
+                <td className="px-5 py-3 text-slate-500">{c.case_type}</td>
+                <td className="px-5 py-3 text-right font-mono text-sm text-blue-700">
+                  {(c as any).amount_proposed ? formatXAF(Number((c as any).amount_proposed), lang) : "—"}
+                </td>
+                <td className="px-5 py-3 text-right font-mono font-semibold text-slate-900">
+                  {c.amount_authorized ? formatXAF(Number(c.amount_authorized), lang) : (
+                    <span className="inline-flex items-center gap-1 text-amber-600">
+                      <AlertCircle size={12} /> {t("common.pending", "pending")}
+                    </span>
+                  )}
+                </td>
+                <td className="px-5 py-3"><StatusChip status={c.status} lang={lang} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* Mobile cards */}
+      <div className="divide-y divide-slate-100 md:hidden">
+        {cases.map((c) => (
+          <Link key={c.uid} to={`/cases/${c.uid}`} className="block px-4 py-3 hover:bg-slate-50">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-slate-900">{c.claimant_name}</div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <span className="font-mono font-bold text-emerald-700">{c.uid.slice(0, 8)}…</span>
+                  <span>·</span>
+                  <span>{c.case_type}</span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-500">{t("table.proposed", "Proposed")}: </span>
+                    <span className="font-mono font-semibold text-blue-700">
+                      {(c as any).amount_proposed ? formatXAF(Number((c as any).amount_proposed), lang) : "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">{t("table.amount", "Authorized")}: </span>
+                    <span className="font-mono font-semibold text-slate-900">
+                      {c.amount_authorized ? formatXAF(Number(c.amount_authorized), lang) : (
+                        <span className="text-amber-600">{t("common.pending", "pending")}</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <StatusChip status={c.status} lang={lang} />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }

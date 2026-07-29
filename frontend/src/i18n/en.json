@@ -67,7 +67,12 @@
   "dash": {
     "cb": {
       "title": "Field reporter workspace",
-      "subtitle": "Open new cases, upload evidence, submit incident reports. Works for both CB (Chef de Brigade) and DP (Delegué Provincial)."
+      "subtitle": "Open new cases, upload evidence, submit incident reports. Works for both CB (Chef de Brigade) and DP (Delegué Provincial).",
+      "kpi": {
+        "drafts": "Drafts",
+        "in_progress": "In progress",
+        "closed": "Closed"
+      }
     },
     "ab": {
       "title": "AB Entheos — Step 2",
@@ -192,7 +197,7 @@
     "eyebrow": "HEC Emergency Fund · Gabon",
     "subtitle_mobile": "Sign in to continue",
     "headline": "HEC Emergency Fund.",
-    "tagline": "Seamless payment service for human–elephant conflict compensation.",
+    "tagline": "Seamless service for human–elephant conflict.",
     "welcome": "Welcome back",
     "signin_hint": "Sign in with your @hec.local account.",
     "sign_in": "Sign in",
@@ -210,7 +215,8 @@
       "minister": "Final approval",
       "admin": "Form publisher, audit, payments",
       "superadmin": "User CRUD, system settings"
-    }
+    },
+    "forgot_password": "Forgot your password?"
   },
   "pipeline": {
     "title": "Approval pipeline",
@@ -629,5 +635,33 @@
   "stages": {
     "title": "Approval stages overview",
     "subtitle": "Cases grouped by current stage."
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your account settings",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "phone_placeholder": "Optional",
+    "language": "Preferred Language",
+    "lang_en": "English",
+    "lang_fr": "Français",
+    "saved": "Profile updated successfully!",
+    "saving": "Saving…",
+    "save": "Save Changes",
+    "change_password": "Change Password"
+  },
+  "password": {
+    "mismatch": "New passwords do not match.",
+    "too_short": "Password must be at least 12 characters.",
+    "change_required": "Change Your Password",
+    "first_login": "You must change your temporary password to continue.",
+    "changed": "Password changed successfully!",
+    "current": "Current Password",
+    "new": "New Password",
+    "confirm": "Confirm New Password",
+    "saving": "Saving…",
+    "save": "Save New Password"
   }
 }

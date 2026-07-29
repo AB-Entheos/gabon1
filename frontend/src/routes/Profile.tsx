@@ -157,8 +157,8 @@ export default function Profile() {
               onChange={(e) => setLanguage(e.target.value as "en" | "fr")}
               className="input"
             >
-              <option value="en">English</option>
-              <option value="fr">Français</option>
+              <option value="en">{t("profile.lang_en", "English")}</option>
+              <option value="fr">{t("profile.lang_fr", "Français")}</option>
             </select>
           </div>
 

@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { LogIn } from "lucide-react";
-import type { AppDispatch } from "@/store";
-import { setCredentials } from "@/store/authSlice";
+import type { AppDispatch, RootState } from "@/store";
+import { setCredentials, setLanguage } from "@/store/authSlice";
 import type { AuthUser as User } from "@/store/authSlice";
 
 
@@ -20,9 +20,10 @@ function GabonFlag() {
 }
 
 export default function Login() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const language = useSelector((s: RootState) => s.auth.language);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +159,29 @@ export default function Login() {
             <div>
               <div className="text-base font-bold text-slate-900 dark:text-slate-100">{t("app.name", "HEC Emergency Fund")}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">{t("login.subtitle_mobile", "Sign in to continue")}</div>
+            </div>
+          </div>
+
+          <div className="mb-6 flex justify-end">
+            <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white text-xs font-bold dark:border-slate-700 dark:bg-slate-800">
+              {(["en", "fr"] as const).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => {
+                    void i18n.changeLanguage(l);
+                    dispatch(setLanguage(l));
+                    document.documentElement.lang = l;
+                  }}
+                  className={
+                    language === l
+                      ? "bg-emerald-600 px-3 py-1.5 text-white"
+                      : "px-3 py-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                  }
+                  aria-pressed={language === l}
+                >
+                  {l.toUpperCase()}
+                </button>
+              ))}
             </div>
           </div>
 

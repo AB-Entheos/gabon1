@@ -399,7 +399,7 @@ def replace_attachment(request, submission_id: int, attachment_id: int):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def list_slot_history(request, case_uid: str, file_type: str):
+def list_slot_history(request, uid: str, file_type: str):
     """Return all (live + superseded) attachments for a given case + slot,
     ordered oldest → newest, so the UI can render a history timeline of
     every file that has ever been in the slot (including replaced ones).
@@ -427,7 +427,7 @@ def list_slot_history(request, case_uid: str, file_type: str):
         "count": <int>
       }
     """
-    case = get_object_or_404(Case, uid=case_uid)
+    case = get_object_or_404(Case, uid=uid)
     qs = (
         FormAttachment.objects.filter(
             submission__case=case,

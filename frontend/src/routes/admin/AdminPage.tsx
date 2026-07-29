@@ -59,15 +59,15 @@ export default function AdminPage({ kind }: { kind: AdminKind }) {
 
   return (
     <div className="space-y-6">
-      <header className="card flex items-start gap-4 p-5">
-        <div className={`grid h-12 w-12 place-items-center rounded-lg bg-slate-50 ring-1 ${meta.ring}`}>
-          <Icon size={22} className={meta.color} />
+      <header className="card flex items-start gap-3 p-4 sm:gap-4 sm:p-5">
+        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-50 ring-1 sm:h-12 sm:w-12 ${meta.ring}`}>
+          <Icon size={20} className={meta.color} />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             {t("nav.admin", "Admin")}
           </div>
-          <h1 className="mt-1 text-3xl font-bold text-slate-900">{t(meta.titleKey)}</h1>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">{t(meta.titleKey)}</h1>
           <p className="mt-1 text-sm text-slate-500">{t(meta.subtitleKey)}</p>
         </div>
       </header>
@@ -627,8 +627,8 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
           <h3 className="text-base font-semibold text-slate-900">{isNew ? t("users.new", "New user") : t("users.edit", "Edit user")}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="col-span-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="col-span-1 sm:col-span-2">
             <label className="mb-1 block text-xs font-semibold text-slate-600">{t("users.email", "Email")}</label>
             <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input" />
           </div>
@@ -662,7 +662,7 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
             <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
           </div>
           {isNew && (
-            <div className="col-span-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">
+            <div className="col-span-1 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700 sm:col-span-2">
               {t("users.auto_password_info", "A temporary password will be auto-generated and sent to the user's email. They will be required to change it on first login.")}
             </div>
           )}
