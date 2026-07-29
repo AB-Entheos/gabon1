@@ -191,10 +191,14 @@ class Command(BaseCommand):
         for row in SEED_USERS:
             email, role, lang, first, last, requires_2fa, village_slug = row
             village = village_by_name.get(village_slug) if village_slug else None
-            user, created = User.objects.get_or_create(
-                email=email,
+            username = email.split("@")[0]
+            # Use username as the primary lookup key — it's stable and unique.
+            # This avoids IntegrityError when the VPS has a user with the same
+            # username but a different email (e.g. from a previous seed).
+            user, created = User.objects.update_or_create(
+                username=username,
                 defaults={
-                    "username": email.split("@")[0],
+                    "email": email,
                     "role": role,
                     "preferred_language": lang,
                     "first_name": first,
@@ -205,24 +209,13 @@ class Command(BaseCommand):
                     "is_superuser": role == "SUPER_ADMIN",
                 },
             )
-            if not created:
-                changed = False
-                target_village_id = village.pk if village else None
-                if getattr(user, "village_id", None) != target_village_id:
-                    user.village = village
-                    changed = True
-                if user.role != role:
-                    user.role = role
-                    changed = True
-                if changed:
-                    user.save(update_fields=["village", "role"])
-            else:
+            if created:
                 user.set_password(SEED_PASSWORD)
                 user.save()
             self.stdout.write(self.style.SUCCESS(
                 f"  {role:12s} {email:36s}  lang={lang}  2fa={requires_2fa}  "
                 f"village={village.name if village else '-':12s}  "
-                f"{'(NEW)' if created else '(exists)'}"
+                f"{'(NEW)' if created else '(updated)'}"
             ))
 
         # Bilingual CB incident form
