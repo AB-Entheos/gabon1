@@ -1,10 +1,11 @@
 from pathlib import Path
-from decouple import Csv, RepositoryEnv, Config as _DecoupleConfig
+from decouple import AutoConfig
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Point python-decouple at the root .env (one level above backend/)
-config = _DecoupleConfig(RepositoryEnv(BASE_DIR.parent / ".env"))
+# Use AutoConfig: reads .env if present, otherwise falls back to OS env vars
+_config_path = str(BASE_DIR.parent)
+config = AutoConfig(_config_path)
 
 SECRET_KEY = config("SECRET_KEY", default="dev-insecure-secret-change-me-in-prod")
 INSTALLED_APPS = [
