@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { KeyRound, ArrowLeft, CheckCircle, AlertTriangle } from "lucide-react";
+import { KeyRound, ArrowLeft, CheckCircle, AlertTriangle, Home } from "lucide-react";
 
 function GabonFlag() {
   return (
@@ -135,9 +135,15 @@ export default function ResetPassword() {
               <p className="mt-2 text-sm text-emerald-600">
                 {t("reset.done_body", "Your password has been updated. You can now sign in with your new password.")}
               </p>
-              <Link to="/login" className="mt-4 inline-block text-sm font-medium text-emerald-700 underline hover:text-emerald-800">
-                {t("reset.go_login", "Sign in")}
-              </Link>
+              <div className="mt-4 flex gap-3">
+                <Link to="/" className="btn-primary flex-1 items-center justify-center gap-2">
+                  <Home size={16} />
+                  {t("reset.go_home", "Go to Home")}
+                </Link>
+                <Link to="/login" className="btn-secondary flex-1 items-center justify-center gap-2">
+                  {t("reset.go_login", "Sign in")}
+                </Link>
+              </div>
             </div>
           ) : !hasToken ? (
             <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">

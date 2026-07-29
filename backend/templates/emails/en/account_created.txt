@@ -1,4 +1,4 @@
-Subject: Welcome to the HEC Emergency Fund — Your login credentials
+{% autoescape off %}Subject: Welcome to the HEC Emergency Fund — Your login credentials
 
 Hello {{ user.first_name|default:user.email }},
 
@@ -20,3 +20,4 @@ IMPORTANT: You will be required to change your password immediately after your f
 If you have any questions, please contact your administrator. mark@ab-entheos.co.ke
 
 HEC Emergency Fund
+{% endautoescape %}

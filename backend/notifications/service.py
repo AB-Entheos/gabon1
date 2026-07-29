@@ -11,7 +11,28 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from django.db import models
+
 logger = logging.getLogger(__name__)
+
+
+def _serialize(obj: Any) -> Any:
+    """Convert a Django model instance to a plain dict for Celery serialization."""
+    if isinstance(obj, models.Model):
+        return {
+            "pk": obj.pk,
+            "first_name": getattr(obj, "first_name", ""),
+            "email": getattr(obj, "email", ""),
+            "get_role_display": getattr(obj, "get_role_display", lambda: "")(),
+            "get_preferred_language_display": getattr(obj, "get_preferred_language_display", lambda: "")(),
+            "uid": getattr(obj, "uid", ""),
+            "claimant_name": getattr(obj, "claimant_name", ""),
+            "amount_proposed": getattr(obj, "amount_proposed", None),
+            "amount_authorized": getattr(obj, "amount_authorized", None),
+            "current_step": getattr(obj, "current_step", ""),
+            "status": getattr(obj, "status", ""),
+        }
+    return obj
 
 # ---------------------------------------------------------------------------
 # Template helpers
@@ -44,15 +65,19 @@ def _template_path(notification_type: str, language: str) -> str:
 
 
 def send_account_created(*, user, temp_password: str = "") -> None:
-    """Notify the newly created user with their welcome email and one-time credentials."""
-    from .tasks import send_notification_email
+    """Notify the newly created user with their welcome email and one-time credentials.
+
+    Sends synchronously via Resend API — the welcome email is critical
+    and must never be silently dropped by a broken Celery broker.
+    """
+    from .tasks import do_send_email
 
     lang = getattr(user, "preferred_language", "fr") or "fr"
-    send_notification_email.delay(
+    do_send_email(
         notification_type="account_created",
         recipient_email=user.email,
         language=lang,
-        template_context={"user": user, "temp_password": temp_password},
+        template_context={"user": _serialize(user), "temp_password": temp_password},
     )
 
 
@@ -65,7 +90,7 @@ def send_password_reset(*, user, reset_url: str) -> None:
         notification_type="password_reset",
         recipient_email=user.email,
         language=lang,
-        template_context={"user": user, "reset_url": reset_url},
+        template_context={"user": _serialize(user), "reset_url": reset_url},
     )
 
 
@@ -90,7 +115,7 @@ def send_new_claim(*, case, recipients=None) -> None:
             notification_type="new_claim",
             recipient_email=r.email,
             language=lang,
-            template_context={"case": case, "recipient": r},
+            template_context={"case": _serialize(case), "recipient": _serialize(r)},
         )
 
 
@@ -106,7 +131,7 @@ def send_case_submitted(*, case) -> None:
             notification_type="case_submitted",
             recipient_email=r.email,
             language=lang,
-            template_context={"case": case, "recipient": r},
+            template_context={"case": _serialize(case), "recipient": _serialize(r)},
         )
 
 
@@ -129,7 +154,7 @@ def send_case_verified(*, case) -> None:
             notification_type="case_verified",
             recipient_email=r.email,
             language=lang,
-            template_context={"case": case, "recipient": r, "step": case.current_step},
+            template_context={"case": _serialize(case), "recipient": _serialize(r), "step": case.current_step},
         )
 
 
@@ -143,7 +168,7 @@ def send_case_approved(*, case) -> None:
             notification_type="case_approved",
             recipient_email=case.created_by.email,
             language=lang,
-            template_context={"case": case, "step": case.current_step},
+            template_context={"case": _serialize(case), "step": case.current_step},
         )
 
 
@@ -157,7 +182,7 @@ def send_case_rejected(*, case, actor=None) -> None:
             notification_type="case_rejected",
             recipient_email=case.created_by.email,
             language=lang,
-            template_context={"case": case, "actor": actor},
+            template_context={"case": _serialize(case), "actor": _serialize(actor)},
         )
 
 
@@ -171,7 +196,7 @@ def send_case_deferred(*, case, actor=None) -> None:
             notification_type="case_deferred",
             recipient_email=case.created_by.email,
             language=lang,
-            template_context={"case": case, "actor": actor, "step": case.current_step},
+            template_context={"case": _serialize(case), "actor": _serialize(actor), "step": case.current_step},
         )
 
 
@@ -192,7 +217,7 @@ def send_case_closed(*, case, actor=None) -> None:
             notification_type="case_closed",
             recipient_email=r.email,
             language=lang,
-            template_context={"case": case, "actor": actor, "recipient": r},
+            template_context={"case": _serialize(case), "actor": _serialize(actor), "recipient": _serialize(r)},
         )
 
 
@@ -209,9 +234,9 @@ def send_amount_proposed(*, case, actor=None) -> None:
             recipient_email=r.email,
             language=lang,
             template_context={
-                "case": case,
+                "case": _serialize(case),
                 "amount_xaf": case.amount_proposed,
-                "actor": actor,
+                "actor": _serialize(actor),
             },
         )
 
@@ -229,9 +254,9 @@ def send_amount_authorized(*, case, actor=None) -> None:
             recipient_email=r.email,
             language=lang,
             template_context={
-                "case": case,
+                "case": _serialize(case),
                 "amount_xaf": case.amount_authorized,
-                "actor": actor,
+                "actor": _serialize(actor),
             },
         )
 
@@ -266,5 +291,5 @@ def notify_approver(case, from_step: int | None = None) -> None:
             notification_type="case_approved",
             recipient_email=recipient.email,
             language=lang,
-            template_context={"case": case, "step": case.current_step, "role": role},
+            template_context={"case": _serialize(case), "step": case.current_step, "role": role},
         )

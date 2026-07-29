@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { Banknote, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Banknote, AlertTriangle, ArrowRight } from "lucide-react";
 import { useListCasesQuery } from "@/api/hecApi";
 import type { RootState } from "@/store";
 import { StatusChip } from "@/components/StatusChip";
-import { formatDate, formatXAF } from "@/api/format";
+import { formatXAF } from "@/api/format";
 import type { Case } from "@/api/hecApi";
 
 export default function DisbursementsPage() {
@@ -93,7 +93,6 @@ export default function DisbursementsPage() {
 function KpiCard({
   label,
   value,
-  color,
   lang,
 }: {
   label: string;
@@ -101,11 +100,6 @@ function KpiCard({
   color: "emerald" | "blue" | "amber";
   lang: "en" | "fr";
 }) {
-  const palette: Record<string, string> = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    blue: "bg-blue-50 text-blue-700 border-blue-200",
-    amber: "bg-amber-50 text-amber-700 border-amber-200",
-  };
   return (
     <div className="card p-5">
       <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</div>

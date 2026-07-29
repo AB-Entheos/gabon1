@@ -52,7 +52,7 @@ export interface User {
   id: number;
   email: string;
   username: string;
-  role: "CB" | "DP" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN";
+  role: "CB" | "DP" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN" | "SUPER_ADMIN";
   first_name: string;
   last_name: string;
   preferred_language: "en" | "fr";
@@ -87,13 +87,19 @@ export interface Case {
     | "APPROVED"
     | "REJECTED"
     | "DEFERRED"
-    | "CLOSED";
+    | "CLOSED"
+    | "DELETED";
   amount_authorized: string | null;
   amount_proposed: string | null;
   sla_deadline: string | null;
   created_by: number;
   created_by_email: string;
   current_approver_role: string | null;
+  disbursement_summary?: {
+    disbursed_xaf: number;
+    remaining_xaf: number;
+    utilization_pct: number;
+  };
 }
 
 export interface CaseEvent {
@@ -191,6 +197,13 @@ export const hecApi = createApi({
     createCase: build.mutation<Case, Partial<Case>>({
       query: (body) => ({ url: "cases", method: "POST", body }),
       invalidatesTags: ["Cases"],
+    }),
+    deleteCase: build.mutation<void, string>({
+      query: (uid) => ({ url: `cases/${uid}`, method: "DELETE" }),
+      invalidatesTags: (_r, _e, uid) => [
+        { type: "Case", id: uid },
+        "Cases",
+      ],
     }),
     submitCase: build.mutation<{ status: string; event_id: number }, string>({
       query: (uid) => ({ url: `cases/${uid}/submit`, method: "POST" }),
@@ -713,6 +726,7 @@ export const {
   useListCasesQuery,
   useGetCaseQuery,
   useCreateCaseMutation,
+  useDeleteCaseMutation,
   useSubmitCaseMutation,
   useVerifyCaseMutation,
   useAdvanceCaseMutation,

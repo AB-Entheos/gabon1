@@ -166,8 +166,11 @@ def list_users(request):
     try:
         from notifications.service import send_account_created
         send_account_created(user=u, temp_password=temp_password)
-    except Exception:
-        pass  # Notifications must never block user creation.
+        import logging as _log
+        _log.getLogger(__name__).info("Welcome email dispatched for %s", u.email)
+    except Exception as exc:
+        import logging as _log
+        _log.getLogger(__name__).warning("Failed to send welcome email for %s: %s", u.email, exc, exc_info=True)
 
     return Response(_AdminUserSerializer(u).data, status=status.HTTP_201_CREATED)
 

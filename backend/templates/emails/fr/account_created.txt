@@ -1,3 +1,4 @@
+{% autoescape off %}
 Subject: Bienvenue sur le Fonds d'urgence HEC — Vos identifiants de connexion
 
 Bonjour {{ user.first_name|default:user.email }},
@@ -20,3 +21,4 @@ IMPORTANT : Vous devrez changer votre mot de passe immédiatement après votre p
 Pour toute question, veuillez contacter votre administrateur. mark@ab-entheos.co.ke
 
 Fonds d'urgence HEC
+{% endautoescape %}

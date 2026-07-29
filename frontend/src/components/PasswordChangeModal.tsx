@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { Lock, AlertTriangle } from "lucide-react";
+import { Lock, AlertTriangle, CheckCircle, Home } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "@/store";
 import { setUser } from "@/store/authSlice";
 
@@ -13,6 +14,7 @@ interface Props {
 export default function PasswordChangeModal({ open, onClose }: Props) {
   const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const user = useSelector((s: RootState) => s.auth.user);
   const accessToken = useSelector((s: RootState) => s.auth.accessToken);
 
@@ -60,7 +62,6 @@ export default function PasswordChangeModal({ open, onClose }: Props) {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      onClose?.();
     } catch (e) {
       setError(String((e as Error).message));
     } finally {
@@ -86,8 +87,34 @@ export default function PasswordChangeModal({ open, onClose }: Props) {
         </div>
 
         {success ? (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
-            {t("password.changed", "Password changed successfully!")}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-emerald-700 font-medium">
+              <CheckCircle size={18} />
+              {t("password.changed", "Password changed successfully!")}
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t("password.changed_hint", "You can now use your new password to sign in.")}
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose?.();
+                  navigate("/");
+                }}
+                className="btn-primary flex-1"
+              >
+                <Home size={16} />
+                {t("password.go_home", "Go to Home")}
+              </button>
+              <button
+                type="button"
+                onClick={() => onClose?.()}
+                className="btn-secondary flex-1"
+              >
+                {t("password.close", "Close")}
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
