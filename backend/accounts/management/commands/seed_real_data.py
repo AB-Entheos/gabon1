@@ -72,8 +72,8 @@ def _random_password(length: int = 16) -> str:
 INCIDENT_FORM_SCHEMA = {
     "title": {"en": "CB Incident Report", "fr": "Rapport d'incident CB"},
     "description": {
-        "en": "Initial incident report submitted by a Chef de Brigade within 48 hours of the event.",
-        "fr": "Rapport d'incident initial soumis par un Chef de Brigade dans les 48 heures suivant l'evenement.",
+        "en": "Initial incident report submitted by a field reporter (CB or DP) within 48 hours of the event.",
+        "fr": "Rapport d'incident initial soumis par un rapporteur terrain (CB ou DP) dans les 48 heures suivant l'evenement.",
     },
     "fields": [
         {
@@ -94,6 +94,20 @@ INCIDENT_FORM_SCHEMA = {
             "type": "date",
             "label": {"en": "Incident date", "fr": "Date de l'incident"},
             "required": True,
+        },
+        {
+            "id": "village_name_text",
+            "type": "text",
+            "label": {"en": "Village name", "fr": "Nom du village"},
+            "help": {"en": "Name of the village where the incident occurred.", "fr": "Nom du village ou l'incident a eu lieu."},
+            "required": True,
+        },
+        {
+            "id": "chef_de_village",
+            "type": "text",
+            "label": {"en": "Chef de village (village chief)", "fr": "Chef de village"},
+            "help": {"en": "Full name of the village chief who witnessed or reported the incident.", "fr": "Nom complet du chef de village temoin ou rapporteur."},
+            "required": False,
         },
         {
             "id": "case_type",
@@ -272,7 +286,7 @@ class Command(BaseCommand):
             defaults={
                 "title": INCIDENT_FORM_SCHEMA["title"]["en"],
                 "schema": INCIDENT_FORM_SCHEMA,
-                "role_scope": "CB",
+                "role_scope": "CB,DP",
                 "status": FormDefinition.Status.PUBLISHED,
                 "published_at": timezone.now(),
             },

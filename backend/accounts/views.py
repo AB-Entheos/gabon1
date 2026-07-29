@@ -274,3 +274,79 @@ def force_change_password(request):
     user.save(update_fields=["password", "must_change_password"])
 
     return Response({"detail": "Password changed successfully.", "must_change_password": False})
+
+
+# ---- Self-service password reset (token-based) --------------------------------
+
+
+class _PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class _PasswordResetConfirmSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=12)
+
+
+@api_view(["POST"])
+@permission_classes([])  # anonymous
+def password_reset_request(request):
+    """Send a password-reset email with a time-limited token link."""
+    from datetime import timedelta
+    import secrets
+
+    serializer = _PasswordResetRequestSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    email = serializer.validated_data["email"].strip().lower()
+
+    # Always return 200 to avoid email enumeration
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"detail": "If an account with that email exists, a reset link has been sent."})
+
+    token = secrets.token_urlsafe(32)
+    from django.utils import timezone
+    user.password_reset_token = token
+    user.password_reset_expires = timezone.now() + timedelta(hours=2)
+    user.save(update_fields=["password_reset_token", "password_reset_expires"])
+
+    try:
+        frontend_base = request.META.get("HTTP_ORIGIN", "http://localhost:3001")
+        reset_url = f"{frontend_base}/reset-password?token={token}"
+        from notifications.service import send_password_reset
+        send_password_reset(user=user, reset_url=reset_url)
+    except Exception:
+        pass  # Notifications must never block the request.
+
+    return Response({"detail": "If an account with that email exists, a reset link has been sent."})
+
+
+@api_view(["POST"])
+@permission_classes([])  # anonymous
+def password_reset_confirm(request):
+    """Validate the reset token and set a new password."""
+    from django.utils import timezone
+
+    serializer = _PasswordResetConfirmSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    token = serializer.validated_data["token"]
+    new_password = serializer.validated_data["new_password"]
+
+    try:
+        user = User.objects.get(password_reset_token=token)
+    except User.DoesNotExist:
+        return Response({"detail": "Invalid or expired reset link."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not user.password_reset_expires or user.password_reset_expires < timezone.now():
+        return Response({"detail": "Invalid or expired reset link."}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.password_reset_token = None
+    user.password_reset_expires = None
+    user.must_change_password = False
+    user.save(update_fields=["password", "password_reset_token", "password_reset_expires", "must_change_password"])
+
+    return Response({"detail": "Password reset successful. You can now sign in."})

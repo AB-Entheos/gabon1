@@ -52,7 +52,7 @@ export interface User {
   id: number;
   email: string;
   username: string;
-  role: "CB" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN";
+  role: "CB" | "DP" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN";
   first_name: string;
   last_name: string;
   preferred_language: "en" | "fr";
@@ -74,6 +74,8 @@ export interface Case {
   relationship_to_claimant: "SELF" | "SPOUSE" | "PARENT" | "CHILD" | "SIBLING" | "OTHER";
   village: number | null;
   village_name: string;
+  village_name_text: string;
+  chef_de_village: string;
   incident_at: string;
   reported_at: string;
   current_step: 1 | 2 | 3 | 4 | 5 | 6;
@@ -204,7 +206,16 @@ export const hecApi = createApi({
         "Cases",
       ],
     }),
-    advanceCase: build.mutation<{ status: string; current_step: number; event_id: number }, { uid: string; notes?: string }>({
+    advanceCase: build.mutation<
+      {
+        status: string;
+        current_step: number;
+        event_id: number;
+        missing_required_slots?: string[];
+        warning?: string;
+      },
+      { uid: string; notes?: string }
+    >({
       query: ({ uid, notes }) => ({
         url: `cases/${uid}/advance`,
         method: "POST",
@@ -462,6 +473,10 @@ export const hecApi = createApi({
             description?: string;
             uploaded_by?: string;
             uploaded_by_name?: string;
+            uploaded_at?: string;
+            deleted_at?: string | null;
+            superseded_by_id?: number | null;
+            is_current?: boolean;
           }>;
         }>;
         count: number;
@@ -471,6 +486,36 @@ export const hecApi = createApi({
       query: ({ uid, includeBag }) =>
         `cases/${uid}/submissions${includeBag ? "?include_bag=1" : ""}`,
       providesTags: (_r, _e, { uid }) => [{ type: "Submissions", id: uid }],
+    }),
+    listSlotHistory: build.query<
+      {
+        case_uid: string;
+        file_type: string;
+        results: Array<{
+          id: number;
+          filename: string;
+          uploaded_at: string;
+          uploaded_by: string;
+          uploaded_by_name: string;
+          is_current: boolean;
+          deleted_at: string | null;
+          superseded_by_id: number | null;
+          scan_status: string;
+          size_bytes: number;
+          mime: string;
+          submission_id: number;
+          description: string;
+        }>;
+        count: number;
+      },
+      { caseUid: string; fileType: string }
+    >({
+      query: ({ caseUid, fileType }) =>
+        `cases/${caseUid}/slots/${encodeURIComponent(fileType)}/history`,
+      providesTags: (_r, _e, { caseUid }) => [
+        { type: "Submissions", id: caseUid },
+        { type: "Case", id: caseUid },
+      ],
     }),
     presignUpload: build.mutation<PresignResult, {
       filename: string;
@@ -518,6 +563,24 @@ export const hecApi = createApi({
         { type: "Case", id: arg.caseUid },
       ],
     }),
+    replaceAttachment: build.mutation<
+      {
+        old_attachment: { id: number; filename: string; file_type: string | null; superseded_by_id: number | null };
+        new_attachment: { id: number; filename: string; file_type: string | null };
+        case_uid: string;
+      },
+      { submissionId: number; attachmentId: number; caseUid: string; newAttachmentId: number }
+    >({
+      query: ({ submissionId, attachmentId, newAttachmentId }) => ({
+        url: `submission/${submissionId}/attachment/${attachmentId}/replace`,
+        method: "POST",
+        body: { new_attachment_id: newAttachmentId },
+      }),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Submissions", id: arg.caseUid },
+        { type: "Case", id: arg.caseUid },
+      ],
+    }),
   }),
 });
 
@@ -543,7 +606,7 @@ export interface AdminUser {
   first_name: string;
   last_name: string;
   full_name: string;
-  role: "CB" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN" | "SUPER_ADMIN";
+  role: "CB" | "DP" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN" | "SUPER_ADMIN";
   phone: string;
   preferred_language: "en" | "fr";
   is_2fa_enabled: boolean;
@@ -661,7 +724,9 @@ export const {
   useGetFormQuery,
   useSubmitFormMutation,
   useListSubmissionsQuery,
+  useListSlotHistoryQuery,
   usePresignUploadMutation,
   useFinishUploadMutation,
   useDeleteAttachmentMutation,
+  useReplaceAttachmentMutation,
 } = hecApi;

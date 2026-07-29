@@ -1,6 +1,10 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-export type Role = "CB" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN" | "SUPER_ADMIN";
+export type Role = "CB" | "DP" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN" | "SUPER_ADMIN";
+
+// Field-reporting roles — can open cases, attach files, and submit for review.
+// Used by the sidebar, dashboard routing, and case-create guards.
+export const FIELD_REPORTER_ROLES: Role[] = ["CB", "DP"];
 export type Language = "en" | "fr";
 export type Theme = "light" | "dark";
 

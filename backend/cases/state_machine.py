@@ -49,11 +49,11 @@ TRANSITIONS: dict[str, Transition] = {
     "submit": Transition(
         name="submit",
         event_type=Event.Type.SUBMITTED,
-        required_role="CB",
+        required_role=None,  # any field reporter (CB or DP) — verified at runtime
         from_step=1,
         to_step=1,
         to_status=Case.Status.SUBMITTED,
-        description="CB submits the incident form. case DRAFT → SUBMITTED.",
+        description="Field reporter (CB/DP) submits the incident form. case DRAFT → SUBMITTED.",
     ),
     "verify": Transition(
         name="verify",
@@ -204,10 +204,15 @@ def case_has_required_files(case: Case) -> bool:
     if not required:
         return True
 
+    # Only the *current* live attachments count for slot coverage.  An
+    # attachment that has been superseded (replaced) is intentionally
+    # excluded — the new file has taken over the slot.  Soft-deleted rows
+    # are also excluded.
     attachments = FormAttachment.objects.filter(
         submission__case=case,
         file_type__isnull=False,
         deleted_at__isnull=True,
+        superseded_by__isnull=True,
     ).values_list("file_type", flat=True)
     found = {str(file_type).strip().lower() for file_type in attachments if file_type}
     return required.issubset(found)

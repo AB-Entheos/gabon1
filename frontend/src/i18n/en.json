@@ -66,8 +66,8 @@
   },
   "dash": {
     "cb": {
-      "title": "CB workspace",
-      "subtitle": "Open new cases, upload evidence, submit incident reports."
+      "title": "Field reporter workspace",
+      "subtitle": "Open new cases, upload evidence, submit incident reports. Works for both CB (Chef de Brigade) and DP (Delegué Provincial)."
     },
     "ab": {
       "title": "AB Entheos — Step 2",
@@ -157,6 +157,10 @@
     "urgent": "Urgent medical need",
     "urgent_hint": "Flag for priority processing",
     "create": "Create draft",
+    "village_name_text": "Village name",
+    "village_name_placeholder": "Name of the village where the incident occurred",
+    "chef_de_village": "Chef de village",
+    "chef_de_village_placeholder": "Full name of the village chief (witness)",
     "crop_section": "Crop damage details",
     "crop_type": "Crop type",
     "area_destroyed_ha": "Area destroyed (ha)",
@@ -323,7 +327,10 @@
       "by": "Uploaded by",
       "open": "Open",
       "download": "Download",
-      "files": "files"
+      "files": "files",
+      "replace": "Replace",
+      "replace_title": "Replace this file?",
+      "replace_body": "This will upload a new version to replace \"{{filename}}\". The original file is retained in the per-slot history for audit purposes."
     },
     "status_label": {
       "DRAFT": "Draft",
@@ -346,7 +353,9 @@
       "address": "Address",
       "incident_location": "Incident location",
       "relationship": "Relationship",
-      "village": "Village"
+      "village": "Village",
+      "village_reported": "Village (reported)",
+      "chef_de_village": "Chef de village"
     },
     "disbursements": {
       "global_warning_title": "Disbursements approaching the authorized limit",
@@ -377,7 +386,7 @@
       "title": "Case files",
       "subtitle": "Supporting material uploaded to this case.",
       "required_title": "Required case files",
-      "required_subtitle": "Upload the mandatory supporting documents for this case.",
+      "required_subtitle": "Upload the mandatory supporting documents for this case. Files can be added or replaced progressively at any approval step.",
       "completed": "completed",
       "slot_completed": "Completed",
       "slot_pending": "Pending",
@@ -399,7 +408,21 @@
       "none_yet": "No files attached yet. Use the upload form below.",
       "uploaded_by": "Uploaded by",
       "delete": "Delete file",
-      "delete_title": "Delete this file?"
+      "delete_title": "Delete this file?",
+      "replace": "Replace file",
+      "replace_title": "Replace this file?",
+      "replace_body": "This will upload a new version to replace \"{{filename}}\". The original file is retained for audit and can be seen in the history below.",
+      "replaced_by": "Replaced by",
+      "history": "Replacement history",
+      "history_empty": "No previous versions for this slot.",
+      "history_count": "{{count}} previous version",
+      "history_count_plural": "{{count}} previous versions",
+      "current_version": "Current",
+      "previous_version": "Previous version",
+      "uploaded_on": "Uploaded {{date}}",
+      "progressive_warning_title": "Files can still be added",
+      "progressive_warning_body": "This case was advanced with one or more required file slots still empty. They can be added by any approver at any later stage.",
+      "progressive_missing_slots": "Missing required slots: {{slots}}"
     },
     "approve_modal": {
       "title": "Approve this case?",

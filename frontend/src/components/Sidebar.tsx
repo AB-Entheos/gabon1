@@ -27,7 +27,7 @@ type Item = {
 const ITEMS: Item[] = [
   { to: "/", icon: LayoutDashboard, key: "dashboard", roles: "all" },
   { to: "/stages", icon: Layers, key: "stages", roles: "all" },
-  { to: "/cases/new", icon: FilePlus, key: "new_case", roles: ["CB"] },
+  { to: "/cases/new", icon: FilePlus, key: "new_case", roles: ["CB", "DP"] },
   { to: "/cases", icon: FileStack, key: "cases", roles: "all" },
   { to: "/queue", icon: ClipboardList, key: "committee", roles: ["AB", "WCS", "DGFC", "DGFAP", "MINISTER"] },
   { to: "/audit", icon: ScrollText, key: "audit", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },

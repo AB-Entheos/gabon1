@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from accounts.permissions import CanSetAmount, IsAB, IsCB, IsRole
+from accounts.permissions import CanSetAmount, IsAB, IsCB, IsDP, IsFieldReporter, IsRole
 from accounts.models import User
 
 from .idempotency import with_idempotency
@@ -25,8 +25,26 @@ from .state_machine import (
     approver_role_for_step,
     case_has_required_files,
     defer_for_step,
+    required_file_slots_for_case,
     transition,
 )
+
+
+def _missing_required_file_slots(case: Case) -> list[str]:
+    """Return the list of required case-file slots that are NOT yet covered
+    by any live (non-deleted, non-superseded) attachment."""
+    required = [s for s in required_file_slots_for_case(case)]
+    if not required:
+        return []
+    from forms.models import FormAttachment
+    present = set(
+        FormAttachment.objects.filter(
+            submission__case=case,
+            file_type__isnull=False,
+            deleted_at__isnull=True,
+        ).values_list("file_type", flat=True)
+    )
+    return [s for s in required if s.lower() not in {p.lower() for p in present}]
 
 if TYPE_CHECKING:
     from accounts.models import User as UserType
@@ -67,7 +85,7 @@ class EventSerializer(serializers.ModelSerializer):
 
 class CaseSerializer(serializers.ModelSerializer):
     uid = serializers.UUIDField(read_only=True)
-    village_name = serializers.CharField(source="village.name", read_only=True)
+    village_name = serializers.SerializerMethodField()
     created_by_email = serializers.CharField(source="created_by.email", read_only=True)
     current_approver_role = serializers.SerializerMethodField()
     sla_deadline = serializers.DateTimeField(read_only=True)
@@ -96,6 +114,8 @@ class CaseSerializer(serializers.ModelSerializer):
             "relationship_to_claimant",
             "village",
             "village_name",
+            "village_name_text",
+            "chef_de_village",
             "incident_at",
             "reported_at",
             "current_step",
@@ -120,7 +140,17 @@ class CaseSerializer(serializers.ModelSerializer):
             "created_by",
             "created_by_email",
             "disbursement_summary",
+            "village_name",
         )
+
+    def get_village_name(self, obj: "Case"):
+        # Prefer the free-text value captured at intake (village_name_text);
+        # fall back to the FK-resolved name when no free-text was captured.
+        if obj.village_name_text:
+            return obj.village_name_text
+        if obj.village is not None:
+            return obj.village.name
+        return ""
 
     def get_disbursement_summary(self, obj: "Case"):
         from .models import Disbursement
@@ -169,6 +199,8 @@ class CreateCaseSerializer(serializers.ModelSerializer):
             "incident_location",
             "relationship_to_claimant",
             "village",
+            "village_name_text",
+            "chef_de_village",
             "incident_at",
         )
 
@@ -237,7 +269,7 @@ class CaseViewSet(ModelViewSet):
         if not isinstance(u, User):
             return Case.objects.none()
         qs = Case.objects.select_related("village", "created_by").all()
-        if u.role == "CB":
+        if u.role in u.FIELD_REPORTER_ROLES:
             qs = qs.filter(created_by=u)
         elif u.role in {"AB", "WCS", "DGFC", "DGFAP", "MINISTER"}:
             qs = qs.exclude(status=Case.Status.DRAFT)
@@ -251,9 +283,9 @@ class CaseViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         u = self.request.user
-        if not isinstance(u, User) or u.role != "CB":
+        if not isinstance(u, User) or u.role not in u.FIELD_REPORTER_ROLES:
             raise serializers.ValidationError(
-                {"detail": "Only CB can open new cases."}
+                {"detail": "Only field reporters (CB, DP) can open new cases."}
             )
         case = serializer.save(created_by=u)
 
@@ -334,7 +366,12 @@ class CaseViewSet(ModelViewSet):
         Automatically selects the correct transition (advance_ab,
         advance_wcs, etc.) based on the case's current_step.
 
-        When advancing from step 2 (AB), required file uploads are verified.
+        Case files are intentionally **progressive**: required file slots can
+        be added at any point during the approval chain.  At AB advance
+        (step 2→3) the UI displays the missing slots as a warning, but the
+        case itself is always submittable — partial uploads are recorded on
+        the audit trail so the next approver can see exactly what was and
+        wasn't on file at the time of advance.
         """
         case = self.get_object()
         if case.status not in (Case.Status.AT_APPROVAL, Case.Status.SUBMITTED):
@@ -342,13 +379,19 @@ class CaseViewSet(ModelViewSet):
                 {"detail": "Case is not in a state that can be advanced."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # File validation: AB advance (step 2→3) requires all required file slots
-        if case.current_step == 2 and not case_has_required_files(case):
-            return Response(
-                {"detail": "Required file uploads are missing. Please upload all required documents before advancing."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         notes = (request.data.get("notes") or "").strip()
+        # Soft warning: record missing required slots on the audit trail but
+        # never block the advance.  This implements the "progressive uploads"
+        # rule from the case-files spec — files can always be added later.
+        missing_slots: list[str] = []
+        if case.current_step == 2:
+            missing_slots = _missing_required_file_slots(case)
+            if missing_slots:
+                notes = (
+                    notes + ("\n" if notes else "") +
+                    f"[Progressive files notice] Missing required slots at advance: "
+                    f"{', '.join(missing_slots)} — case advanced anyway; files can be added later."
+                ).strip()
         try:
             t = advance_transition_for_step(case.current_step)
             event = transition(
@@ -360,13 +403,18 @@ class CaseViewSet(ModelViewSet):
             )
         except StateError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(
-            {
-                "status": case.status,
-                "current_step": case.current_step,
-                "event_id": event.id,
-            }
-        )
+        resp = {
+            "status": case.status,
+            "current_step": case.current_step,
+            "event_id": event.id,
+        }
+        if missing_slots:
+            resp["missing_required_slots"] = missing_slots
+            resp["warning"] = (
+                "Case advanced with missing required file slots. "
+                "They can still be uploaded by any approver at later stages."
+            )
+        return Response(resp)
 
     @action(detail=True, methods=["post"], url_path="reject")
     @with_idempotency

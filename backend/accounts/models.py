@@ -7,6 +7,7 @@ class User(AbstractUser):
 
     class Role(models.TextChoices):
         CB = "CB", "Chef de Brigade"
+        DP = "DP", "Delegué Provincial"
         AB = "AB", "AB Entheos"
         WCS = "WCS", "WCS"
         DGFC = "DGFC", "DGFC"
@@ -14,6 +15,10 @@ class User(AbstractUser):
         MINISTER = "MINISTER", "Minister"
         ADMIN = "ADMIN", "Administrator"
         SUPER_ADMIN = "SUPER_ADMIN", "Super Administrator"
+
+    # Field-reporting roles — these are the only roles that can create
+    # new cases from the field.  Mirrors IsCB and IsDP permission classes.
+    FIELD_REPORTER_ROLES = ("CB", "DP")
 
     class Status(models.TextChoices):
         ACTIVE = "ACTIVE", "Active"
@@ -47,12 +52,17 @@ class User(AbstractUser):
         default=Language.FR,
     )
     telegram_chat_id = models.CharField(max_length=64, blank=True)
+    password_reset_token = models.CharField(max_length=128, blank=True, null=True)
+    password_reset_expires = models.DateTimeField(null=True, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
     def requires_2fa(self) -> bool:
-        return self.role != self.Role.CB
+        # CB and DP are field reporters operating in remote areas — they
+        # cannot be expected to manage a TOTP device per login.  All other
+        # roles are office-bound and must use 2FA.
+        return self.role not in self.FIELD_REPORTER_ROLES
 
     def __str__(self) -> str:
         return f"{self.get_role_display()} — {self.email}"

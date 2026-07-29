@@ -22,6 +22,7 @@ export function StatusChip({ status, lang: _lang }: { status: string; lang: Lang
 
 const ROLE_LABEL_KEY: Record<string, string> = {
   CB: "role.CB",
+  DP: "role.DP",
   AB: "role.AB",
   WCS: "role.WCS",
   DGFC: "role.DGFC",
@@ -33,6 +34,7 @@ const ROLE_LABEL_KEY: Record<string, string> = {
 
 const ROLE_PALETTE: Record<string, string> = {
   CB: "bg-emerald-100 text-emerald-700",
+  DP: "bg-teal-100 text-teal-700",
   AB: "bg-blue-100 text-blue-700",
   WCS: "bg-yellow-100 text-yellow-700",
   DGFC: "bg-violet-100 text-violet-700",

@@ -130,6 +130,10 @@ def submit_form(request, slug: str, version: int):
         payload=payload,
         version=fd.version,
     )
+    # Project known free-text form fields onto the Case row so the data is
+    # queryable and surfaces in the Case API without requiring a join to
+    # the latest FormSubmission row.
+    _project_form_payload_onto_case(case, payload)
     return Response(
         {
             "id": sub.id,
@@ -176,8 +180,16 @@ def list_submissions(request, uid: str):
                     "description": a.description,
                     "uploaded_by": a.uploaded_by.email if a.uploaded_by_id else "",
                     "uploaded_by_name": a.uploaded_by_name,
+                    "uploaded_at": a.uploaded_at,
+                    "deleted_at": a.deleted_at,
+                    "superseded_by_id": a.superseded_by_id,
+                    # Convenience flag: True when this attachment is the
+                    # current live one for its file_type slot.
+                    "is_current": (
+                        a.deleted_at is None and a.superseded_by_id is None
+                    ),
                 }
-                for a in s.attachments.filter(deleted_at__isnull=True)
+                for a in s.attachments.all()
             ],
         }
         for s in qs
@@ -249,7 +261,7 @@ def download_attachment(request, submission_id: int, attachment_id: int):
     if user.role not in {"ADMIN", "SUPER_ADMIN"}:
         if case.status == "DRAFT" and case.created_by_id != user.id:
             return Response({"detail": "Forbidden."}, status=403)
-        if case.status != "DRAFT" and user.role == "CB" and case.created_by_id != user.id:
+        if case.status != "DRAFT" and user.role in user.FIELD_REPORTER_ROLES and case.created_by_id != user.id:
             return Response({"detail": "Forbidden."}, status=403)
 
     signed = presign_get(key=att.s3_key)
@@ -265,6 +277,192 @@ def download_attachment(request, submission_id: int, attachment_id: int):
     response["Content-Disposition"] = f'inline; filename="{att.filename}"'
     response["X-Content-SHA256"] = att.sha256
     return response
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def replace_attachment(request, submission_id: int, attachment_id: int):
+    """Replace a case-file attachment with a new one, preserving history.
+
+    Body (after the new file has already been uploaded via /uploads/finish):
+      {
+        "new_attachment_id": <int>   # the FormAttachment row just created
+                                    # via the normal presign → dev-put → finish flow
+      }
+
+    Behavior:
+      - The new attachment stays as the live one (deleted_at is null).
+      - The old attachment is soft-marked as superseded: superseded_by → new.id,
+        and deleted_at is left NULL so it still appears in the per-slot history.
+      - A FILE_SUPERSEDED audit event is recorded with both IDs.
+      - The file blob of the old attachment is intentionally retained so an
+        auditor can still download it (fraud-free audit trail).
+    """
+    new_attachment_id = request.data.get("new_attachment_id")
+    if not new_attachment_id:
+        return Response(
+            {"new_attachment_id": "Required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    old = get_object_or_404(
+        FormAttachment.objects.select_related("submission__case", "submission__case__created_by"),
+        id=attachment_id,
+        submission_id=submission_id,
+        deleted_at__isnull=True,
+    )
+    new = get_object_or_404(
+        FormAttachment.objects.select_related("submission__case"),
+        id=int(new_attachment_id),
+    )
+
+    case = old.submission.case
+    user = request.user
+
+    # Authorization mirrors delete_attachment rules:
+    #   ADMIN/SUPER_ADMIN: always
+    #   CB on own DRAFT case
+    #   Any non-CB approver on a non-DRAFT case
+    if user.role in {"ADMIN", "SUPER_ADMIN"}:
+        pass
+    elif case.status == "DRAFT" and case.created_by_id == user.id:
+        pass
+    elif case.status in {"SUBMITTED", "AT_VERIFICATION", "AT_APPROVAL"} and user.role not in user.FIELD_REPORTER_ROLES:
+        pass
+    else:
+        return Response(
+            {"detail": "You cannot replace this attachment."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # The new attachment must belong to the same case, and must not itself
+    # already be deleted or superseded.  We also require it to be live (no
+    # superseded_by chain) so we don't end up creating fork histories.
+    if new.submission.case_id != case.id:
+        return Response(
+            {"detail": "The replacement attachment belongs to a different case."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if new.deleted_at is not None:
+        return Response(
+            {"detail": "The replacement attachment has been deleted."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if new.superseded_by_id is not None:
+        return Response(
+            {"detail": "The replacement attachment is itself superseded."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Carry the slot (file_type) forward to the new attachment so it counts
+    # for required-slot coverage in case_has_required_files().
+    if not new.file_type and old.file_type:
+        new.file_type = old.file_type
+        new.save(update_fields=["file_type"])
+
+    # Mark the OLD attachment as superseded.  We deliberately do NOT set
+    # deleted_at — superseded rows stay visible in the per-slot history.
+    old.superseded_by = new
+    old.save(update_fields=["superseded_by"])
+
+    # Record an immutable audit event.
+    from cases.models import Event
+
+    Event.objects.create(
+        case=case,
+        actor=user,
+        event_type=Event.Type.FILE_SUPERSEDED,
+        notes=(
+            f"Replaced attachment #{old.id} ({old.filename}) with #{new.id} "
+            f"({new.filename}); old file retained in slot '{old.file_type or ''}'."
+        ).strip(),
+        ip_address=getattr(request, "_audit_ip", None),
+        user_agent=getattr(request, "_audit_ua", ""),
+    )
+
+    payload = {
+        "old_attachment": {
+            "id": old.id,
+            "filename": old.filename,
+            "file_type": old.file_type,
+            "superseded_by_id": old.superseded_by_id,
+        },
+        "new_attachment": {
+            "id": new.id,
+            "filename": new.filename,
+            "file_type": new.file_type,
+        },
+        "case_uid": str(case.uid),
+    }
+    return Response(payload, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_slot_history(request, case_uid: str, file_type: str):
+    """Return all (live + superseded) attachments for a given case + slot,
+    ordered oldest → newest, so the UI can render a history timeline of
+    every file that has ever been in the slot (including replaced ones).
+
+    Response:
+      {
+        "case_uid": "...",
+        "file_type": "medical_report",
+        "results": [
+          {
+            "id": 42,
+            "filename": "old.pdf",
+            "uploaded_at": "...",
+            "uploaded_by": "...",
+            "uploaded_by_name": "...",
+            "is_current": false,
+            "superseded_by_id": 99,
+            "scan_status": "CLEAN",
+            "size_bytes": 12345,
+            "mime": "application/pdf"
+          },
+          ...
+          { "id": 99, "is_current": true, "superseded_by_id": null, ... }
+        ],
+        "count": <int>
+      }
+    """
+    case = get_object_or_404(Case, uid=case_uid)
+    qs = (
+        FormAttachment.objects.filter(
+            submission__case=case,
+            file_type__iexact=file_type,
+        )
+        .select_related("uploaded_by")
+        .order_by("uploaded_at")
+    )
+    rows = []
+    for a in qs:
+        rows.append(
+            {
+                "id": a.id,
+                "filename": a.filename,
+                "uploaded_at": a.uploaded_at,
+                "uploaded_by": a.uploaded_by.email if a.uploaded_by_id else "",
+                "uploaded_by_name": a.uploaded_by_name,
+                "is_current": a.deleted_at is None and a.superseded_by_id is None,
+                "deleted_at": a.deleted_at,
+                "superseded_by_id": a.superseded_by_id,
+                "scan_status": a.scan_status,
+                "size_bytes": a.size_bytes,
+                "mime": a.mime,
+                "submission_id": a.submission_id,
+                "description": a.description,
+            }
+        )
+    return Response(
+        {
+            "case_uid": str(case.uid),
+            "file_type": file_type,
+            "results": rows,
+            "count": len(rows),
+        }
+    )
 
 
 @api_view(["DELETE"])
@@ -298,7 +496,7 @@ def delete_attachment(request, submission_id: int, attachment_id: int):
         pass
     elif case.status == "DRAFT" and case.created_by_id == user.id:
         pass
-    elif case.status in {"SUBMITTED", "AT_VERIFICATION", "AT_APPROVAL"} and user.role != "CB":
+    elif case.status in {"SUBMITTED", "AT_VERIFICATION", "AT_APPROVAL"} and user.role not in user.FIELD_REPORTER_ROLES:
         pass
     else:
         return Response(
@@ -338,3 +536,32 @@ def delete_attachment(request, submission_id: int, attachment_id: int):
         "deleted_by": user.email,
     }
     return Response(payload, status=status.HTTP_200_OK)
+
+# ---- Form-payload → Case projection helpers ---------------------------------
+
+# Map of form payload keys → Case model attribute.  When a field reporter
+# submits a form (cb-incident-report, etc.), we copy these named values onto
+# the Case row so they show up in the Case API without requiring callers to
+# fetch the latest FormSubmission payload.
+_FORM_FIELD_TO_CASE_FIELD = {
+    "village_name_text": "village_name_text",
+    "chef_de_village": "chef_de_village",
+    # Add more mappings here as the cb-incident-report schema grows.
+}
+
+
+def _project_form_payload_onto_case(case: Case, payload: dict) -> None:
+    """Copy named form fields onto the Case row.  Saves only changed fields."""
+    updates: list[str] = []
+    for form_key, case_attr in _FORM_FIELD_TO_CASE_FIELD.items():
+        value = payload.get(form_key)
+        if not isinstance(value, str):
+            continue
+        value = value.strip()
+        if not value:
+            continue
+        if getattr(case, case_attr, "") != value:
+            setattr(case, case_attr, value[:128])
+            updates.append(case_attr)
+    if updates:
+        case.save(update_fields=updates)

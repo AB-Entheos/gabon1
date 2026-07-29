@@ -66,8 +66,8 @@
   },
   "dash": {
     "cb": {
-      "title": "Espace CB",
-      "subtitle": "Ouvrir de nouveaux dossiers, téléverser les preuves, soumettre les rapports d'incident."
+      "title": "Espace rapporteur terrain",
+      "subtitle": "Ouvrir de nouveaux dossiers, televerser des preuves, soumettre les rapports d'incident. Pour les CB (Chef de Brigade) et DP (Delegue Provincial)."
     },
     "ab": {
       "title": "AB Entheos — Étape 2",
@@ -157,6 +157,10 @@
     "urgent": "Besoin médical urgent",
     "urgent_hint": "Traitement prioritaire",
     "create": "Créer le brouillon",
+    "village_name_text": "Nom du village",
+    "village_name_placeholder": "Nom du village où l'incident a eu lieu",
+    "chef_de_village": "Chef de village",
+    "chef_de_village_placeholder": "Nom complet du chef de village (témoin)",
     "crop_section": "Détails des dégâts aux cultures",
     "crop_type": "Type de culture",
     "area_destroyed_ha": "Superficie détruite (ha)",
@@ -323,7 +327,10 @@
       "by": "Téléversé par",
       "open": "Ouvrir",
       "download": "Télécharger",
-      "files": "fichiers"
+      "files": "fichiers",
+      "replace": "Remplacer",
+      "replace_title": "Remplacer ce fichier ?",
+      "replace_body": "Ceci téléversera une nouvelle version pour remplacer « {{filename}} ». Le fichier original est conservé dans l'historique par emplacement pour l'audit."
     },
     "status_label": {
       "DRAFT": "Brouillon",
@@ -346,7 +353,9 @@
       "address": "Adresse",
       "incident_location": "Lieu de l'incident",
       "relationship": "Lien de parenté",
-      "village": "Village"
+      "village": "Village",
+      "village_reported": "Village (rapporte)",
+      "chef_de_village": "Chef de village"
     },
     "disbursements": {
       "global_warning_title": "Décaissements proches de la limite autorisée",
@@ -377,7 +386,7 @@
       "title": "Fichiers du dossier",
       "subtitle": "Documents complémentaires téléchargés pour ce dossier.",
       "required_title": "Fichiers requis",
-      "required_subtitle": "Téléversez les documents de preuve obligatoires pour ce dossier.",
+      "required_subtitle": "Téléversez les documents de preuve obligatoires pour ce dossier. Les fichiers peuvent être ajoutés ou remplacés progressivement à toute étape d'approbation.",
       "completed": "terminé",
       "slot_completed": "Terminé",
       "slot_pending": "En attente",
@@ -399,7 +408,21 @@
       "none_yet": "Aucun fichier joint pour l'instant. Utilisez le formulaire de téléversement ci-dessous.",
       "uploaded_by": "Téléversé par",
       "delete": "Supprimer le fichier",
-      "delete_title": "Supprimer ce fichier ?"
+      "delete_title": "Supprimer ce fichier ?",
+      "replace": "Remplacer le fichier",
+      "replace_title": "Remplacer ce fichier ?",
+      "replace_body": "Ceci téléversera une nouvelle version pour remplacer « {{filename}} ». Le fichier original est conservé pour l'audit et reste visible dans l'historique ci-dessous.",
+      "replaced_by": "Remplacé par",
+      "history": "Historique des remplacements",
+      "history_empty": "Aucune version précédente pour cet emplacement.",
+      "history_count": "{{count}} version précédente",
+      "history_count_plural": "{{count}} versions précédentes",
+      "current_version": "Actuelle",
+      "previous_version": "Version précédente",
+      "uploaded_on": "Téléversé le {{date}}",
+      "progressive_warning_title": "Des fichiers peuvent encore être ajoutés",
+      "progressive_warning_body": "Ce dossier a été avancé alors qu'un ou plusieurs emplacements de fichiers requis étaient vides. Ils peuvent être ajoutés par tout approbateur à toute étape ultérieure.",
+      "progressive_missing_slots": "Emplacements requis manquants : {{slots}}"
     },
     "approve_modal": {
       "title": "Approuver ce dossier ?",

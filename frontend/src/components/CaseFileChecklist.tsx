@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useSelector } from "react-redux";
-import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, RefreshCw, X } from "lucide-react";
-import { useDeleteAttachmentMutation, useListSubmissionsQuery } from "@/api/hecApi";
+import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, RefreshCw, X, History } from "lucide-react";
+import {
+  useDeleteAttachmentMutation,
+  useListSlotHistoryQuery,
+  useListSubmissionsQuery,
+  usePresignUploadMutation,
+  useFinishUploadMutation,
+  useReplaceAttachmentMutation,
+} from "@/api/hecApi";
 import type { RootState } from "@/store";
 import FileUploader from "@/components/FileUploader";
 import { useAttachmentUrl } from "@/hooks/useAttachmentUrl";
@@ -31,6 +39,9 @@ interface FileRow {
   submitted_at: string;
   scan_status: string;
   submission_id: number;
+  uploaded_at?: string;
+  superseded_by_id?: number | null;
+  is_current?: boolean;
 }
 
 const REQUIRED_FILE_SLOTS: Record<string, Slot[]> = {
@@ -62,11 +73,18 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
     { skip: !caseUid, refetchOnMountOrArgChange: true },
   );
   const [deleteAttachment] = useDeleteAttachmentMutation();
+  const [replaceAttachment] = useReplaceAttachmentMutation();
+  const [presignUpload] = usePresignUploadMutation();
+  const [finishUpload] = useFinishUploadMutation();
+  // deleteAttachment is kept for the legacy soft-delete fallback path; we
+  // no longer call it from the UI — replace is the new flow.
+  void deleteAttachment;
   const [pendingDelete, setPendingDelete] = useState<FileRow | null>(null);
   const [deletingId, setDeletingId] = useState<number>(0);
   const [previewFile, setPreviewFile] = useState<FileRow | null>(null);
+  const [historySlot, setHistorySlot] = useState<string | null>(null);
   const baseSlots = REQUIRED_FILE_SLOTS[caseType] ?? DEFAULT_REQUIRED_FILE_SLOTS;
-  const slots: Slot[] = [...baseSlots, { id: OTHER_SLOT_ID, label: t("case.files.other_slot", "Other") }];
+  const slots: Slot[] = [...baseSlots, { id: OTHER_SLOT_ID, labelKey: "case.files.other_slot" }];
 
   const [selectedSlot, setSelectedSlot] = useState(slots[0]?.id ?? "");
   const [otherLabel, setOtherLabel] = useState("");
@@ -94,6 +112,9 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
           submitted_at: s.submitted_at,
           scan_status: a.scan_status,
           submission_id: s.id,
+          uploaded_at: a.uploaded_at,
+          superseded_by_id: a.superseded_by_id ?? null,
+          is_current: a.is_current ?? (a.deleted_at == null && a.superseded_by_id == null),
         });
       }
     }
@@ -103,7 +124,8 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
   const completedSet = useMemo(() => {
     const set = new Set<string>();
     for (const file of files) {
-      if (file.file_type) {
+      // Only "current" (non-superseded) files count for slot coverage.
+      if (file.file_type && file.is_current) {
         set.add(file.file_type.toLowerCase());
       }
     }
@@ -172,10 +194,13 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
 
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {slotStatus.map((slot) => {
-          const slotFiles = files.filter(
+          const allSlotFiles = files.filter(
             (f) => f.file_type && f.file_type.toLowerCase() === slot.id.toLowerCase(),
           );
-          const firstFile = slotFiles[0];
+          // "Live" files count for slot completion; superseded ones live in history only.
+          const currentFiles = allSlotFiles.filter((f) => f.is_current);
+          const supersededCount = allSlotFiles.length - currentFiles.length;
+          const firstFile = currentFiles[0];
           return (
             <div
               key={slot.id}
@@ -237,9 +262,40 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
                 </div>
               )}
 
-              {slotFiles.length > 0 && (
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {firstFile && (
+                    <button
+                      type="button"
+                      onClick={() => setPendingDelete(firstFile)}
+                      disabled={deletingId === firstFile.id}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-amber-50 hover:text-amber-700 disabled:opacity-50"
+                      title={t("case.files.replace", "Replace file")}
+                      data-testid={`replace-checklist-${firstFile.id}`}
+                    >
+                      <RefreshCw size={11} />
+                      {t("case.files.replace", "Replace file")}
+                    </button>
+                  )}
+                  {supersededCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setHistorySlot(slot.id)}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+                      data-testid={`history-checklist-${slot.id}`}
+                    >
+                      <History size={11} />
+                      {supersededCount === 1
+                        ? t("case.files.history_count", "{{count}} previous version", { count: supersededCount })
+                        : t("case.files.history_count_plural", "{{count}} previous versions", { count: supersededCount })}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {currentFiles.length > 1 && (
                 <ul className="mt-3 space-y-2">
-                  {slotFiles.map((f) => (
+                  {currentFiles.map((f) => (
                     <li
                       key={f.id}
                       className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs"
@@ -259,16 +315,6 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
                             title={t("common.download", "Download")}
                           >
                             <Download size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPendingDelete(f)}
-                            disabled={deletingId === f.id}
-                            className="text-slate-500 transition-colors hover:text-amber-600 disabled:opacity-50"
-                            title={t("case.files.replace", "Replace file")}
-                            data-testid={`delete-checklist-${f.id}`}
-                          >
-                            <RefreshCw size={12} />
                           </button>
                         </div>
                       </div>
@@ -332,71 +378,74 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
       )}
 
       {pendingDelete && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
-          onClick={() => deletingId === 0 && setPendingDelete(null)}
-        >
-          <div
-            className="card w-full max-w-md p-5"
-            onClick={(e) => e.stopPropagation()}
-            data-testid="delete-confirm-modal"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-base font-semibold text-slate-900">
-                {t("case.files.replace_title", "Replace this file?")}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setPendingDelete(null)}
-                disabled={deletingId !== 0}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <p className="mt-2 text-sm text-slate-600">
-              {t(
-                "case.files.replace_body",
-                'This will hide "{{filename}}" from this slot and allow you to upload a new version. The original file is retained for audit purposes.',
-                { filename: pendingDelete.filename },
-              )}
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setPendingDelete(null)}
-                disabled={deletingId !== 0}
-              >
-                {t("common.cancel", "Cancel")}
-              </button>
-              <button
-                type="button"
-                className="btn-primary bg-amber-600 hover:bg-amber-700"
-                disabled={deletingId !== 0}
-                data-testid="confirm-delete-checklist"
-                onClick={async () => {
-                  setDeletingId(pendingDelete.id);
-                  try {
-                    await deleteAttachment({
-                      submissionId: pendingDelete.submission_id,
-                      attachmentId: pendingDelete.id,
-                      caseUid,
-                    }).unwrap();
-                    await refetch();
-                    setPendingDelete(null);
-                  } catch (err) {
-                    console.error("replace attachment failed", err);
-                  } finally {
-                    setDeletingId(0);
-                  }
-                }}
-              >
-                <RefreshCw size={14} /> {deletingId === pendingDelete.id ? t("common.replacing", "Replacing…") : t("case.files.replace", "Replace")}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ReplaceFileModal
+          file={pendingDelete}
+          onClose={() => {
+            if (deletingId === 0) setPendingDelete(null);
+          }}
+          busy={deletingId !== 0}
+          t={t}
+          onConfirm={async (newFile: File) => {
+            setDeletingId(pendingDelete.id);
+            try {
+              // 1. Upload the new file via the normal presign → dev-put → finish flow.
+              const presigned = await presignUpload({
+                filename: newFile.name,
+                mime: newFile.type || "application/octet-stream",
+                size: newFile.size,
+                case_uid: caseUid,
+                file_type: pendingDelete.file_type,
+              } as any).unwrap();
+              const put = await fetch(presigned.url, {
+                method: "PUT",
+                body: newFile,
+                headers: { "Content-Type": newFile.type || "application/octet-stream" },
+              });
+              if (!put.ok) throw new Error(`PUT failed: ${put.status}`);
+              const buf = await newFile.arrayBuffer();
+              const hash = await crypto.subtle.digest("SHA-256", buf);
+              const sha = Array.from(new Uint8Array(hash))
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join("");
+              const finished = await finishUpload({
+                key: presigned.key,
+                filename: newFile.name,
+                mime: newFile.type || "application/octet-stream",
+                size: newFile.size,
+                sha256: sha,
+                case_uid: caseUid,
+                file_type: pendingDelete.file_type,
+              } as any).unwrap();
+              // 2. Mark the OLD attachment as superseded by the new one.
+              await replaceAttachment({
+                submissionId: pendingDelete.submission_id,
+                attachmentId: pendingDelete.id,
+                caseUid,
+                newAttachmentId: finished.id,
+              }).unwrap();
+              await refetch();
+              setPendingDelete(null);
+            } catch (err) {
+              console.error("replace attachment failed", err);
+            } finally {
+              setDeletingId(0);
+            }
+          }}
+        />
+      )}
+
+      {historySlot && (
+        <SlotHistoryModal
+          caseUid={caseUid}
+          slotId={historySlot}
+          slotLabel={t(
+            REQUIRED_FILE_SLOTS_LABELS[historySlot] || "case.files.other_slot",
+          )}
+          token={token}
+          onClose={() => setHistorySlot(null)}
+          onDownload={(row) => downloadAttachment(row.submission_id, row.id, row.filename, token)}
+          t={t}
+        />
       )}
 
       <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
@@ -524,6 +573,236 @@ function PreviewBody({ caseUid, file }: { caseUid: string; file: FileRow }) {
     <div className="flex flex-col items-center gap-2 text-slate-500">
       <FileType2 size={48} />
       <p className="text-xs">{file.mime}</p>
+    </div>
+  );
+}
+
+// Map slot ID → translation key, used by the history modal so we can label
+// each history panel with the same human-readable name used elsewhere.
+const REQUIRED_FILE_SLOTS_LABELS: Record<string, string> = {
+  medical_report: "case.files.slot_medical_report",
+  claimant_id: "case.files.slot_claimant_id",
+  ambulance_receipt: "case.files.slot_ambulance_receipt",
+  death_certificate: "case.files.slot_death_certificate",
+  funeral_receipt: "case.files.slot_funeral_receipt",
+  supporting_document: "case.files.slot_supporting_document",
+  case_photos: "case.files.slot_case_photos",
+  other: "case.files.other_slot",
+};
+
+function ReplaceFileModal({
+  file,
+  busy,
+  onClose,
+  onConfirm,
+  t,
+}: {
+  file: FileRow;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: (file: File) => Promise<void>;
+  t: TFunction;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [chosen, setChosen] = useState<File | null>(null);
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+      onClick={() => !busy && onClose()}
+      data-testid="replace-confirm-modal"
+    >
+      <div
+        className="card w-full max-w-md p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-base font-semibold text-slate-900">
+            {t("case.files.replace_title", "Replace this file?")}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="text-slate-400 hover:text-slate-600"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <p className="mt-2 text-sm text-slate-600">
+          {t(
+            "case.files.replace_body",
+            'This will upload a new version to replace "{{filename}}". The original file is retained for audit and can be seen in the history below.',
+            { filename: file.filename },
+          )}
+        </p>
+        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600">
+          <p>
+            <strong>{t("common.download", "Download")}:</strong> {file.filename} ({(file.size_bytes / 1024).toFixed(1)} KB)
+          </p>
+          {file.file_type && (
+            <p className="mt-1 text-[11px] text-slate-500">
+              {t("case.files.selected_file_type", "File type")}: <code>{file.file_type}</code>
+            </p>
+          )}
+        </div>
+        <div className="mt-4">
+          <input
+            ref={inputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/csv,.csv,application/vnd.ms-excel,text/plain,.txt"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              setChosen(f ?? null);
+            }}
+            data-testid="replace-file-input"
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+            className="w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-4 text-center text-sm text-slate-700 hover:border-emerald-400 hover:bg-emerald-50/50 disabled:opacity-50"
+          >
+            {chosen
+              ? chosen.name
+              : t("case.files.upload_button", "Upload selected required file")}
+          </button>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onClose}
+            disabled={busy}
+          >
+            {t("common.cancel", "Cancel")}
+          </button>
+          <button
+            type="button"
+            className="btn-primary bg-amber-600 hover:bg-amber-700"
+            disabled={busy || !chosen}
+            data-testid="confirm-replace-checklist"
+            onClick={() => chosen && onConfirm(chosen)}
+          >
+            <RefreshCw size={14} /> {busy ? t("common.replacing", "Replacing…") : t("case.files.replace", "Replace")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface SlotHistoryRow {
+  id: number;
+  filename: string;
+  uploaded_at: string;
+  uploaded_by: string;
+  uploaded_by_name: string;
+  is_current: boolean;
+  deleted_at: string | null;
+  superseded_by_id: number | null;
+  scan_status: string;
+  size_bytes: number;
+  mime: string;
+  submission_id: number;
+  description: string;
+}
+
+function SlotHistoryModal({
+  caseUid,
+  slotId,
+  slotLabel,
+  token,
+  onClose,
+  onDownload,
+  t,
+}: {
+  caseUid: string;
+  slotId: string;
+  slotLabel: string;
+  token: string | null;
+  onClose: () => void;
+  onDownload: (row: SlotHistoryRow) => void;
+  t: TFunction;
+}) {
+  const { data, isLoading } = useListSlotHistoryQuery(
+    { caseUid, fileType: slotId },
+    { refetchOnMountOrArgChange: true },
+  );
+  const rows: SlotHistoryRow[] = data?.results ?? [];
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+      onClick={onClose}
+      data-testid="slot-history-modal"
+    >
+      <div
+        className="card w-full max-w-2xl p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900">
+              <History size={16} className="text-slate-400" />
+              {t("case.files.history", "Replacement history")} — {slotLabel}
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              {t("case.files.history_count", "{{count}} previous version", { count: rows.length })}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-lg border border-slate-200">
+          {isLoading && <div className="p-4 text-sm text-slate-500">{t("common.loading", "Loading…")}</div>}
+          {!isLoading && rows.length === 0 && (
+            <div className="p-4 text-sm text-slate-500">{t("case.files.history_empty", "No previous versions for this slot.")}</div>
+          )}
+          {!isLoading && rows.length > 0 && (
+            <ul className="divide-y divide-slate-200">
+              {[...rows].reverse().map((row) => (
+                <li key={row.id} className="flex items-start justify-between gap-3 px-3 py-2.5 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium text-slate-900" title={row.filename}>{row.filename}</span>
+                      {row.is_current ? (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                          {t("case.files.current_version", "Current")}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+                          {t("case.files.previous_version", "Previous version")}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      {t("case.files.uploaded_on", "Uploaded {{date}}", {
+                        date: row.uploaded_at ? new Date(row.uploaded_at).toLocaleString() : "—",
+                      })}
+                      {row.uploaded_by_name && <> · {t("case.files.uploaded_by", "Uploaded by")} <strong className="text-slate-700">{row.uploaded_by_name}</strong></>}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onDownload(row)}
+                    disabled={!token}
+                    className="shrink-0 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
+                    data-testid={`history-download-${row.id}`}
+                  >
+                    <Download size={12} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button className="btn-primary" onClick={onClose}>
+            {t("common.close", "Close")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

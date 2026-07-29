@@ -29,7 +29,7 @@ interface AttachmentRow {
   role_at_submission: string;
 }
 
-const STAGE_ORDER = ["CB", "AB", "WCS", "DGFC", "DGFAP", "MINISTER", "ADMIN"] as const;
+const STAGE_ORDER = ["CB", "DP", "AB", "WCS", "DGFC", "DGFAP", "MINISTER", "ADMIN"] as const;
 
 function isImage(mime: string) {
   return mime.startsWith("image/");

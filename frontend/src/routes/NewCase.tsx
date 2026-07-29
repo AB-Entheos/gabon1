@@ -17,6 +17,8 @@ interface Draft {
   incidentLocation: string;
   relationship: "SELF" | "SPOUSE" | "PARENT" | "CHILD" | "SIBLING" | "OTHER";
   incidentAt: string;
+  villageNameText: string;
+  chefDeVillage: string;
 }
 
 const defaultIncidentAt = () => {
@@ -37,6 +39,8 @@ const blankDraft: Draft = {
   incidentLocation: "",
   relationship: "SELF",
   incidentAt: defaultIncidentAt(),
+  villageNameText: "",
+  chefDeVillage: "",
 };
 
 export default function NewCase() {
@@ -46,7 +50,7 @@ export default function NewCase() {
   const [error, setError] = useState<string | null>(null);
 
   const [draft, setDraft] = useLocalState<Draft>("new-case-draft", blankDraft);
-  const { caseType, name, phone, idNumber, idType, dateOfBirth, gender, address, incidentLocation, relationship, incidentAt } = draft;
+  const { caseType, name, phone, idNumber, idType, dateOfBirth, gender, address, incidentLocation, relationship, incidentAt, villageNameText, chefDeVillage } = draft;
   const setCaseType = (v: "MEDICAL" | "BURIAL") => setDraft((d) => ({ ...d, caseType: v }));
   const setName = (v: string) => setDraft((d) => ({ ...d, name: v }));
   const setPhone = (v: string) => setDraft((d) => ({ ...d, phone: v }));
@@ -58,6 +62,8 @@ export default function NewCase() {
   const setIncidentLocation = (v: string) => setDraft((d) => ({ ...d, incidentLocation: v }));
   const setRelationship = (v: "SELF" | "SPOUSE" | "PARENT" | "CHILD" | "SIBLING" | "OTHER") => setDraft((d) => ({ ...d, relationship: v }));
   const setIncidentAt = (v: string) => setDraft((d) => ({ ...d, incidentAt: v }));
+  const setVillageNameText = (v: string) => setDraft((d) => ({ ...d, villageNameText: v }));
+  const setChefDeVillage = (v: string) => setDraft((d) => ({ ...d, chefDeVillage: v }));
 
   // Crop-damage intake was removed; only medical and burial remain.
 
@@ -77,6 +83,8 @@ export default function NewCase() {
         incident_location: incidentLocation,
         relationship_to_claimant: relationship,
         incident_at: new Date(incidentAt).toISOString(),
+        village_name_text: villageNameText.trim(),
+        chef_de_village: chefDeVillage.trim(),
       } as any).unwrap();
       // Reset the draft now that the case exists on the server.
       setDraft(blankDraft);
@@ -159,6 +167,29 @@ export default function NewCase() {
         <Field label={t("new_case.address", "Address")}>
           <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="input" placeholder={t("new_case.address_placeholder", "Full address of the claimant")} />
         </Field>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field label={t("new_case.village_name_text", "Village name")} required>
+            <input
+              type="text"
+              value={villageNameText}
+              onChange={(e) => setVillageNameText(e.target.value)}
+              required
+              className="input"
+              placeholder={t("new_case.village_name_placeholder", "Name of the village where the incident occurred")}
+            />
+          </Field>
+
+          <Field label={t("new_case.chef_de_village", "Chef de village")}>
+            <input
+              type="text"
+              value={chefDeVillage}
+              onChange={(e) => setChefDeVillage(e.target.value)}
+              className="input"
+              placeholder={t("new_case.chef_de_village_placeholder", "Full name of the village chief")}
+            />
+          </Field>
+        </div>
 
         <Field label={t("new_case.incident_location", "Incident location")} required>
           <input type="text" value={incidentLocation} onChange={(e) => setIncidentLocation(e.target.value)} required className="input" placeholder={t("new_case.incident_location_placeholder", "Where did the incident occur?")} />

@@ -97,6 +97,22 @@ class Case(models.Model):
         blank=True,
         related_name="cases",
     )
+    # Free-text fields for village name and chef de village, captured at
+    # intake time.  These are intentionally denormalized from the Village
+    # FK so a Case record remains self-describing even if the Village row
+    # is later renamed, merged, or removed.
+    village_name_text = models.CharField(
+        max_length=128,
+        blank=True,
+        default="",
+        help_text="Free-text village name entered by the field reporter (CB/DP).",
+    )
+    chef_de_village = models.CharField(
+        max_length=128,
+        blank=True,
+        default="",
+        help_text="Free-text name of the village chief (chef de village).",
+    )
     incident_at = models.DateTimeField()
     reported_at = models.DateTimeField(auto_now_add=True)
     current_step = models.PositiveSmallIntegerField(default=1)
@@ -150,6 +166,7 @@ class Event(models.Model):
         PROOF_UPLOADED = "PROOF_UPLOADED", "Proof of payment uploaded"
         FILE_DELETED = "FILE_DELETED", "File deleted"  # legacy – kept for existing rows
         FILE_SOFT_DELETED = "FILE_SOFT_DELETED", "File soft-deleted (retained for audit)"
+        FILE_SUPERSEDED = "FILE_SUPERSEDED", "File replaced (old version retained for history)"
         CLOSED = "CLOSED", "Closed"
         COMMENT = "COMMENT", "Comment"
 

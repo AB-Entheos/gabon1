@@ -35,7 +35,7 @@ def cases_stages(request):
     u: User = request.user
     qs = Case.objects.all()
 
-    if u.role == "CB":
+    if u.role in u.FIELD_REPORTER_ROLES:
         qs = qs.filter(created_by=u)
     elif u.role not in ("ADMIN", "SUPER_ADMIN"):
         # Approvers see all non-draft cases

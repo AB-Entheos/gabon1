@@ -58,9 +58,9 @@ def enroll_2fa(request):
     re-enrolled safely.
     """
     user = request.user
-    if user.role == "CB":
+    if user.role in {"CB", "DP"}:
         return Response(
-            {"detail": "CB role does not require 2FA."},
+            {"detail": "Field reporters (CB, DP) do not require 2FA."},
             status=status.HTTP_400_BAD_REQUEST,
         )
     if user.is_2fa_enabled:

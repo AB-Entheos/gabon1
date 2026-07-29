@@ -66,7 +66,7 @@ def run():
         defaults={
             "title": "CB Incident Report",
             "schema": {"fields": []},
-            "role_scope": "CB",
+            "role_scope": "CB,DP",
             "status": FormDefinition.Status.PUBLISHED,
         },
     )

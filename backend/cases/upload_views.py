@@ -294,7 +294,7 @@ def _get_or_create_synthetic_submission(case, user):
         defaults={
             "title": "Case files bag",
             "schema": {"fields": []},
-            "role_scope": "CB,AB,WCS,DGFC,DGFAP,MINISTER,ADMIN,SUPER_ADMIN",
+            "role_scope": "CB,DP,AB,WCS,DGFC,DGFAP,MINISTER,ADMIN,SUPER_ADMIN",
             "status": FormDefinition.Status.PUBLISHED,
         },
     )

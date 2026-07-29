@@ -91,23 +91,16 @@ export default function AdminDashboard() {
 }
 
 function KpiCard({
-  label, value, color, icon,
-}: { label: string; value: number; color: string; icon?: React.ReactNode }) {
-  const palette: Record<string, string> = {
-    primary: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    accent: "bg-blue-50 text-blue-700 border-blue-200",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    yellow: "bg-yellow-50 text-yellow-700 border-yellow-300",
-  };
+  label, value, icon,
+}: { label: string; value: number; color?: string; icon?: React.ReactNode }) {
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between">
         <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</div>
         {icon && <span className="text-slate-400">{icon}</span>}
       </div>
-      <div className="mt-2 flex items-end justify-between">
+      <div className="mt-2">
         <div className="text-3xl font-extrabold text-slate-900">{value}</div>
-        <span className={`chip border ${palette[color]}`}>{color}</span>
       </div>
     </div>
   );

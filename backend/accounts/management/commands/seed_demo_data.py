@@ -22,6 +22,12 @@ SEED_USERS = [
     ("cb.oyem@hec.local",        "CB", "fr", "Pierre",    "Nze",       False, "oyem"),
     ("cb.franceville@hec.local", "CB", "fr", "Estelle",   "Koumba",    False, "franceville"),
     ("cb.makokou@hec.local",     "CB", "fr", "Bruno",     "Engonga",   False, "makokou"),
+    # --- Two DPs per village (Delegué Provincial — same field-reporter role as CB) ---
+    ("dp.libreville@hec.local",  "DP", "fr", "Sylvain",   "Ndong",     False, "libreville"),
+    ("dp.libreville2@hec.local", "DP", "fr", "Helene",    "Mba",       False, "libreville"),
+    ("dp.oyem@hec.local",        "DP", "fr", "Patrick",   "Eyenga",    False, "oyem"),
+    ("dp.franceville@hec.local", "DP", "fr", "Yvonne",    "Bekale",    False, "franceville"),
+    ("dp.makokou@hec.local",     "DP", "fr", "Christian", "Akoma",     False, "makokou"),
     # --- Two AB Entheos reps ---
     ("ab@hec.local",             "AB", "fr", "Marie",     "Ndong",     True,  None),
     ("ab2@hec.local",            "AB", "fr", "Camille",   "Eyenga",    True,  None),
@@ -50,14 +56,23 @@ SEED_VILLAGES = [
     ("Makokou",     "Ogooue-Ivindo",  "cb.makokou@hec.local"),
 ]
 
+# Secondary contact per village (a DP).  CBs are the primary contact_user; DPs
+# are recorded here for the villages API if/when it is added.
+SEED_VILLAGE_DPS = [
+    ("Libreville",  "dp.libreville@hec.local"),
+    ("Oyem",        "dp.oyem@hec.local"),
+    ("Franceville", "dp.franceville@hec.local"),
+    ("Makokou",     "dp.makokou@hec.local"),
+]
+
 SEED_PASSWORD = "HEC-Dev-2026!"
 
 
 INCIDENT_FORM_SCHEMA = {
     "title": {"en": "CB Incident Report", "fr": "Rapport d'incident CB"},
     "description": {
-        "en": "Initial incident report submitted by a Chef de Brigade within 48 hours of the event.",
-        "fr": "Rapport d'incident initial soumis par un Chef de Brigade dans les 48 heures suivant l'evenement.",
+        "en": "Initial incident report submitted by a field reporter (CB or DP) within 48 hours of the event.",
+        "fr": "Rapport d'incident initial soumis par un rapporteur terrain (CB ou DP) dans les 48 heures suivant l'evenement.",
     },
     "fields": [
         {
@@ -78,6 +93,20 @@ INCIDENT_FORM_SCHEMA = {
             "type": "date",
             "label": {"en": "Incident date", "fr": "Date de l'incident"},
             "required": True,
+        },
+        {
+            "id": "village_name_text",
+            "type": "text",
+            "label": {"en": "Village name", "fr": "Nom du village"},
+            "help": {"en": "Name of the village where the incident occurred.", "fr": "Nom du village ou l'incident a eu lieu."},
+            "required": True,
+        },
+        {
+            "id": "chef_de_village",
+            "type": "text",
+            "label": {"en": "Chef de village (village chief)", "fr": "Chef de village"},
+            "help": {"en": "Full name of the village chief who witnessed or reported the incident.", "fr": "Nom complet du chef de village temoin ou rapporteur."},
+            "required": False,
         },
         {
             "id": "case_type",
@@ -143,7 +172,13 @@ class Command(BaseCommand):
                 village.contact_user = contact
                 village.save(update_fields=["contact_user"])
             village_by_name[name.lower()] = village
-            self.stdout.write(f"  Village: {name} ({region})")
+            self.stdout.write(f"  Village: {name} ({region})  primary={contact.email if contact else '-'}")
+
+        # Log secondary DP contact per village (informational; full villages
+        # API not yet available, so the contact_user stays the CB).
+        for name, email in SEED_VILLAGE_DPS:
+            dp = User.objects.filter(email=email).first()
+            self.stdout.write(f"           (DP contact for {name}: {dp.email if dp else email})")
 
         # Pre-compute village ids so we don't rely on the dynamically-generated
         # `_id` attribute on unsaved model classes (Pylance reports the
@@ -199,7 +234,7 @@ class Command(BaseCommand):
             defaults={
                 "title": INCIDENT_FORM_SCHEMA["title"]["en"],
                 "schema": INCIDENT_FORM_SCHEMA,
-                "role_scope": "CB",
+                "role_scope": "CB,DP",
                 "status": FormDefinition.Status.PUBLISHED,
                 "published_at": timezone.now(),
             },

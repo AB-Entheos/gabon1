@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import DashboardShell from "@/components/DashboardShell";
 import Login from "@/routes/Login";
+import ForgotPassword from "@/routes/ForgotPassword";
+import ResetPassword from "@/routes/ResetPassword";
 import CBDashboard from "@/routes/CBDashboard";
 import ApproverDashboard from "@/routes/ApproverDashboard";
 import DGFAPDashboard from "@/routes/DGFAPDashboard";
@@ -22,6 +24,7 @@ function HomeRouter() {
   if (!role) return <Navigate to="/login" replace />;
   switch (role) {
     case "CB": return <CBDashboard />;
+    case "DP": return <CBDashboard />;
     case "AB": return <ApproverDashboard step={2} title={t("dash.ab.title", "AB Entheos — Step 2")} subtitle={t("dash.ab.subtitle", "Operational validation.")} />;
     case "WCS": return <ApproverDashboard step={3} title={t("dash.wcs.title", "WCS — Step 3")} subtitle={t("dash.wcs.subtitle", "Technical partner review.")} />;
     case "DGFC": return <ApproverDashboard step={4} title={t("dash.dgfc.title", "DGFC — Step 4")} subtitle={t("dash.dgfc.subtitle", "Faune & contrôle review.")} />;
@@ -76,6 +79,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           element={
             <RequireAuth>

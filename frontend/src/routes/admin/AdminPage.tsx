@@ -500,7 +500,7 @@ function PaymentsPanel() {
 
 /* ----------------------------- USERS ----------------------------- */
 
-const ROLES = ["CB", "AB", "WCS", "DGFC", "DGFAP", "MINISTER", "ADMIN", "SUPER_ADMIN"] as const;
+const ROLES = ["CB", "DP", "AB", "WCS", "DGFC", "DGFAP", "MINISTER", "ADMIN", "SUPER_ADMIN"] as const;
 
 function UsersPanel() {
   const { t } = useTranslation();

@@ -18,7 +18,7 @@ def download_attachment(request, submission_id: int, attachment_id: int):
     if user.role not in {"ADMIN", "SUPER_ADMIN"}:
         if case.status == "DRAFT" and case.created_by_id != user.id:
             return Response({"detail": "Forbidden."}, status=403)
-        if case.status != "DRAFT" and user.role == "CB" and case.created_by_id != user.id:
+        if case.status != "DRAFT" and user.role in user.FIELD_REPORTER_ROLES and case.created_by_id != user.id:
             return Response({"detail": "Forbidden."}, status=403)
 
     signed = presign_get(key=att.s3_key)

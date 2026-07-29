@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { LogIn } from "lucide-react";
@@ -198,6 +198,11 @@ export default function Login() {
               <LogIn size={16} />
               {busy ? t("login.signing_in", "Signing in…") : t("login.sign_in", "Sign in")}
             </button>
+            <div className="text-center">
+              <Link to="/forgot-password" className="text-sm text-emerald-600 hover:text-emerald-700">
+                {t("login.forgot_password", "Forgot your password?")}
+              </Link>
+            </div>
           </form>
 
 

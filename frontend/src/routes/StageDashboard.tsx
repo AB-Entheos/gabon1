@@ -15,7 +15,7 @@ import { StatusChip } from "@/components/StatusChip";
  *   1. CB → 2. Technical team (AB · WCS · DGFC · DGFAP) → 3. Minister
  */
 const STAGE_META_6: Record<number, { key: string; role: string; color: string; bg: string; border: string; sub: string }> = {
-  1: { key: "stage_cb",     role: "CB",      color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200", sub: "" },
+  1: { key: "stage_cb",     role: "CB / DP", color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200", sub: "" },
   2: { key: "stage_ab",     role: "AB",      color: "text-sky-700",      bg: "bg-sky-50",      border: "border-sky-200",     sub: "" },
   3: { key: "stage_wcs",    role: "WCS",     color: "text-amber-700",    bg: "bg-amber-50",    border: "border-amber-200",   sub: "" },
   4: { key: "stage_dgfc",   role: "DGFC",    color: "text-indigo-700",   bg: "bg-indigo-50",   border: "border-indigo-200",  sub: "" },
@@ -24,7 +24,7 @@ const STAGE_META_6: Record<number, { key: string; role: string; color: string; b
 };
 
 const STAGE_META_3: Record<number, { key: string; role: string; color: string; bg: string; border: string; sub: string }> = {
-  1: { key: "stage_cb",         role: "CB",          color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200", sub: "" },
+  1: { key: "stage_cb",         role: "CB / DP",     color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200", sub: "" },
   2: { key: "stage_technical",   role: "TECHNICAL",   color: "text-sky-700",      bg: "bg-sky-50",      border: "border-sky-200",     sub: "pipeline.technical_sub" },
   3: { key: "stage_minister",    role: "MINISTER",    color: "text-rose-700",     bg: "bg-rose-50",     border: "border-rose-200",    sub: "" },
 };
@@ -60,7 +60,7 @@ export default function StageDashboard() {
             {t("dash.stages.subtitle", "Live counts per approval stage. Click a stage to see its queue.")}
           </p>
         </div>
-        {user?.role === "CB" && (
+        {(user?.role === "CB" || user?.role === "DP") && (
           <Link to="/cases/new" className="btn-primary">
             <FilePlus size={16} />
             {t("dash.stages.new_case", "New case")}
@@ -189,21 +189,13 @@ export default function StageDashboard() {
 }
 
 function KpiCard({
-  label, value, color,
-}: { label: string; value: number; color: "primary" | "slate" | "sky" | "yellow" | "green" }) {
-  const palette: Record<string, string> = {
-    primary: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    slate:   "bg-slate-50 text-slate-700 border-slate-200",
-    sky:     "bg-sky-50 text-sky-700 border-sky-200",
-    yellow:  "bg-yellow-50 text-yellow-700 border-yellow-300",
-    green:   "bg-emerald-50 text-emerald-700 border-emerald-200",
-  };
+  label, value,
+}: { label: string; value: number; color?: string }) {
   return (
     <div className={`rounded-xl border bg-white p-4`}>
       <div className="text-xs font-medium uppercase tracking-wider text-slate-500">{label}</div>
-      <div className="mt-2 flex items-end justify-between">
+      <div className="mt-2">
         <div className="text-3xl font-extrabold text-slate-900">{value}</div>
-        <span className={`chip border ${palette[color]}`}>{color}</span>
       </div>
     </div>
   );

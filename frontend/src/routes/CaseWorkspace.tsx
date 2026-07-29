@@ -45,11 +45,13 @@ export default function CaseWorkspace() {
   const [resumeCase] = useResumeCaseMutation();
   const [setAmount] = useSetAmountMutation();
   const [submitCase] = useSubmitCaseMutation();
+  const [progressiveMissingSlots, setProgressiveMissingSlots] = useState<string[] | null>(null);
+  const [progressiveWarning, setProgressiveWarning] = useState<string | null>(null);
 
   if (isLoading) return <div className="p-6 text-slate-500">{t("common.loading")}</div>;
   if (!caseData) return <div className="p-6 text-rose-600">{t("case.not_found", "Case not found.")}</div>;
 
-  const isCB = user?.role === "CB" && caseData.created_by === user.id;
+  const isCB = (user?.role === "CB" || user?.role === "DP") && caseData.created_by === user.id;
   const isCurrentApprover =
     caseData.status === "AT_APPROVAL" &&
     caseData.current_approver_role === user?.role;
@@ -100,6 +102,12 @@ export default function CaseWorkspace() {
           <DetailRow label={t("case.kyc.incident_location", "Incident location")} value={caseData.incident_location} />
           <DetailRow label={t("case.kyc.relationship", "Relationship")} value={caseData.relationship_to_claimant} />
           <DetailRow label={t("case.kyc.village", "Village")} value={caseData.village_name} />
+          {caseData.village_name_text && (
+            <DetailRow label={t("case.kyc.village_reported", "Village (reported)")} value={caseData.village_name_text} />
+          )}
+          {caseData.chef_de_village && (
+            <DetailRow label={t("case.kyc.chef_de_village", "Chef de village")} value={caseData.chef_de_village} />
+          )}
         </div>
       </div>
 
@@ -148,6 +156,46 @@ export default function CaseWorkspace() {
 
           <div className="space-y-6">
             <EvidenceGallery caseUid={caseData.uid} lang={lang} />
+            {progressiveMissingSlots && progressiveMissingSlots.length > 0 && (
+              <div
+                className="flex items-start justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900"
+                data-testid="progressive-missing-slots-banner"
+                role="status"
+              >
+                <div className="flex items-start gap-2">
+                  <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {t("case.files.progressive_warning_title", "Files can still be added")}
+                    </p>
+                    <p className="mt-1 text-xs">
+                      {t(
+                        "case.files.progressive_warning_body",
+                        "This case was advanced with one or more required file slots still empty. They can be added by any approver at any later stage.",
+                      )}
+                    </p>
+                    <p className="mt-1 text-xs font-medium">
+                      {t(
+                        "case.files.progressive_missing_slots",
+                        "Missing required slots: {{slots}}",
+                        { slots: progressiveMissingSlots.join(", ") },
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProgressiveMissingSlots(null);
+                    setProgressiveWarning(null);
+                  }}
+                  className="text-amber-600 hover:text-amber-800"
+                  data-testid="dismiss-progressive-banner"
+                >
+                  ×
+                </button>
+              </div>
+            )}
             <CaseFileChecklist caseUid={caseData.uid} caseType={caseData.case_type} lang={lang} />
             <DisbursementHistory caseUid={caseData.uid} />
             <CaseTimeline
@@ -167,7 +215,20 @@ export default function CaseWorkspace() {
             refetch={refetch}
             onVerify={async () => { await verifyCase(caseData.uid).unwrap(); void refetch(); }}
             onSubmit={async () => { await submitCase(caseData.uid).unwrap(); void refetch(); }}
-            onAdvance={async (notes) => { await advance({ uid: caseData.uid, notes }).unwrap(); void refetch(); }}
+            onAdvance={async (notes) => {
+              const result = await advance({ uid: caseData.uid, notes }).unwrap();
+              if (result.missing_required_slots && result.missing_required_slots.length > 0) {
+                setProgressiveMissingSlots(result.missing_required_slots);
+                setProgressiveWarning(
+                  result.warning ??
+                    "This case was advanced with one or more required file slots still empty.",
+                );
+              } else {
+                setProgressiveMissingSlots(null);
+                setProgressiveWarning(null);
+              }
+              void refetch();
+            }}
             onReject={async (notes) => { await reject({ uid: caseData.uid, notes }).unwrap(); void refetch(); }}
             onDefer={async (notes) => { await deferCase({ uid: caseData.uid, notes }).unwrap(); void refetch(); }}
             onResume={async (notes) => { await resumeCase({ uid: caseData.uid, notes }).unwrap(); void refetch(); }}
@@ -272,7 +333,7 @@ function DetailRow({ label, value }: { label: string; value: string | null | und
 }
 
 const ROLE_FOR_STEP: Record<number, string> = {
-  1: "CB",
+  1: "CB / DP",
   2: "AB",
   3: "WCS",
   4: "DGFC",
@@ -317,7 +378,7 @@ function ActionPanel({
     (user.role === "ADMIN" ||
       user.role === "SUPER_ADMIN" ||
       caseData.current_approver_role === user.role ||
-      (user.role === "CB" && caseData.current_step === 1));
+      (user.role === "CB" || user.role === "DP") && caseData.current_step === 1);
 
   async function wrap(fn: () => Promise<unknown>) {
     setBusy(true); setError(null);

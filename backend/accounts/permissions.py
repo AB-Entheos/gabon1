@@ -17,6 +17,18 @@ class IsCB(IsRole):
     allowed_roles = ("CB",)
 
 
+class IsDP(IsRole):
+    """Delegué Provincial — same field-reporter duties as CB."""
+
+    allowed_roles = ("DP",)
+
+
+class IsFieldReporter(IsRole):
+    """Either Chef de Brigade or Delegué Provincial — both can create cases."""
+
+    allowed_roles = ("CB", "DP")
+
+
 class IsAB(IsRole):
     allowed_roles = ("AB",)
 
