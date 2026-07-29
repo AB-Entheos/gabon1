@@ -12,6 +12,7 @@ import DGFAPDashboard from "@/routes/DGFAPDashboard";
 import AdminDashboard from "@/routes/AdminDashboard";
 import CaseWorkspace from "@/routes/CaseWorkspace";
 import NewCase from "@/routes/NewCase";
+import DisbursementsPage from "@/routes/DisbursementsPage";
 import StageDashboard from "@/routes/StageDashboard";
 import AdminPage from "@/routes/admin/AdminPage";
 import Profile from "@/routes/Profile";
@@ -94,6 +95,7 @@ export default function App() {
           <Route path="cases/new" element={<NewCase />} />
           <Route path="cases/:uid" element={<CaseWorkspace />} />
           <Route path="committee" element={<HomeRouter />} />
+          <Route path="disbursements" element={<DisbursementsPage />} />
           <Route path="audit" element={<AdminPage kind="audit" />} />
           <Route path="reports" element={<AdminPage kind="reports" />} />
           <Route path="forms" element={<AdminPage kind="forms" />} />

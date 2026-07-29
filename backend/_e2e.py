@@ -78,7 +78,7 @@ def run():
         payload={},
         version=fd.version,
     )
-    for slot in ("medical_report", "claimant_id", "ambulance_receipt"):
+    for slot in ("medical_report", "claimant_id", "receipt"):
         key = f"cases/{case.uid}/case_files/e2e-{slot}.bin"
         save_attachment_bytes(key=key, data=f"fake {slot} content".encode())
         FormAttachment.objects.create(

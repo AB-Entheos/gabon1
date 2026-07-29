@@ -84,7 +84,7 @@ case = req("POST", "/cases", token=cb, body={
 uid = case["uid"]
 print(f"[CB] case created {uid}")
 
-for slot, fn in [("medical_report", "medical.png"), ("claimant_id", "id.png"), ("ambulance_receipt", "ambulance.png")]:
+for slot, fn in [("medical_report", "medical.png"), ("claimant_id", "id.png"), ("receipt", "receipt.png")],
     upload(cb, uid, os.path.join(FIX, fn), slot, f"Slot {slot}")
     print(f"[CB] uploaded {slot}")
 req("POST", f"/cases/{uid}/submit", token=cb)

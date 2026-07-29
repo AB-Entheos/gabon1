@@ -177,8 +177,11 @@ export const hecApi = createApi({
       }),
       invalidatesTags: ["Me"],
     }),
-    listCases: build.query<{ results: Case[]; count: number }, void>({
-      query: () => "cases",
+    listCases: build.query<{ results: Case[]; count: number }, { status?: string } | void>({
+      query: (arg) => ({
+        url: "cases",
+        params: arg && arg.status ? { status: arg.status } : undefined,
+      }),
       providesTags: ["Cases"],
     }),
     getCase: build.query<CaseDetail, string>({
@@ -277,6 +280,7 @@ export const hecApi = createApi({
           amount_xaf: number;
           purpose: string;
           recipient_kind: string;
+          recipient_kind_other: string;
           recipient_name: string;
           payment_date: string;
           payment_reference: string;
@@ -317,10 +321,11 @@ export const hecApi = createApi({
           amount_xaf: number;
           purpose: string;
           recipient_kind: string;
+          recipient_kind_other?: string;
           recipient_name: string;
           payment_date: string;
-          payment_reference?: string;
-          notes?: string;
+          payment_reference: string;
+          notes: string;
           proof_of_payment_id?: number | null;
         };
       }
@@ -358,6 +363,7 @@ export const hecApi = createApi({
           amount_xaf: number;
           purpose: string;
           recipient_kind: string;
+          recipient_kind_other: string;
           recipient_name: string;
           payment_date: string;
           payment_reference: string;

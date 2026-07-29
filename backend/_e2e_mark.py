@@ -125,7 +125,7 @@ print(f"[CB] case created uid={uid} status={case.get('status')}")
 slots = [
     ("medical_report", "medical_report.png", "Medical report (photo of form)"),
     ("claimant_id",    "claimant_id.png",    "National ID card (front)"),
-    ("ambulance_receipt", "ambulance_receipt.png", "Ambulance receipt"),
+    ("receipt", "receipt.png", "Receipt"),
 ]
 t0 = datetime.now()
 for slot, rel, desc in slots:

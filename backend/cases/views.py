@@ -229,9 +229,10 @@ class DisbursementSerializer(serializers.Serializer):
         ],
         default="CLAIMANT",
     )
+    recipient_kind_other = serializers.CharField(max_length=200, required=False, allow_blank=True, default="")
     recipient_name = serializers.CharField(max_length=200)
     payment_date = serializers.DateField()
-    payment_reference = serializers.CharField(max_length=128, required=False, allow_blank=True, default="")
+    payment_reference = serializers.CharField(max_length=128)
     notes = serializers.CharField(required=False, allow_blank=True, default="")
     proof_of_payment_id = serializers.IntegerField(required=False, allow_null=True, default=None)
 
@@ -246,6 +247,7 @@ class DisbursementEditSerializer(serializers.Serializer):
         ],
         required=False,
     )
+    recipient_kind_other = serializers.CharField(max_length=200, required=False, allow_blank=True)
     recipient_name = serializers.CharField(max_length=200, required=False)
     payment_date = serializers.DateField(required=False)
     payment_reference = serializers.CharField(max_length=128, required=False, allow_blank=True)
@@ -274,6 +276,12 @@ class CaseViewSet(ModelViewSet):
         elif u.role in {"AB", "WCS", "DGFC", "DGFAP", "MINISTER"}:
             qs = qs.exclude(status=Case.Status.DRAFT)
         # ADMIN / SUPER_ADMIN sees everything
+        # Optional status filter (e.g. ?status=APPROVED)
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            valid = {c[0] for c in Case.Status.choices}
+            if status_filter in valid:
+                qs = qs.filter(status=status_filter)
         return qs
 
     def get_serializer_class(self):  # type: ignore[override]
@@ -705,6 +713,7 @@ class CaseViewSet(ModelViewSet):
                     "amount_xaf": d.amount_xaf,
                     "purpose": d.purpose,
                     "recipient_kind": d.recipient_kind,
+                    "recipient_kind_other": d.recipient_kind_other,
                     "recipient_name": d.recipient_name,
                     "payment_date": d.payment_date,
                     "payment_reference": d.payment_reference,
@@ -785,6 +794,7 @@ class CaseViewSet(ModelViewSet):
             amount_xaf=amount,
             purpose=d["purpose"],
             recipient_kind=d["recipient_kind"],
+            recipient_kind_other=d.get("recipient_kind_other", ""),
             recipient_name=d["recipient_name"],
             payment_date=d["payment_date"],
             payment_reference=d.get("payment_reference", ""),
@@ -820,6 +830,7 @@ class CaseViewSet(ModelViewSet):
                 "amount_xaf": disb.amount_xaf,
                 "purpose": disb.purpose,
                 "recipient_kind": disb.recipient_kind,
+                "recipient_kind_other": disb.recipient_kind_other,
                 "recipient_name": disb.recipient_name,
                 "payment_date": disb.payment_date,
                 "payment_reference": disb.payment_reference,
@@ -906,8 +917,8 @@ class CaseViewSet(ModelViewSet):
 
         changes = []
         updatable = s.validated_data
-        for field in ("amount_xaf", "purpose", "recipient_kind", "recipient_name",
-                       "payment_date", "payment_reference", "notes"):
+        for field in ("amount_xaf", "purpose", "recipient_kind", "recipient_kind_other",
+                       "recipient_name", "payment_date", "payment_reference", "notes"):
             if field in updatable:
                 old_val = getattr(disb, field)
                 new_val = updatable[field]
@@ -975,6 +986,7 @@ class CaseViewSet(ModelViewSet):
                 "amount_xaf": disb.amount_xaf,
                 "purpose": disb.purpose,
                 "recipient_kind": disb.recipient_kind,
+                "recipient_kind_other": disb.recipient_kind_other,
                 "recipient_name": disb.recipient_name,
                 "payment_date": str(disb.payment_date),
                 "payment_reference": disb.payment_reference,

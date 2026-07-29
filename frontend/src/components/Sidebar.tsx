@@ -13,6 +13,7 @@ import {
   Layers,
   ShieldCheck,
   CheckCircle2,
+  Banknote,
   X,
 } from "lucide-react";
 import type { RootState } from "@/store";
@@ -31,6 +32,7 @@ const ITEMS: Item[] = [
   { to: "/cases/new", icon: FilePlus, key: "new_case", roles: ["CB", "DP"] },
   { to: "/cases", icon: FileStack, key: "cases", roles: "all" },
   { to: "/queue", icon: ClipboardList, key: "committee", roles: ["AB", "WCS", "DGFC", "DGFAP", "MINISTER"] },
+  { to: "/disbursements", icon: Banknote, key: "disbursements", roles: ["WCS"] as Role[] },
   { to: "/audit", icon: ScrollText, key: "audit", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
   { to: "/reports", icon: BarChart3, key: "reports", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
   { to: "/forms", icon: FormInput, key: "forms", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },

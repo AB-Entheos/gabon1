@@ -251,9 +251,13 @@ class Disbursement(models.Model):
     recipient_kind = models.CharField(
         max_length=16, choices=RecipientKind.choices, default=RecipientKind.CLAIMANT
     )
+    recipient_kind_other = models.CharField(
+        max_length=200, blank=True, default="",
+        help_text="Free-text when recipient_kind is OTHER",
+    )
     recipient_name = models.CharField(max_length=200)
     payment_date = models.DateField()
-    payment_reference = models.CharField(max_length=128, blank=True)
+    payment_reference = models.CharField(max_length=128)
     proof_of_payment = models.ForeignKey(
         "forms.FormAttachment",
         on_delete=models.SET_NULL,

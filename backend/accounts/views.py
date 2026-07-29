@@ -1,4 +1,7 @@
 """User self-service endpoints (PATCH /users/me, etc.)."""
+import secrets
+import string
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes
@@ -151,7 +154,8 @@ def list_users(request):
     s = _AdminUserWriteSerializer(data=request.data)
     s.is_valid(raise_exception=True)
     data = dict(s.validated_data)
-    temp_password = User.objects.make_random_password(length=14)
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    temp_password = "".join(secrets.choice(alphabet) for _ in range(14))
     u = User(**data)
     u.username = data["email"]
     u.set_password(temp_password)
@@ -222,7 +226,8 @@ def admin_password_reset(request):
     except User.DoesNotExist:
         return Response({"detail": "No user with that email."}, status=404)
 
-    new_password = User.objects.make_random_password(length=14)
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    new_password = "".join(secrets.choice(alphabet) for _ in range(14))
     user.set_password(new_password)
     user.save(update_fields=["password"])
 

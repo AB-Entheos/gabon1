@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useSelector } from "react-redux";
-import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, RefreshCw, X, History } from "lucide-react";
+import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, RefreshCw, X, History, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useDeleteAttachmentMutation,
   useListSlotHistoryQuery,
@@ -48,7 +48,7 @@ const REQUIRED_FILE_SLOTS: Record<string, Slot[]> = {
   MEDICAL: [
     { id: "medical_report", labelKey: "case.files.slot_medical_report" },
     { id: "claimant_id", labelKey: "case.files.slot_claimant_id" },
-    { id: "ambulance_receipt", labelKey: "case.files.slot_ambulance_receipt" },
+    { id: "receipt", labelKey: "case.files.slot_receipt" },
   ],
   BURIAL: [
     { id: "death_certificate", labelKey: "case.files.slot_death_certificate" },
@@ -132,12 +132,46 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
     return set;
   }, [files]);
 
-  const slotStatus = slots.map((slot) => ({
-    ...slot,
-    completed: completedSet.has(slot.id.toLowerCase()),
-  }));
+  // Base slot IDs (built-in slots).
+  const baseSlotIds = useMemo(
+    () => new Set(slots.map((s) => s.id.toLowerCase())),
+    [slots],
+  );
+
+  // Discover custom file_types from uploaded files that aren't base slots or "other".
+  const customSlots: Slot[] = useMemo(() => {
+    const seen = new Set<string>();
+    const result: Slot[] = [];
+    for (const file of files) {
+      if (!file.file_type || !file.is_current) continue;
+      const ft = file.file_type;
+      const key = ft.toLowerCase();
+      if (baseSlotIds.has(key) || key === OTHER_SLOT_ID || seen.has(key)) continue;
+      seen.add(key);
+      result.push({ id: ft, labelKey: ft });
+    }
+    return result;
+  }, [files, baseSlotIds]);
+
+  const slotStatus = [
+    ...slots.map((slot) => ({
+      ...slot,
+      completed: completedSet.has(slot.id.toLowerCase()),
+    })),
+    ...customSlots.map((slot) => ({
+      ...slot,
+      completed: completedSet.has(slot.id.toLowerCase()),
+    })),
+  ];
 
   const completedCount = slotStatus.filter((slot) => slot.completed).length;
+
+  // All current (non-superseded) files for preview navigation
+  const allCurrentFiles = useMemo(() => files.filter((f) => f.is_current), [files]);
+  const previewIdx = useMemo(() => {
+    if (!previewFile) return -1;
+    return allCurrentFiles.findIndex((f) => f.id === previewFile.id);
+  }, [previewFile, allCurrentFiles]);
 
   const handleDownload = useCallback(
     (file: FileRow) => {
@@ -303,8 +337,18 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2">
-                          <FileText size={14} className="shrink-0 text-slate-500" />
-                          <span className="truncate" title={f.filename}>{f.filename}</span>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewFile(f)}
+                            className="flex min-w-0 items-center gap-2 text-left hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500/40 rounded"
+                          >
+                            {f.mime.startsWith("image/") ? (
+                              <ImageIcon size={14} className="shrink-0 text-emerald-500" />
+                            ) : (
+                              <FileText size={14} className="shrink-0 text-slate-500" />
+                            )}
+                            <span className="truncate text-slate-700 hover:text-emerald-600" title={f.filename}>{f.filename}</span>
+                          </button>
                         </div>
                         <div className="flex shrink-0 items-center gap-2 text-[11px] text-slate-500">
                           <span>{(f.size_bytes / 1024).toFixed(1)} KB</span>
@@ -345,9 +389,30 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
           className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
           onClick={() => setPreviewFile(null)}
         >
-          <div className="card w-full max-w-2xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="card w-full max-w-3xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="rounded-full bg-slate-100 p-1 text-slate-600 hover:bg-slate-200"
+                  disabled={previewIdx <= 0}
+                  onClick={(e) => { e.stopPropagation(); setPreviewFile(allCurrentFiles[previewIdx - 1]); }}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full bg-slate-100 p-1 text-slate-600 hover:bg-slate-200"
+                  disabled={previewIdx >= allCurrentFiles.length - 1}
+                  onClick={(e) => { e.stopPropagation(); setPreviewFile(allCurrentFiles[previewIdx + 1]); }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+                {allCurrentFiles.length > 1 && (
+                  <span className="text-xs text-slate-400">{previewIdx + 1} / {allCurrentFiles.length}</span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
                 <h3 className="text-base font-semibold text-slate-900">{previewFile.filename}</h3>
                 <p className="mt-1 text-xs text-slate-500">
                   {previewFile.uploaded_by_name && (
@@ -438,9 +503,11 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
         <SlotHistoryModal
           caseUid={caseUid}
           slotId={historySlot}
-          slotLabel={t(
-            REQUIRED_FILE_SLOTS_LABELS[historySlot] || "case.files.other_slot",
-          )}
+          slotLabel={
+            REQUIRED_FILE_SLOTS_LABELS[historySlot]
+              ? t(REQUIRED_FILE_SLOTS_LABELS[historySlot])
+              : historySlot
+          }
           token={token}
           onClose={() => setHistorySlot(null)}
           onDownload={(row) => downloadAttachment(row.submission_id, row.id, row.filename, token)}
@@ -582,7 +649,7 @@ function PreviewBody({ caseUid, file }: { caseUid: string; file: FileRow }) {
 const REQUIRED_FILE_SLOTS_LABELS: Record<string, string> = {
   medical_report: "case.files.slot_medical_report",
   claimant_id: "case.files.slot_claimant_id",
-  ambulance_receipt: "case.files.slot_ambulance_receipt",
+  receipt: "case.files.slot_receipt",
   death_certificate: "case.files.slot_death_certificate",
   funeral_receipt: "case.files.slot_funeral_receipt",
   supporting_document: "case.files.slot_supporting_document",

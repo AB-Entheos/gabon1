@@ -70,7 +70,7 @@ def main():
     print(f"   case uid={uid}")
 
     step("CB: upload 3 required case files via presign/finish")
-    for slot in ("medical_report", "claimant_id", "ambulance_receipt"):
+    for slot in ("medical_report", "claimant_id", "receipt"):
         body_bytes = f"fake {slot}".encode()
         s, p = http("POST", "/uploads/presign", token=cb, body={
             "filename": f"{slot}.pdf",

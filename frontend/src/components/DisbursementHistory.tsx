@@ -89,6 +89,9 @@ function InfoField({ label, children, className = "" }: { label: string; childre
 
 function DetailsTab({ disbursement: d }: { disbursement: NonNullable<ReturnType<typeof useListDisbursementsQuery>["data"]>["results"][number] }) {
   const { t } = useTranslation();
+  const displayKind = d.recipient_kind === "OTHER" && d.recipient_kind_other
+    ? `${d.recipient_kind_other}`
+    : d.recipient_kind;
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
@@ -96,7 +99,7 @@ function DetailsTab({ disbursement: d }: { disbursement: NonNullable<ReturnType<
           <span className="inline-flex items-center gap-1">
             {d.recipient_kind === "CLAIMANT" ? <Banknote size={12} className="text-emerald-600" /> : <Building2 size={12} className="text-sky-600" />}
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
-              {d.recipient_kind}
+              {displayKind}
             </span>
           </span>
         </InfoField>
@@ -149,6 +152,7 @@ function EditTab({ caseUid, disbursement: d, onClose }: { caseUid: string; disbu
   const [amount, setAmount] = useState(String(d.amount_xaf));
   const [purpose, setPurpose] = useState(d.purpose);
   const [recipientKind, setRecipientKind] = useState(d.recipient_kind);
+  const [recipientKindOther, setRecipientKindOther] = useState(d.recipient_kind_other || "");
   const [recipientName, setRecipientName] = useState(d.recipient_name);
   const [paymentDate, setPaymentDate] = useState(d.payment_date);
   const [paymentReference, setPaymentReference] = useState(d.payment_reference);
@@ -171,6 +175,7 @@ function EditTab({ caseUid, disbursement: d, onClose }: { caseUid: string; disbu
           amount_xaf: amt,
           purpose: purpose.trim(),
           recipient_kind: recipientKind,
+          recipient_kind_other: recipientKind === "OTHER" ? recipientKindOther.trim() : "",
           recipient_name: recipientName.trim(),
           payment_date: paymentDate,
           payment_reference: paymentReference.trim(),
@@ -196,6 +201,12 @@ function EditTab({ caseUid, disbursement: d, onClose }: { caseUid: string; disbu
             {RECIPIENT_KINDS.map((k) => (<option key={k.value} value={k.value}>{t(k.labelKey, k.value)}</option>))}
           </select>
         </label>
+        {recipientKind === "OTHER" && (
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">{t("case.disbursements.recipient_kind_other", "Other (specify)")} *</span>
+            <input type="text" value={recipientKindOther} onChange={(e) => setRecipientKindOther(e.target.value)} required className="input mt-1" placeholder="e.g. School, NGO" />
+          </label>
+        )}
         <label className="block sm:col-span-2">
           <span className="text-xs font-medium text-slate-600">{t("case.disbursements.recipient_name", "Recipient name")} *</span>
           <input type="text" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} required className="input mt-1" />
@@ -531,6 +542,7 @@ export default function DisbursementHistory({ caseUid }: Props) {
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [recipientKind, setRecipientKind] = useState("CLAIMANT");
+  const [recipientKindOther, setRecipientKindOther] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [paymentDate, setPaymentDate] = useState(todayISO());
   const [paymentReference, setPaymentReference] = useState("");
@@ -549,6 +561,7 @@ export default function DisbursementHistory({ caseUid }: Props) {
     setAmount("");
     setPurpose("");
     setRecipientKind("CLAIMANT");
+    setRecipientKindOther("");
     setRecipientName("");
     setPaymentDate(todayISO());
     setPaymentReference("");
@@ -570,9 +583,11 @@ export default function DisbursementHistory({ caseUid }: Props) {
           amount_xaf: amt,
           purpose: purpose.trim(),
           recipient_kind: recipientKind,
+          recipient_kind_other: recipientKind === "OTHER" ? recipientKindOther.trim() : "",
           recipient_name: recipientName.trim(),
           payment_date: paymentDate,
           payment_reference: paymentReference.trim(),
+          notes: "",
         },
       }).unwrap();
       reset();
@@ -660,6 +675,12 @@ export default function DisbursementHistory({ caseUid }: Props) {
                 {RECIPIENT_KINDS.map((k) => (<option key={k.value} value={k.value}>{t(k.labelKey, k.value)}</option>))}
               </select>
             </label>
+            {recipientKind === "OTHER" && (
+              <label className="block">
+                <span className="text-xs font-medium text-slate-600">{t("case.disbursements.recipient_kind_other", "Other (specify)")} *</span>
+                <input type="text" value={recipientKindOther} onChange={(e) => setRecipientKindOther(e.target.value)} required className="input mt-1" placeholder="e.g. School, NGO" data-testid="disbursement-recipient-kind-other" />
+              </label>
+            )}
             <label className="block sm:col-span-2">
               <span className="text-xs font-medium text-slate-600">{t("case.disbursements.recipient_name", "Recipient name")} *</span>
               <input type="text" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} required className="input mt-1" placeholder="e.g. Paulin Andzongo Hospital" data-testid="disbursement-recipient-name" />
@@ -673,8 +694,8 @@ export default function DisbursementHistory({ caseUid }: Props) {
               <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} required className="input mt-1" />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-slate-600">{t("case.disbursements.payment_reference", "Payment reference")}</span>
-              <input type="text" value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} className="input mt-1" placeholder="e.g. AIRTEL-MOMO-001" />
+              <span className="text-xs font-medium text-slate-600">{t("case.disbursements.payment_reference", "Payment reference")} *</span>
+              <input type="text" value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} required className="input mt-1" placeholder="e.g. AIRTEL-MOMO-001" />
             </label>
           </div>
           {error && (<div className="mt-3 rounded-lg border border-rose-300 bg-rose-50 p-2 text-sm text-rose-700">{error}</div>)}
@@ -712,7 +733,7 @@ export default function DisbursementHistory({ caseUid }: Props) {
                     <div className="flex items-center gap-2 flex-wrap">
                       {d.recipient_kind === "CLAIMANT" ? (<Banknote size={14} className="shrink-0 text-emerald-600" />) : (<Building2 size={14} className="shrink-0 text-sky-600" />)}
                       <span className="truncate font-semibold text-slate-900">{d.recipient_name}</span>
-                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">{d.recipient_kind}</span>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">{d.recipient_kind === "OTHER" && d.recipient_kind_other ? d.recipient_kind_other : d.recipient_kind}</span>
                       {d.proof_of_payment && (
                         <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700 flex items-center gap-0.5">
                           <FileText size={9} /> Proof

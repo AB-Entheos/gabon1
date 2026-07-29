@@ -312,6 +312,7 @@
       "dgfap_authorize_amount": "Authorize amount",
       "dgfap_authorize_hint": "Authorize the final amount. This locks the amount for the rest of the chain.",
       "propose_amount": "Propose amount",
+      "amount_proposer": "You are the amount proposer. Propose an amount to advance to DGFAP.",
       "advance_to_dgfap": "Advance to DGFAP"
     },
     "defer_modal": {
@@ -405,7 +406,7 @@
       "other_slot": "Other",
       "slot_medical_report": "Medical report or hospital bill",
       "slot_claimant_id": "Claimant ID",
-      "slot_ambulance_receipt": "Ambulance receipt",
+      "slot_receipt": "Receipt",
       "slot_death_certificate": "Death certificate or burial permit",
       "slot_funeral_receipt": "Funeral expenses receipt",
       "slot_supporting_document": "Supporting document",
@@ -450,6 +451,7 @@
       "confirm": "Close Claim"
     },
     "amount_proposed": "Proposed",
+    "amount_proposed_success": "Amount of {{amount}} FCFA has been recorded. See the activity card below.",
     "error": {
       "missing_files": "Cannot advance: missing required files: {{slots}}"
     },
@@ -478,7 +480,7 @@
   },
   "upload": {
     "file_type": "File type (optional)",
-    "file_type_placeholder": "e.g. ambulance receipt",
+    "file_type_placeholder": "e.g. receipt",
     "max_size": "25 MB max"
   },
   "theme": {

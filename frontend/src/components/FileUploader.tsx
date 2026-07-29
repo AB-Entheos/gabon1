@@ -215,7 +215,7 @@ export default function FileUploader({
       await doUpload({
         file: p.file,
         description: p.description || docDescription,
-        fileType: p.fileTypeOverride || selectedFileType,
+        fileType: selectedFileType,
       });
     }
     setPending([]);

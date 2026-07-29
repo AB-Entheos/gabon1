@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { Image as ImageIcon, FileText, Download, ExternalLink, Layers, RefreshCw } from "lucide-react";
+import { Image as ImageIcon, FileText, Download, ExternalLink, Layers, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDeleteAttachmentMutation, useListSubmissionsQuery } from "@/api/hecApi";
 import type { RootState } from "@/store";
 import { RoleBadge } from "@/components/StatusChip";
@@ -108,6 +108,10 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
   }, [rows]);
 
   const [preview, setPreview] = useState<AttachmentRow | null>(null);
+  const previewIdx = useMemo(() => {
+    if (!preview) return -1;
+    return rows.findIndex((r) => r.id === preview.id);
+  }, [preview, rows]);
 
   return (
     <section className="card p-5">
@@ -141,14 +145,15 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
                 </span>
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
                 {items.map((a) => (
-                  <AttachmentTile
-                    key={a.id}
-                    att={a}
-                    onOpen={() => setPreview(a)}
-                    onDelete={() => setPendingDelete(a)}
-                  />
+                  <div key={a.id} className="w-36 flex-shrink-0 snap-start sm:w-40">
+                    <AttachmentTile
+                      att={a}
+                      onOpen={() => setPreview(a)}
+                      onDelete={() => setPendingDelete(a)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -158,9 +163,28 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
 
       {preview && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => setPreview(null)}>
-          <div className="card w-full max-w-2xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="card w-full max-w-3xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="rounded-full bg-slate-100 p-1 text-slate-600 hover:bg-slate-200"
+                  disabled={previewIdx <= 0}
+                  onClick={(e) => { e.stopPropagation(); setPreview(rows[previewIdx - 1]); }}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full bg-slate-100 p-1 text-slate-600 hover:bg-slate-200"
+                  disabled={previewIdx >= rows.length - 1}
+                  onClick={(e) => { e.stopPropagation(); setPreview(rows[previewIdx + 1]); }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+                <span className="text-xs text-slate-400">{previewIdx + 1} / {rows.length}</span>
+              </div>
+              <div className="min-w-0 flex-1">
                 <h3 className="text-base font-semibold text-slate-900">{preview.filename}</h3>
                 <p className="mt-1 text-xs text-slate-500">
                   {t("case.gallery.by", "Uploaded by")}{" "}

@@ -184,7 +184,7 @@ ROLE_FOR_STEP = {
 }
 
 REQUIRED_FILE_SLOTS: dict[str, list[str]] = {
-    Case.Type.MEDICAL: ["medical_report", "claimant_id", "ambulance_receipt"],
+    Case.Type.MEDICAL: ["medical_report", "claimant_id", "receipt"],
     Case.Type.BURIAL: ["death_certificate", "claimant_id", "funeral_receipt"],
 }
 

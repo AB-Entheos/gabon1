@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck, CircleDollarSign, Loader2 } from "lucide-react";
 import {
   useGetCaseQuery,
   useVerifyCaseMutation,
@@ -198,12 +198,14 @@ export default function CaseWorkspace() {
             )}
             <CaseFileChecklist caseUid={caseData.uid} caseType={caseData.case_type} lang={lang} />
             <DisbursementHistory caseUid={caseData.uid} />
-            <CaseTimeline
-              events={caseData.events}
-              lang={lang}
-              amountProposed={caseData.amount_proposed}
-              amountAuthorized={caseData.amount_authorized}
-            />
+            <div id="case-timeline">
+              <CaseTimeline
+                events={caseData.events}
+                lang={lang}
+                amountProposed={caseData.amount_proposed}
+                amountAuthorized={caseData.amount_authorized}
+              />
+            </div>
           </div>
 
           <ActionPanel
@@ -369,6 +371,7 @@ function ActionPanel({
   const [closeComment, setCloseComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [amountSuccess, setAmountSuccess] = useState<string | null>(null);
 
   const canDefer = isCurrentApprover && caseData.current_step >= 3;
   const isDeferred = caseData.status === "DEFERRED";
@@ -481,6 +484,14 @@ function ActionPanel({
               <ShieldAlert size={14} />
               {t("case.actions.amount_proposer", "You are the amount proposer. Propose an amount to advance to DGFAP.")}
             </div>
+
+            {amountSuccess && (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700" data-testid="amount-proposed-success">
+                <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+                <span>{amountSuccess}</span>
+              </div>
+            )}
+
             <div>
               <label className="mb-1 block text-xs font-medium text-blue-800">
                 {t("case.amount_label", "Proposed amount (FCFA)")}
@@ -508,9 +519,37 @@ function ActionPanel({
             <button
               className="btn-primary w-full"
               disabled={busy || !amount || Number(amount) <= 0}
-              onClick={() => wrap(() => onSetAmount(Math.floor(Number(amount)), reason))}
+              onClick={async () => {
+                const amt = Math.floor(Number(amount));
+                setBusy(true); setError(null); setAmountSuccess(null);
+                try {
+                  await onSetAmount(amt, reason);
+                  setAmountSuccess(
+                    t("case.amount_proposed_success", "Amount of {{amount}} FCFA has been recorded. See the activity card below.")
+                      .replace("{{amount}}", amt.toLocaleString("fr-FR"))
+                  );
+                  // Scroll to the activity card
+                  setTimeout(() => {
+                    const el = document.getElementById("case-timeline");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 300);
+                } catch (e: any) {
+                  const detail = e?.data?.detail || e?.detail || String(e);
+                  setError(detail);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              data-testid="propose-amount-button"
             >
-              {t("case.propose_amount", "Propose amount")}
+              {busy ? (
+                <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> {t("common.saving", "Saving…")}</span>
+              ) : (
+                <>
+                  <CircleDollarSign size={14} />
+                  {t("case.propose_amount", "Propose amount")}
+                </>
+              )}
             </button>
             <button
               className="btn-primary w-full"
@@ -678,18 +717,6 @@ function ActionPanel({
               </button>
             )}
           </div>
-        )}
-
-        {user?.role === "MINISTER" && caseData.status === "AT_APPROVAL" && caseData.current_step === 6 && (
-          <button
-            className="btn-primary w-full"
-            disabled={busy}
-            onClick={() => { setApproveNotes(""); setApproveOpen(true); }}
-            data-testid="approve-button"
-          >
-            <CheckCircle2 size={16} />
-            {t("case.terminal_approve", "Final approve")}
-          </button>
         )}
 
         {caseData.status === "APPROVED" && user?.role === "WCS" && (

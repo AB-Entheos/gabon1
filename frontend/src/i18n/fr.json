@@ -405,7 +405,7 @@
       "other_slot": "Autre",
       "slot_medical_report": "Rapport médical ou facture d'hôpital",
       "slot_claimant_id": "Pièce d'identité du requérant",
-      "slot_ambulance_receipt": "Reçu d'ambulance",
+      "slot_receipt": "Reçu",
       "slot_death_certificate": "Acte de décès ou permis d'ensevelissement",
       "slot_funeral_receipt": "Reçu de frais funéraires",
       "slot_supporting_document": "Document justificatif",
@@ -450,6 +450,7 @@
       "confirm": "Clôturer le dossier"
     },
     "amount_proposed": "Proposé",
+    "amount_proposed_success": "Le montant de {{amount}} FCFA a été enregistré. Voir la carte d'activité ci-dessous.",
     "error": {
       "missing_files": "Impossible de transmettre : fichiers requis manquants : {{slots}}"
     },
@@ -478,7 +479,7 @@
   },
   "upload": {
     "file_type": "Type de fichier (optionnel)",
-    "file_type_placeholder": "ex. reçu d'ambulance",
+    "file_type_placeholder": "ex. reçu",
     "max_size": "25 Mo max"
   },
   "theme": {
