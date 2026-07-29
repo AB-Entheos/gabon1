@@ -2,7 +2,7 @@
 
 Tests:
   CB creates -> CB submits -> CB verifies -> AB advances ->
-  WCS accelerates -> WCS advances -> DGFC advances ->
+  WCS advances -> DGFC advances ->
   DGFAP sets amount -> DGFAP advances -> Minister approves ->
   Admin closes
 
@@ -38,7 +38,6 @@ def run():
         claimant_name="E2E Tester",
         claimant_phone="+24177000100",
         incident_at=__import__("django").utils.timezone.now(),
-        urgent_medical=False,
         created_by=cb,
     )
     print(f"   case {case.uid} status={case.status} step={case.current_step}")
@@ -98,23 +97,7 @@ def run():
     print(f"   status={case.status} step={case.current_step}")
     assert case.status == Case.Status.AT_APPROVAL and case.current_step == 3
 
-    step("5. WCS accelerates benefit")
-    # Try the accelerated benefit action directly (it's a separate path).
-    from cases.models import Event as EventModel
-    case.urgent_medical = True
-    case.save(update_fields=["urgent_medical"])
-    fs = FundSettings.get_solo()
-    case.accelerated_benefit_released = True
-    case.accelerated_benefit_amount_xaf = fs.accelerated_benefit_amount(case.case_type)
-    case.save(update_fields=["accelerated_benefit_released", "accelerated_benefit_amount_xaf"])
-    EventModel.objects.create(
-        case=case, actor=wcs, event_type=EventModel.Type.ACCELERATED_BENEFIT_RELEASED,
-        from_step=3, to_step=3,
-        notes=f"20% of {fs.ceiling_for(case.case_type):,} = {case.accelerated_benefit_amount_xaf:,} XAF",
-    )
-    print(f"   accelerated benefit set to {case.accelerated_benefit_amount_xaf} XAF")
-
-    step("6. WCS advances")
+    step("5. WCS advances")
     transition(case, "advance_wcs", wcs, notes="WCS approves")
     case.refresh_from_db()
     print(f"   status={case.status} step={case.current_step}")
@@ -143,8 +126,8 @@ def run():
     print(f"   status={case.status} step={case.current_step}")
     assert case.status == Case.Status.APPROVED
 
-    step("11. Admin closes")
-    transition(case, "close", admin, notes="payment confirmed")
+    step("11. WCS closes")
+    transition(case, "close", wcs, notes="payment confirmed")
     case.refresh_from_db()
     print(f"   status={case.status} step={case.current_step}")
     assert case.status == Case.Status.CLOSED

@@ -31,13 +31,9 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = config("EMAIL_HOST", default="smtp.example.com")
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@hec.example.com")
+# Resend replaces SMTP — credentials live in RESEND_API_KEY (base settings).
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # fallback for management commands
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="hec@ab-entheos.com")
 
 CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = config("REDIS_URL", default="redis://localhost:6379/0")
@@ -74,6 +70,6 @@ else:
 MEDICAL_CEILING_XAF = config("MEDICAL_CEILING_XAF", default=2_000_000, cast=int)
 BURIAL_CEILING_XAF = config("BURIAL_CEILING_XAF", default=1_500_000, cast=int)
 CROP_CEILING_XAF = config("CROP_CEILING_XAF", default=400_000, cast=int)
-FIRST_AID_PCT = config("ACCELERATED_BENEFIT_PCT", default=20, cast=int)
+
 
 APPROVAL_HMAC_SECRET = config("APPROVAL_HMAC_SECRET", default="")

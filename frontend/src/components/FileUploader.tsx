@@ -344,12 +344,12 @@ export default function FileUploader({
 
       {showTypeInput && (
         <div className="mt-2">
-          <label className="mb-1 block text-xs font-medium text-slate-500">File type (optional)</label>
+          <label className="mb-1 block text-xs font-medium text-slate-500">{t("upload.file_type", "File type (optional)")}</label>
           <input
             type="text"
             value={fileType}
             onChange={(e) => setFileType(e.target.value)}
-            placeholder="e.g. ambulance receipt"
+            placeholder={t("upload.file_type_placeholder", "e.g. ambulance receipt")}
             className="input"
           />
         </div>

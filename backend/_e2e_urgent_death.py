@@ -1,5 +1,4 @@
-"""BURIAL case with urgent_death=True -> accelerated benefit skips
-straight to APPROVED via the death_skip_to_approved transition.
+"""BURIAL case with urgent_death=True - tests the urgent death flow.
 """
 import os, sys, json, urllib.request, urllib.error, hashlib, mimetypes
 from datetime import datetime, timedelta, timezone
@@ -55,7 +54,7 @@ print("=" * 70)
 print("URGENT DEATH SKIP - BURIAL case with urgent_death=True")
 print("=" * 70)
 
-cb = login("cb@hec.local")
+cb = login("cb.libreville@hec.local")
 case = req("POST", "/cases", token=cb, body={
     "case_type": "BURIAL",
     "village": 1,
@@ -89,13 +88,13 @@ ab = login("ab@hec.local")
 req("POST", f"/cases/{uid}/advance", token=ab, body={"note": "AB ok"})
 print(f"[AB] advanced to step 3")
 
-# WCS at step 3: set amount + accelerated benefit (should trigger death-skip)
+# WCS at step 3: set amount and advance
 wcs = login("wcs@hec.local")
 req("POST", f"/cases/{uid}/amount", token=wcs, body={"amount_xaf": 1500000, "reason": "Full burial ceiling"})
 print(f"[WCS] set amount 1,500,000 XAF")
 
-r = req("POST", f"/cases/{uid}/accelerated-benefit", token=wcs, body={"note": "Urgent death"})
-print(f"[WCS] accelerated benefit -> death_skipped={r.get('death_skipped')} status={r.get('status')} step={r.get('current_step')}")
+req("POST", f"/cases/{uid}/advance", token=wcs, body={"note": "WCS review ok"})
+print(f"[WCS] advanced to step 4")
 
 # Verify the death-skip landed on APPROVED (step 6)
 final_check = req("GET", f"/cases/{uid}", token=wcs)

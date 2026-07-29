@@ -53,12 +53,6 @@ export default function AdminDashboard() {
           color="emerald"
           icon={<ScrollText size={16} />}
         />
-        <KpiCard
-          label={t("dash.admin.kpi.first_aid", "Accelerated benefit")}
-          value={stages?.accelerated_benefit_released ?? 0}
-          color="yellow"
-          icon={<ShieldCheck size={16} />}
-        />
       </div>
 
       <section className="card p-5">
@@ -75,7 +69,7 @@ export default function AdminDashboard() {
                 <span className="text-sm font-medium text-slate-900">{f.title}</span>
               </div>
               <div className="text-xs text-slate-500">
-                scope: {f.role_scope} · {formatDate(f.published_at, lang)}
+                {t("dash.admin.scope_prefix", "scope:")} {f.role_scope} · {formatDate(f.published_at, lang)}
               </div>
             </li>
           ))}
@@ -83,7 +77,7 @@ export default function AdminDashboard() {
       </section>
 
       <section className="card p-5">
-        <h2 className="text-base font-semibold text-slate-900">Quick links</h2>
+        <h2 className="text-base font-semibold text-slate-900">{t("dash.admin.quick_links", "Quick links")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
           <QuickLink to="/stages" label={t("nav.stages", "Committee")} />
           <QuickLink to="/audit" label={t("nav.audit", "Audit")} />

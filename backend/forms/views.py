@@ -270,7 +270,11 @@ def download_attachment(request, submission_id: int, attachment_id: int):
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_attachment(request, submission_id: int, attachment_id: int):
-    """Delete a FormAttachment (and its underlying file on storage).
+    """Soft-delete a FormAttachment — the file blob is intentionally retained.
+
+    Fraud-free audit trail: deleting an attachment hides it from the UI but
+    the underlying file is never purged from storage.  This allows compliance
+    reviewers to recover any document that a user attempted to remove.
 
     Authorization:
       - Admin: always allowed.
@@ -302,14 +306,14 @@ def delete_attachment(request, submission_id: int, attachment_id: int):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    # Best-effort: remove the underlying blob. We don't fail the request
-    # if the blob is already gone (e.g. dev cleanup); we still want the
-    # DB row removed so the UI reflects the change.
-    from cases.uploads import delete_attachment_bytes
+    # ── Fraud-free audit trail ──────────────────────────────────────────
+    # We intentionally DO NOT delete the underlying blob from storage.
+    # The file remains preserved so that no user can permanently purge
+    # evidence.  The soft-delete flags hide it from the main UI while
+    # keeping the row and bytes intact for audit and compliance review.
+    # ─────────────────────────────────────────────────────────────────────
 
-    delete_attachment_bytes(key=att.s3_key)
-
-    # Soft-delete: keep the DB row for the audit trail.
+    # Soft-delete: keep the DB row and blob for the audit trail.
     att.deleted_at = timezone.now()
     att.deleted_by = user
     att.save(update_fields=["deleted_at", "deleted_by"])
@@ -320,8 +324,8 @@ def delete_attachment(request, submission_id: int, attachment_id: int):
     Event.objects.create(
         case=case,
         actor=user,
-        event_type=Event.Type.FILE_DELETED,
-        notes=f"Deleted attachment #{att.id} — {att.filename}",
+        event_type=Event.Type.FILE_SOFT_DELETED,
+        notes=f"Soft-deleted attachment #{att.id} — {att.filename} (file retained for audit)",
         ip_address=getattr(request, "_audit_ip", None),
         user_agent=getattr(request, "_audit_ua", ""),
     )

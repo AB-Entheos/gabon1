@@ -6,9 +6,6 @@ won't fire.
 """
 from __future__ import annotations
 
-from celery import chain
-from django.db import transaction
-
 from . import tasks
 
 
@@ -28,5 +25,4 @@ def schedule_notifications(case, from_step: int | None, action: str = "", actor=
         notify.send_case_closed(case=case, actor=actor)
 
 
-def schedule_accelerated_benefit(case, amount_xaf: int) -> None:
-    tasks.notify_accelerated_benefit.delay(str(case.uid), amount_xaf)
+

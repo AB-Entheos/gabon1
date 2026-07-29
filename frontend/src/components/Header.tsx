@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { LogOut, Wifi, WifiOff, Sun, Moon } from "lucide-react";
 import type { AppDispatch, RootState } from "@/store";
 import { setLanguage, toggleTheme, logout, type Language } from "@/store/authSlice";
@@ -7,6 +8,7 @@ import { setLanguage, toggleTheme, logout, type Language } from "@/store/authSli
 export default function Header() {
   const { i18n, t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const language = useSelector((s: RootState) => s.auth.language);
   const theme = useSelector((s: RootState) => s.auth.theme);
   const user = useSelector((s: RootState) => s.auth.user);
@@ -75,12 +77,16 @@ export default function Header() {
 
         {user && (
           <div className="flex items-center gap-3 border-l border-slate-200 pl-3 dark:border-slate-800">
-            <div className="text-right">
+            <button
+              onClick={() => navigate("/profile")}
+              className="text-right hover:underline"
+              title={t("nav.profile", "My Profile")}
+            >
               <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {user.first_name} {user.last_name}
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">{user.email}</div>
-            </div>
+            </button>
             <div className="grid h-9 w-9 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">
               {user.first_name?.[0]}{user.last_name?.[0]}
             </div>

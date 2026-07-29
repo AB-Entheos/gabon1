@@ -11,7 +11,7 @@ Reported:    {{ case.reported_at }}
 SLA:         {{ case.sla_deadline|default:"-" }}
 
 Open the case in the dashboard:
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 HEC Emergency Fund
 Pipeline d'approbation des dossiers HEC

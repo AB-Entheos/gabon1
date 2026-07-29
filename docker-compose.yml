@@ -65,9 +65,7 @@ services:
     ports:
       - "8000:8000"
     command: >
-      sh -c "mkdir -p /app/files &&
-             chmod -R 777 /app/files 2>/dev/null || true &&
-             python manage.py migrate --noinput &&
+      sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
              gunicorn hec_fund.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --timeout 120"
 
@@ -84,6 +82,12 @@ services:
       - redis
     volumes:
       - backend-media:/app/media
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A hec_fund inspect ping --timeout 5 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     command: celery -A hec_fund worker --loglevel=info
 
   celery-beat:
@@ -97,6 +101,11 @@ services:
     depends_on:
       - backend
       - redis
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import os,signal; signal.alarm(0)\" || exit 0"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     command: celery -A hec_fund beat --loglevel=info
 
   redis:

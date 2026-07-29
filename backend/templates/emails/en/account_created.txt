@@ -1,4 +1,4 @@
-Subject: Welcome to the HEC Emergency Fund
+Subject: Welcome to the HEC Emergency Fund — Your login credentials
 
 Hello {{ user.first_name|default:user.email }},
 
@@ -8,10 +8,15 @@ Account details:
 - Email: {{ user.email }}
 - Role: {{ user.get_role_display }}
 - Preferred language: {{ user.get_preferred_language_display }}
+{% if temp_password %}
+- Temporary password: {{ temp_password }}
+{% endif %}
 
-You can now log in to the dashboard:
-http://localhost:5173/login
-
-If you have any questions, please contact your administrator.
+Please log in using the credentials above:
+{{ frontend_url }}/login
+{% if temp_password %}
+IMPORTANT: You will be required to change your password immediately after your first login.
+{% endif %}
+If you have any questions, please contact your administrator. mark@ab-entheos.co.ke
 
 HEC Emergency Fund

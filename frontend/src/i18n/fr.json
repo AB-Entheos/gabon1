@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Fonds d'urgence HEC",
-    "tagline": "Du troupeau au chèque"
+    "tagline": "Du troupeau au chèque",
+    "version": "v0.2.0 · Gabon 2026"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -19,7 +20,20 @@
   },
   "common": {
     "refresh": "Actualiser",
-    "saving": "Enregistrement…"
+    "saving": "Enregistrement…",
+    "total": "total",
+    "loading": "Chargement…",
+    "back": "Retour",
+    "advance": "Approuver et transmettre",
+    "reject": "Rejeter",
+    "defer": "Renvoyer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "download": "Télécharger",
+    "yes": "Oui",
+    "no": "Non",
+    "pending": "en attente",
+    "retry": "Réessayer"
   },
   "online": {
     "label": "En ligne",
@@ -36,6 +50,10 @@
     "uid": "UID",
     "claimant": "Requérant",
     "amount": "Montant",
+    "proposed": "Proposé",
+    "authorized": "Autorisé",
+    "status": "Statut",
+    "step": "Étape",
     "actions": "Actions",
     "name": "Nom",
     "email": "Email",
@@ -44,8 +62,7 @@
     "active": "Actif",
     "type": "Type",
     "reported": "Signalé",
-    "closed_at": "Clôturé",
-    "accelerated_benefit": "Premiers soins"
+    "closed_at": "Clôturé"
   },
   "dash": {
     "cb": {
@@ -73,6 +90,49 @@
     "queue": {
       "title": "Ma file",
       "empty": "Aucun dossier à votre étape pour l'instant."
+    },
+    "dgfap": {
+      "title": "Décideur de montant",
+      "subtitle": "Révisez le montant proposé par le DGFC, autorisez ou proposez un nouveau montant, puis vérifiez pour envoyer au Ministre.",
+      "awaiting": "En attente de montant",
+      "set": "Montant fixé · prêt à transmettre",
+      "queue": "File étape 5",
+      "empty": "Aucun dossier à l'étape 5 pour l'instant.",
+      "waiting": "EN ATTENTE",
+      "ready": "PRÊT"
+    },
+    "admin": {
+      "title_super": "Administration système",
+      "title": "Console d'administration",
+      "subtitle_super": "Accès système complet : utilisateurs, formulaires, audit, paiements, paramètres.",
+      "subtitle": "Définitions de formulaires, audit, rapports, paiements.",
+      "scope_prefix": "portée :",
+      "quick_links": "Liens rapides",
+      "kpi": {
+        "cases": "Dossiers",
+        "forms": "Formulaires publiés",
+        "approved": "Approuvés"
+      },
+      "forms": "Définitions de formulaires"
+    },
+    "stages": {
+      "title": "Aperçu du comité d'approbation",
+      "subtitle": "Comptes en direct par étape. Cliquez sur une étape pour voir sa file.",
+      "new_case": "Nouveau dossier",
+      "active": "Actifs",
+      "drafts": "Brouillons",
+      "submitted": "Soumis",
+      "verified": "Vérifiés",
+      "approved": "Approuvés",
+      "funnel": "Funnel d'approbation",
+      "case": "dossier",
+      "cases": "dossiers",
+      "view_queue": "Voir la file →",
+      "closed": "Clôturés",
+      "rejected": "Rejetés",
+      "recent": "Dossiers les plus récents",
+      "you": "VOUS",
+      "step_prefix": "Étape"
     }
   },
   "case_type": {
@@ -95,7 +155,7 @@
     "claimant_phone": "Téléphone du requérant",
     "incident_at": "Date et heure de l'incident",
     "urgent": "Besoin médical urgent",
-    "urgent_hint": "déclenche les premiers soins (20%) à l'étape 1",
+    "urgent_hint": "Traitement prioritaire",
     "create": "Créer le brouillon",
     "crop_section": "Détails des dégâts aux cultures",
     "crop_type": "Type de culture",
@@ -133,6 +193,9 @@
     "signin_hint": "Connectez-vous avec votre compte @hec.local.",
     "sign_in": "Connexion",
     "signing_in": "Connexion…",
+    "republic": "République Gabonaise",
+    "email": "Email",
+    "password": "Mot de passe",
     "demo": {
       "_": "Comptes de démo (mot de passe :",
       "cb": "Rapporteur terrain (sans 2FA)",
@@ -148,6 +211,7 @@
   "pipeline": {
     "title": "Circuit d'approbation",
     "step_of": "Étape {step} sur {total}",
+    "technical_sub": "AB Entheos · WCS · DGFC · DGFAP",
     "step_cb": "CB",
     "step_ab": "AB Entheos",
     "step_wcs": "WCS",
@@ -172,8 +236,7 @@
       "closed": "Clôturé · toutes les étapes terminées",
       "approved": "Approuvé",
       "rejected": "Rejeté à l'étape {step}"
-    },
-    "accelerated_benefit_released": "Avance accélérée débloquée (20% du plafond)."
+    }
   },
   "case": {
     "timeline": {
@@ -192,7 +255,6 @@
         "AMOUNT_SET": "Montant fixé",
         "AMOUNT_PROPOSED": "Montant proposé par le DGFC",
         "AMOUNT_AUTHORIZED": "Montant autorisé par le DGFAP",
-        "ACCELERATED_BENEFIT_RELEASED": "Avance accélérée débloquée",
         "APPROVED": "Approbation finale",
         "CLOSED": "Dossier clôturé",
         "COMMENT": "Commentaire"
@@ -208,21 +270,6 @@
     "metadata": "Détails",
     "phone": "Téléphone",
     "upload_evidence": "Téléverser une preuve (caméra)",
-    "files": {
-      "title": "Fichiers du dossier",
-      "subtitle": "Documents complémentaires téléchargés pour ce dossier.",
-      "required_title": "Fichiers requis",
-      "required_subtitle": "Téléversez les documents de preuve obligatoires pour ce dossier.",
-      "completed": "terminé",
-      "slot_completed": "Terminé",
-      "slot_pending": "En attente",
-      "upload_section_title": "Téléversez un fichier requis",
-      "upload_section_help": "Choisissez le type de document ci-dessous, puis téléversez le fichier.",
-      "required_slot": "Document requis",
-      "selected_file_type": "Type de fichier",
-      "upload_button": "Téléverser le fichier requis sélectionné",
-      "type": "Type"
-    },
     "village": "Village",
     "sla": "SLA",
     "amount": "Montant",
@@ -288,8 +335,122 @@
       "CLOSED": "Clôturé",
       "DEFERRED": "Renvoyé"
     },
-    "accelerated_benefit": "Premiers soins",
-    "accelerated_benefit_release": "Débloquer l'avance accélérée (20%)"
+    "kyc": {
+      "title": "Détails du requérant",
+      "name": "Nom complet",
+      "phone": "Téléphone",
+      "id_type": "Type de pièce",
+      "id_number": "Numéro de pièce",
+      "date_of_birth": "Date de naissance",
+      "gender": "Genre",
+      "address": "Adresse",
+      "incident_location": "Lieu de l'incident",
+      "relationship": "Lien de parenté",
+      "village": "Village"
+    },
+    "disbursements": {
+      "global_warning_title": "Décaissements proches de la limite autorisée",
+      "authorized": "Autorisé",
+      "disbursed": "Décaissé",
+      "remaining": "Restant",
+      "recipient_kind": "Type de bénéficiaire",
+      "amount": "Montant",
+      "purpose": "Objet",
+      "payment_date": "Date de paiement",
+      "payment_reference": "Référence de paiement",
+      "recorded_by": "Enregistré par",
+      "created_at": "Créé le",
+      "notes": "Notes",
+      "no_proof": "Aucune preuve de paiement jointe pour l'instant.",
+      "save_changes": "Enregistrer les modifications",
+      "replace_proof_hint": "Téléversez un nouveau fichier pour remplacer la preuve actuelle.",
+      "uploading": "Téléversement…",
+      "drop_or_click": "Déposez un fichier ici ou cliquez pour parcourir",
+      "file_types": "PDF, JPG, PNG — max 25 Mo",
+      "proof_attached": "Preuve de paiement jointe avec succès.",
+      "amount_positive": "Le montant doit être > 0.",
+      "current_proof": "Actuel :",
+      "proof_description": "Preuve de paiement pour le décaissement #{{id}}",
+      "recipient_name": "Nom du bénéficiaire"
+    },
+    "files": {
+      "title": "Fichiers du dossier",
+      "subtitle": "Documents complémentaires téléchargés pour ce dossier.",
+      "required_title": "Fichiers requis",
+      "required_subtitle": "Téléversez les documents de preuve obligatoires pour ce dossier.",
+      "completed": "terminé",
+      "slot_completed": "Terminé",
+      "slot_pending": "En attente",
+      "upload_section_title": "Téléversez un fichier requis",
+      "upload_section_help": "Choisissez le type de document ci-dessous, puis téléversez le fichier.",
+      "required_slot": "Document requis",
+      "selected_file_type": "Type de fichier",
+      "upload_button": "Téléverser le fichier requis sélectionné",
+      "type": "Type",
+      "other_slot": "Autre",
+      "slot_medical_report": "Rapport médical ou facture d'hôpital",
+      "slot_claimant_id": "Pièce d'identité du requérant",
+      "slot_ambulance_receipt": "Reçu d'ambulance",
+      "slot_death_certificate": "Acte de décès ou permis d'ensevelissement",
+      "slot_funeral_receipt": "Reçu de frais funéraires",
+      "slot_supporting_document": "Document justificatif",
+      "slot_case_photos": "Photos du dossier",
+      "load_error": "Impossible de charger les fichiers. Veuillez actualiser.",
+      "none_yet": "Aucun fichier joint pour l'instant. Utilisez le formulaire de téléversement ci-dessous.",
+      "uploaded_by": "Téléversé par",
+      "delete": "Supprimer le fichier",
+      "delete_title": "Supprimer ce fichier ?"
+    },
+    "approve_modal": {
+      "title": "Approuver ce dossier ?",
+      "body": "Le dossier sera transmis au prochain approbateur. Ajoutez un commentaire d'approbation optionnel pour la piste d'audit.",
+      "notes_label": "Commentaire d'approbation (optionnel)",
+      "notes_placeholder": "ex. Identité vérifiée et reçu d'ambulance, transmission au WCS."
+    },
+    "reject_modal": {
+      "title": "Rejeter ce dossier ?",
+      "body": "Le dossier sera marqué comme rejeté. Un motif est optionnel mais recommandé.",
+      "notes_label": "Motif du rejet (optionnel)",
+      "notes_placeholder": "ex. Document d'identité du requérant manquant."
+    },
+    "close_modal": {
+      "title": "Clôturer ce dossier ?",
+      "body": "Cette action clôturera le dossier de façon permanente. Un commentaire de clôture est requis pour la piste d'audit.",
+      "comment_label": "Commentaire de clôture (requis)",
+      "comment_placeholder": "ex. Tous les décaissements effectués. Traitement + transport intégralement payés.",
+      "confirm": "Clôturer le dossier"
+    },
+    "amount_proposed": "Proposé",
+    "error": {
+      "missing_files": "Impossible de transmettre : fichiers requis manquants : {{slots}}"
+    },
+    "submit_button": "Soumettre le dossier",
+    "submitted_hint": "Dossier soumis. Cliquez sur Vérifier pour transmettre à la chaîne d'approbation.",
+    "close_claim": "Clôturer le dossier",
+    "close_no_disbursements": "Au moins un décaissement est requis avant la clôture."
+  },
+  "disbursement": {
+    "kind": {
+      "CLAIMANT": "Requérant",
+      "HOSPITAL": "Hôpital / clinique",
+      "MORTUARY": "Morgue / salon funéraire",
+      "PHARMACY": "Pharmacie",
+      "TRANSPORT": "Transport (ambulance)",
+      "GOVERNMENT": "Gouvernement / ministère",
+      "INSURANCE": "Assurance",
+      "OTHER": "Autre"
+    },
+    "event": {
+      "DISBURSEMENT_RECORDED": "Paiement enregistré",
+      "DISBURSEMENT_UPDATED": "Paiement mis à jour",
+      "DISBURSEMENT_DELETED": "Paiement supprimé",
+      "PROOF_UPLOADED": "Preuve téléchargée"
+    }
+  },
+  "upload": {
+    "file_type": "Type de fichier (optionnel)",
+    "file_type_placeholder": "ex. reçu d'ambulance",
+    "max_size": "25 Mo max"
   },
   "theme": {
     "toggle_to_dark": "Passer en mode sombre",
@@ -303,8 +464,7 @@
     "APPROVED": "Approuvé",
     "REJECTED": "Rejeté",
     "CLOSED": "Clôturé",
-    "DEFERRED": "Renvoyé",
-    "ACCELERATED_BENEFIT_RELEASED": "Premiers soins débloqués"
+    "DEFERRED": "Renvoyé"
   },
   "role": {
     "CB": "Chef de Brigade",
@@ -330,7 +490,7 @@
       "subtitle": "Synthèses trimestrielles et annuelles, exportables en PDF et XLSX.",
       "section": {
         "title": "Derniers rapports",
-        "body": "Générer, télécharger et archiver les rapports trimestriels + annuels. Inclut les totaux, le temps médian d'approbation et les premiers soins débloqués."
+        "body": "Générer, télécharger et archiver les rapports trimestriels + annuels. Inclut les totaux et le temps médian d'approbation."
       }
     },
     "forms": {

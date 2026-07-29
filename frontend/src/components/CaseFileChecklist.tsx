@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, Trash2, X } from "lucide-react";
+import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, RefreshCw, X } from "lucide-react";
 import { useDeleteAttachmentMutation, useListSubmissionsQuery } from "@/api/hecApi";
 import type { RootState } from "@/store";
 import FileUploader from "@/components/FileUploader";
@@ -17,7 +17,7 @@ interface Props {
 
 interface Slot {
   id: string;
-  label: string;
+  labelKey: string;
 }
 
 interface FileRow {
@@ -35,23 +35,23 @@ interface FileRow {
 
 const REQUIRED_FILE_SLOTS: Record<string, Slot[]> = {
   MEDICAL: [
-    { id: "medical_report", label: "Medical report or hospital bill" },
-    { id: "claimant_id", label: "Claimant ID" },
-    { id: "ambulance_receipt", label: "Ambulance receipt" },
+    { id: "medical_report", labelKey: "case.files.slot_medical_report" },
+    { id: "claimant_id", labelKey: "case.files.slot_claimant_id" },
+    { id: "ambulance_receipt", labelKey: "case.files.slot_ambulance_receipt" },
   ],
   BURIAL: [
-    { id: "death_certificate", label: "Death certificate or burial permit" },
-    { id: "claimant_id", label: "Claimant ID" },
-    { id: "funeral_receipt", label: "Funeral expenses receipt" },
+    { id: "death_certificate", labelKey: "case.files.slot_death_certificate" },
+    { id: "claimant_id", labelKey: "case.files.slot_claimant_id" },
+    { id: "funeral_receipt", labelKey: "case.files.slot_funeral_receipt" },
   ],
 };
 
 const OTHER_SLOT_ID = "other";
 
 const DEFAULT_REQUIRED_FILE_SLOTS: Slot[] = [
-  { id: "supporting_document", label: "Supporting document" },
-  { id: "claimant_id", label: "Claimant ID" },
-  { id: "case_photos", label: "Case photographs" },
+  { id: "supporting_document", labelKey: "case.files.slot_supporting_document" },
+  { id: "claimant_id", labelKey: "case.files.slot_claimant_id" },
+  { id: "case_photos", labelKey: "case.files.slot_case_photos" },
 ];
 
 export default function CaseFileChecklist({ caseUid, caseType }: Props) {
@@ -194,7 +194,7 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
                   ) : (
                     <FileText size={16} className="shrink-0 text-slate-500" />
                   )}
-                  <span className="truncate" title={slot.label}>{slot.label}</span>
+                  <span className="truncate" title={t(slot.labelKey)}>{t(slot.labelKey)}</span>
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
@@ -264,11 +264,11 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
                             type="button"
                             onClick={() => setPendingDelete(f)}
                             disabled={deletingId === f.id}
-                            className="text-slate-500 transition-colors hover:text-rose-600 disabled:opacity-50"
-                            title={t("case.files.delete", "Delete file")}
+                            className="text-slate-500 transition-colors hover:text-amber-600 disabled:opacity-50"
+                            title={t("case.files.replace", "Replace file")}
                             data-testid={`delete-checklist-${f.id}`}
                           >
-                            <Trash2 size={12} />
+                            <RefreshCw size={12} />
                           </button>
                         </div>
                       </div>
@@ -343,7 +343,7 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
           >
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-base font-semibold text-slate-900">
-                {t("case.files.delete_title", "Delete this file?")}
+                {t("case.files.replace_title", "Replace this file?")}
               </h3>
               <button
                 type="button"
@@ -356,8 +356,8 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
             </div>
             <p className="mt-2 text-sm text-slate-600">
               {t(
-                "case.files.delete_body",
-                'Are you sure you want to delete "{{filename}}"? This will remove it from this slot.',
+                "case.files.replace_body",
+                'This will hide "{{filename}}" from this slot and allow you to upload a new version. The original file is retained for audit purposes.',
                 { filename: pendingDelete.filename },
               )}
             </p>
@@ -372,7 +372,7 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
               </button>
               <button
                 type="button"
-                className="btn-primary bg-rose-600 hover:bg-rose-700"
+                className="btn-primary bg-amber-600 hover:bg-amber-700"
                 disabled={deletingId !== 0}
                 data-testid="confirm-delete-checklist"
                 onClick={async () => {
@@ -386,13 +386,13 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
                     await refetch();
                     setPendingDelete(null);
                   } catch (err) {
-                    console.error("delete attachment failed", err);
+                    console.error("replace attachment failed", err);
                   } finally {
                     setDeletingId(0);
                   }
                 }}
               >
-                <Trash2 size={14} /> {deletingId === pendingDelete.id ? t("common.deleting", "Deleting…") : t("case.files.delete", "Delete")}
+                <RefreshCw size={14} /> {deletingId === pendingDelete.id ? t("common.replacing", "Replacing…") : t("case.files.replace", "Replace")}
               </button>
             </div>
           </div>
@@ -428,7 +428,7 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
         >
           {slots.map((slot) => (
             <option key={slot.id} value={slot.id}>
-              {slot.label}
+              {t(slot.labelKey)}
             </option>
           ))}
         </select>

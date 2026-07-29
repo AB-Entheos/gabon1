@@ -110,7 +110,7 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-slate-200 p-4 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
-        v0.2.0 · Gabon 2026
+        {t("app.version", "v0.2.0 · Gabon 2026")}
       </div>
     </aside>
   );

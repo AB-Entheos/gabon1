@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "HEC Emergency Fund",
-    "tagline": "From the herd to the cheque"
+    "tagline": "From the herd to the cheque",
+    "version": "v0.2.0 · Gabon 2026"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -19,7 +20,20 @@
   },
   "common": {
     "refresh": "Refresh",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "total": "total",
+    "loading": "Loading…",
+    "back": "Back",
+    "advance": "Approve & advance",
+    "reject": "Reject",
+    "defer": "Defer",
+    "cancel": "Cancel",
+    "close": "Close",
+    "download": "Download",
+    "yes": "Yes",
+    "no": "No",
+    "pending": "pending",
+    "retry": "Retry"
   },
   "online": {
     "label": "Online",
@@ -36,6 +50,10 @@
     "uid": "UID",
     "claimant": "Claimant",
     "amount": "Amount",
+    "proposed": "Proposed",
+    "authorized": "Authorized",
+    "status": "Status",
+    "step": "Step",
     "actions": "Actions",
     "name": "Name",
     "email": "Email",
@@ -44,8 +62,7 @@
     "active": "Active",
     "type": "Type",
     "reported": "Reported",
-    "closed_at": "Closed",
-    "accelerated_benefit": "First aid"
+    "closed_at": "Closed"
   },
   "dash": {
     "cb": {
@@ -73,6 +90,49 @@
     "queue": {
       "title": "My queue",
       "empty": "No cases at your step right now."
+    },
+    "dgfap": {
+      "title": "Amount-decider",
+      "subtitle": "Review the DGFC proposed amount, authorize or set a new amount, then verify to send to the Minister.",
+      "awaiting": "Awaiting amount",
+      "set": "Amount set · ready to advance",
+      "queue": "Step 5 queue",
+      "empty": "No cases at step 5 right now.",
+      "waiting": "WAITING",
+      "ready": "READY"
+    },
+    "admin": {
+      "title_super": "System administration",
+      "title": "Admin console",
+      "subtitle_super": "Full system access: users, forms, audit, payments, system settings.",
+      "subtitle": "Form definitions, audit, reports, payments.",
+      "scope_prefix": "scope:",
+      "quick_links": "Quick links",
+      "kpi": {
+        "cases": "Cases",
+        "forms": "Published forms",
+        "approved": "Approved"
+      },
+      "forms": "Form definitions"
+    },
+    "stages": {
+      "title": "Approval committee overview",
+      "subtitle": "Live counts per approval stage. Click a stage to see its queue.",
+      "new_case": "New case",
+      "active": "Active",
+      "drafts": "Drafts",
+      "submitted": "Submitted",
+      "verified": "Verified",
+      "approved": "Approved",
+      "funnel": "Approval funnel",
+      "case": "case",
+      "cases": "cases",
+      "view_queue": "View queue →",
+      "closed": "Closed",
+      "rejected": "Rejected",
+      "recent": "Most recent cases",
+      "you": "YOU",
+      "step_prefix": "Step"
     }
   },
   "case_type": {
@@ -95,7 +155,7 @@
     "claimant_phone": "Claimant phone",
     "incident_at": "Incident date & time",
     "urgent": "Urgent medical need",
-    "urgent_hint": "enables 20% accelerated benefit release at Step 1",
+    "urgent_hint": "Flag for priority processing",
     "create": "Create draft",
     "crop_section": "Crop damage details",
     "crop_type": "Crop type",
@@ -133,6 +193,9 @@
     "signin_hint": "Sign in with your @hec.local account.",
     "sign_in": "Sign in",
     "signing_in": "Signing in…",
+    "republic": "République Gabonaise",
+    "email": "Email",
+    "password": "Password",
     "demo": {
       "_": "Demo accounts (password:",
       "cb": "Field reporter (no 2FA)",
@@ -148,6 +211,7 @@
   "pipeline": {
     "title": "Approval pipeline",
     "step_of": "Step {step} of {total}",
+    "technical_sub": "AB Entheos · WCS · DGFC · DGFAP",
     "step_cb": "CB",
     "step_ab": "AB Entheos",
     "step_wcs": "WCS",
@@ -172,8 +236,7 @@
       "closed": "Closed · all steps complete",
       "approved": "Approved",
       "rejected": "Rejected at step {step}"
-    },
-    "accelerated_benefit_released": "Accelerated benefit released (20% of ceiling)."
+    }
   },
   "case": {
     "timeline": {
@@ -192,7 +255,6 @@
         "AMOUNT_SET": "Amount set",
         "AMOUNT_PROPOSED": "Amount proposed by DGFC",
         "AMOUNT_AUTHORIZED": "Amount authorized by DGFAP",
-        "ACCELERATED_BENEFIT_RELEASED": "Accelerated benefit released",
         "APPROVED": "Final approval",
         "CLOSED": "Case closed",
         "COMMENT": "Comment"
@@ -208,21 +270,6 @@
     "metadata": "Details",
     "phone": "Phone",
     "upload_evidence": "Upload evidence (camera)",
-    "files": {
-      "title": "Case files",
-      "subtitle": "Supporting material uploaded to this case.",
-      "required_title": "Required case files",
-      "required_subtitle": "Upload the mandatory supporting documents for this case.",
-      "completed": "completed",
-      "slot_completed": "Completed",
-      "slot_pending": "Pending",
-      "upload_section_title": "Upload a required file",
-      "upload_section_help": "Choose the document type below, then upload the file.",
-      "required_slot": "Required document",
-      "selected_file_type": "File type",
-      "upload_button": "Upload selected required file",
-      "type": "Type"
-    },
     "village": "Village",
     "sla": "SLA",
     "amount": "Amount",
@@ -288,8 +335,122 @@
       "CLOSED": "Closed",
       "DEFERRED": "Deferred"
     },
-    "accelerated_benefit_release": "Release accelerated benefit (20%)",
-    "accelerated_benefit": "First-aid"
+    "kyc": {
+      "title": "Claimant Details",
+      "name": "Full name",
+      "phone": "Phone",
+      "id_type": "ID type",
+      "id_number": "ID number",
+      "date_of_birth": "Date of birth",
+      "gender": "Gender",
+      "address": "Address",
+      "incident_location": "Incident location",
+      "relationship": "Relationship",
+      "village": "Village"
+    },
+    "disbursements": {
+      "global_warning_title": "Disbursements approaching the authorized limit",
+      "authorized": "Authorized",
+      "disbursed": "Disbursed",
+      "remaining": "Remaining",
+      "recipient_kind": "Recipient kind",
+      "amount": "Amount",
+      "purpose": "Purpose",
+      "payment_date": "Payment date",
+      "payment_reference": "Payment reference",
+      "recorded_by": "Recorded by",
+      "created_at": "Created at",
+      "notes": "Notes",
+      "no_proof": "No proof of payment attached yet.",
+      "save_changes": "Save changes",
+      "replace_proof_hint": "Upload a new file to replace the current proof.",
+      "uploading": "Uploading…",
+      "drop_or_click": "Drop a file here or click to browse",
+      "file_types": "PDF, JPG, PNG — max 25 MB",
+      "proof_attached": "Proof of payment attached successfully.",
+      "amount_positive": "Amount must be > 0.",
+      "current_proof": "Current:",
+      "proof_description": "Proof of payment for disbursement #{{id}}",
+      "recipient_name": "Recipient name"
+    },
+    "files": {
+      "title": "Case files",
+      "subtitle": "Supporting material uploaded to this case.",
+      "required_title": "Required case files",
+      "required_subtitle": "Upload the mandatory supporting documents for this case.",
+      "completed": "completed",
+      "slot_completed": "Completed",
+      "slot_pending": "Pending",
+      "upload_section_title": "Upload a required file",
+      "upload_section_help": "Choose the document type below, then upload the file.",
+      "required_slot": "Required document",
+      "selected_file_type": "File type",
+      "upload_button": "Upload selected required file",
+      "type": "Type",
+      "other_slot": "Other",
+      "slot_medical_report": "Medical report or hospital bill",
+      "slot_claimant_id": "Claimant ID",
+      "slot_ambulance_receipt": "Ambulance receipt",
+      "slot_death_certificate": "Death certificate or burial permit",
+      "slot_funeral_receipt": "Funeral expenses receipt",
+      "slot_supporting_document": "Supporting document",
+      "slot_case_photos": "Case photographs",
+      "load_error": "Could not load attached files. Please refresh.",
+      "none_yet": "No files attached yet. Use the upload form below.",
+      "uploaded_by": "Uploaded by",
+      "delete": "Delete file",
+      "delete_title": "Delete this file?"
+    },
+    "approve_modal": {
+      "title": "Approve this case?",
+      "body": "The case will move to the next approver. Add an optional approval comment for the audit trail.",
+      "notes_label": "Approval comment (optional)",
+      "notes_placeholder": "e.g. Verified ID and ambulance receipt, advancing to WCS."
+    },
+    "reject_modal": {
+      "title": "Reject this case?",
+      "body": "The case will be marked as rejected. A reason is optional but recommended.",
+      "notes_label": "Rejection reason (optional)",
+      "notes_placeholder": "e.g. Missing claimant ID document."
+    },
+    "close_modal": {
+      "title": "Close this claim?",
+      "body": "This action will close the case permanently. A closing comment is required for the audit trail.",
+      "comment_label": "Closing comment (required)",
+      "comment_placeholder": "e.g. All disbursements completed. Treatment + transport fully paid.",
+      "confirm": "Close Claim"
+    },
+    "amount_proposed": "Proposed",
+    "error": {
+      "missing_files": "Cannot advance: missing required files: {{slots}}"
+    },
+    "submit_button": "Submit case",
+    "submitted_hint": "Case submitted. Click Verify to advance to the approval chain.",
+    "close_claim": "Close Claim",
+    "close_no_disbursements": "At least one disbursement is required before closing."
+  },
+  "disbursement": {
+    "kind": {
+      "CLAIMANT": "Claimant",
+      "HOSPITAL": "Hospital / clinic",
+      "MORTUARY": "Mortuary / funeral home",
+      "PHARMACY": "Pharmacy",
+      "TRANSPORT": "Transport (ambulance)",
+      "GOVERNMENT": "Government / ministry",
+      "INSURANCE": "Insurance",
+      "OTHER": "Other"
+    },
+    "event": {
+      "DISBURSEMENT_RECORDED": "Payment recorded",
+      "DISBURSEMENT_UPDATED": "Payment updated",
+      "DISBURSEMENT_DELETED": "Payment deleted",
+      "PROOF_UPLOADED": "Proof uploaded"
+    }
+  },
+  "upload": {
+    "file_type": "File type (optional)",
+    "file_type_placeholder": "e.g. ambulance receipt",
+    "max_size": "25 MB max"
   },
   "theme": {
     "toggle_to_dark": "Switch to dark mode",
@@ -303,8 +464,7 @@
     "APPROVED": "Approved",
     "REJECTED": "Rejected",
     "CLOSED": "Closed",
-    "DEFERRED": "Deferred",
-    "ACCELERATED_BENEFIT_RELEASED": "Accelerated benefit released"
+    "DEFERRED": "Deferred"
   },
   "role": {
     "CB": "Chef de Brigade",
@@ -330,7 +490,7 @@
       "subtitle": "Quarterly and annual summaries, exportable as PDF and XLSX.",
       "section": {
         "title": "Latest reports",
-        "body": "Generate, download and archive quarterly + annual reports. Includes totals, median time-to-approve, and accelerated benefit disbursements."
+        "body": "Generate, download and archive quarterly + annual reports. Includes totals and median time-to-approve."
       }
     },
     "forms": {

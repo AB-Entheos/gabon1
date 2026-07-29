@@ -37,6 +37,10 @@ class User(AbstractUser):
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.ACTIVE)
     is_2fa_enabled = models.BooleanField(default=False)
     otp_secret = models.CharField(max_length=64, blank=True)
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="If True, user must set a new password on next login.",
+    )
     preferred_language = models.CharField(
         max_length=2,
         choices=Language.choices,

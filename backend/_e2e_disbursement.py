@@ -73,7 +73,7 @@ print("=" * 70)
 print(f"NEW FLOW - BUDGET {BUDGET:,} XAF (3 disbursements to institutions)")
 print("=" * 70)
 
-cb = login("cb@hec.local")
+cb = login("cb.libreville@hec.local")
 case = req("POST", "/cases", token=cb, body={
     "case_type": "MEDICAL", "village": 1,
     "claimant_name": "Mark Test (disbursement flow)",

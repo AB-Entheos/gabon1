@@ -9,6 +9,6 @@ Case details:
 - Type: {{ case.get_case_type_display }}
 
 Open the case in the dashboard:
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 HEC Emergency Fund

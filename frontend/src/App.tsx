@@ -12,6 +12,7 @@ import CaseWorkspace from "@/routes/CaseWorkspace";
 import NewCase from "@/routes/NewCase";
 import StageDashboard from "@/routes/StageDashboard";
 import AdminPage from "@/routes/admin/AdminPage";
+import Profile from "@/routes/Profile";
 import type { RootState, AppDispatch } from "@/store";
 import { setUser, logout } from "@/store/authSlice";
 
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="forms" element={<AdminPage kind="forms" />} />
           <Route path="payments" element={<AdminPage kind="payments" />} />
           <Route path="users" element={<AdminPage kind="users" />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="closed" element={<AdminPage kind="closed" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

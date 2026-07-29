@@ -1,7 +1,10 @@
 from pathlib import Path
-from decouple import config, Csv
+from decouple import Csv, RepositoryEnv, Config as _DecoupleConfig
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Point python-decouple at the root .env (one level above backend/)
+config = _DecoupleConfig(RepositoryEnv(BASE_DIR.parent / ".env"))
 
 SECRET_KEY = config("SECRET_KEY", default="dev-insecure-secret-change-me-in-prod")
 INSTALLED_APPS = [
@@ -177,13 +180,25 @@ CELERY_BEAT_SCHEDULE = {
         "task": "approvals.tasks.nightly_pg_dump",
         "schedule": 60 * 60 * 24,  # 24h
     },
+    "check-sla-breaches": {
+        "task": "approvals.tasks.check_sla_breaches",
+        "schedule": 60 * 60 * 24,  # daily
+    },
+    "auto-approve-scans": {
+        "task": "approvals.tasks.auto_approve_scans",
+        "schedule": 60 * 5,  # every 5 minutes
+    },
 }
 
 APPROVAL_HMAC_SECRET = config("APPROVAL_HMAC_SECRET", default="dev-hmac-secret-change-me")
 
+# Resend email API
+RESEND_API_KEY = config("RESEND_API_KEY", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="hec@ab-entheos.com")
+FRONTEND_URL = config("FRONTEND_URL", default="https://hec.ab-entheos.com")
+
 MEDICAL_CEILING_XAF = 2_000_000
 BURIAL_CEILING_XAF = 1_500_000
-ACCELERATED_BENEFIT_PCT = 20
 
 LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"

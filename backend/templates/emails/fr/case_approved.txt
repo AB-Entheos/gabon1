@@ -11,6 +11,6 @@ Signalé le :   {{ case.reported_at }}
 SLA :          {{ case.sla_deadline|default:"-" }}
 
 Ouvrir le dossier dans le tableau de bord :
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 Fonds d'urgence HEC

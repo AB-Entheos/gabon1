@@ -49,7 +49,6 @@ const ICON_MAP: Record<string, { icon: typeof FilePlus; tone: string; ring: stri
   AMOUNT_PROPOSED:     { icon: CircleDollarSign,tone: "text-amber-700 bg-amber-100",           ring: "ring-amber-200" },
   AMOUNT_AUTHORIZED:   { icon: CircleDollarSign,tone: "text-emerald-700 bg-emerald-100",       ring: "ring-emerald-200" },
   FIRST_AID_RELEASED:  { icon: HeartPulse,      tone: "text-yellow-700 bg-yellow-100",         ring: "ring-yellow-200" },
-  ACCELERATED_BENEFIT_RELEASED:  { icon: HeartPulse, tone: "text-yellow-700 bg-yellow-100", ring: "ring-yellow-200" },
   APPROVED:            { icon: ThumbsUp,        tone: "text-emerald-700 bg-emerald-100",       ring: "ring-emerald-200" },
   CLOSED:              { icon: Lock,            tone: "text-slate-700 bg-slate-200",           ring: "ring-slate-300" },
   COMMENT:             { icon: MessageSquare,   tone: "text-slate-700 bg-slate-100",           ring: "ring-slate-200" },

@@ -12,6 +12,6 @@ Détails du dossier :
 Veuillez revoir le dossier et corriger les éventuels problèmes. Vous pouvez resoumettre le dossier après avoir effectué les corrections nécessaires.
 
 Ouvrir le dossier dans le tableau de bord :
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 Fonds d'urgence HEC

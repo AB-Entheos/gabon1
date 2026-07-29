@@ -11,7 +11,6 @@ export function StatusChip({ status, lang: _lang }: { status: string; lang: Lang
     REJECTED: "chip-error",
     CLOSED: "chip-neutral",
     FIRST_AID_RELEASED: "chip-secondary",
-    ACCELERATED_BENEFIT_RELEASED: "chip-secondary",
   };
   const { t } = useTranslation();
   return (

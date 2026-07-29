@@ -10,6 +10,6 @@ Détails du dossier :
 - Montant proposé : {{ amount_xaf }} FCFA
 
 Veuillez revoir et autoriser le montant dans le tableau de bord :
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 Fonds d'urgence HEC

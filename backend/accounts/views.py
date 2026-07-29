@@ -11,7 +11,7 @@ from .permissions import IsSuperAdmin
 
 class _UserSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    email = serializers.EmailField(read_only=True)
+    email = serializers.EmailField()
     username = serializers.CharField(read_only=True)
     role = serializers.CharField(read_only=True)
     first_name = serializers.CharField(required=False, allow_blank=True)
@@ -21,6 +21,7 @@ class _UserSerializer(serializers.Serializer):
     telegram_chat_id = serializers.CharField(required=False, allow_blank=True)
     is_2fa_enabled = serializers.BooleanField(read_only=True)
     requires_2fa = serializers.BooleanField(read_only=True)
+    must_change_password = serializers.BooleanField(read_only=True)
     village = serializers.IntegerField(read_only=True, allow_null=True)
 
 
@@ -42,6 +43,7 @@ def me(request):  # noqa: F811  - see decorator above
                 "preferred_language": user.preferred_language,
                 "is_2fa_enabled": user.is_2fa_enabled,
                 "requires_2fa": user.requires_2fa(),
+                "must_change_password": user.must_change_password,
                 "village": user.village_id,
                 "telegram_chat_id": user.telegram_chat_id,
             }
@@ -50,6 +52,18 @@ def me(request):  # noqa: F811  - see decorator above
     # PATCH
     data = request.data
     updated_fields: list[str] = []
+
+    if "email" in data:
+        new_email = str(data["email"]).strip().lower()
+        if new_email != user.email:
+            if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+                return Response(
+                    {"email": "A user with this email already exists."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user.email = new_email
+            user.username = new_email
+            updated_fields.extend(["email", "username"])
 
     if "preferred_language" in data:
         lang = data["preferred_language"]
@@ -110,13 +124,11 @@ class _AdminUserSerializer(serializers.ModelSerializer):
 
 
 class _AdminUserWriteSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False, allow_blank=False)
-
     class Meta:
         model = User
         fields = ("email", "first_name", "last_name", "role", "phone",
                   "preferred_language", "is_active", "village",
-                  "telegram_chat_id", "password")
+                  "telegram_chat_id")
 
     def validate_role(self, value):
         if value not in dict(User.Role.choices):
@@ -139,17 +151,17 @@ def list_users(request):
     s = _AdminUserWriteSerializer(data=request.data)
     s.is_valid(raise_exception=True)
     data = dict(s.validated_data)
-    password = data.pop("password", None) or User.objects.make_random_password(length=14)
+    temp_password = User.objects.make_random_password(length=14)
     u = User(**data)
     u.username = data["email"]
-    if password:
-        u.set_password(password)
+    u.set_password(temp_password)
+    u.must_change_password = True
     u.save()
 
-    # Send welcome email to the newly created user.
+    # Send welcome email with one-time credentials.
     try:
         from notifications.service import send_account_created
-        send_account_created(user=u)
+        send_account_created(user=u, temp_password=temp_password)
     except Exception:
         pass  # Notifications must never block user creation.
 
@@ -178,11 +190,8 @@ def user_detail(request, pk):
     s = _AdminUserWriteSerializer(u, data=request.data, partial=True)
     s.is_valid(raise_exception=True)
     data = dict(s.validated_data)
-    password = data.pop("password", None)
     for k, v in data.items():
         setattr(u, k, v)
-    if password:
-        u.set_password(password)
     u.save()
     return Response(_AdminUserSerializer(u).data)
 
@@ -228,3 +237,40 @@ def admin_password_reset(request):
         pass  # Notifications must never block the reset.
 
     return Response({"detail": f"Password reset email sent to {user.email}."})
+
+
+# ---- Force change password (first login) -------------------------------------
+
+
+class _ForceChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField()
+    new_password = serializers.CharField(min_length=12)
+
+
+@extend_schema(request=_ForceChangePasswordSerializer, responses={200: dict})
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def force_change_password(request):
+    """User changes their password (required on first login).
+
+    Validates the current (temporary) password, sets the new one, and
+    clears the ``must_change_password`` flag.
+    """
+    serializer = _ForceChangePasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    user: User = request.user
+    current_password = serializer.validated_data["current_password"]
+    new_password = serializer.validated_data["new_password"]
+
+    if not user.check_password(current_password):
+        return Response(
+            {"detail": "Current password is incorrect."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user.set_password(new_password)
+    user.must_change_password = False
+    user.save(update_fields=["password", "must_change_password"])
+
+    return Response({"detail": "Password changed successfully.", "must_change_password": False})

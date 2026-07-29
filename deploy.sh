@@ -68,9 +68,8 @@ $COMPOSE_CMD run --rm backend python manage.py migrate --noinput
 $COMPOSE_CMD run --rm backend python manage.py compilemessages || true
 $COMPOSE_CMD run --rm backend python manage.py collectstatic --noinput
 
-echo "[4.5/9] Ensure files directory is writable"
+echo "[4.5/9] Ensure files directory exists"
 sudo mkdir -p "$REPO_DIR/backend/files"
-sudo chmod -R 777 "$REPO_DIR/backend/files"
 
 echo "[5/9] Restart services"
 $COMPOSE_CMD down

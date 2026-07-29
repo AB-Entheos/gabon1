@@ -12,6 +12,6 @@ Case details:
 Please review the case and address any issues. You may re-submit the case after making the necessary corrections.
 
 Open the case in the dashboard:
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 HEC Emergency Fund

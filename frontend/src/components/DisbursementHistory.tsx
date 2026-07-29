@@ -35,21 +35,21 @@ interface Props {
 }
 
 const RECIPIENT_KINDS = [
-  { value: "CLAIMANT", label_en: "Claimant" },
-  { value: "HOSPITAL", label_en: "Hospital / clinic" },
-  { value: "MORTUARY", label_en: "Mortuary / funeral home" },
-  { value: "PHARMACY", label_en: "Pharmacy" },
-  { value: "TRANSPORT", label_en: "Transport (ambulance)" },
-  { value: "GOVERNMENT", label_en: "Government / ministry" },
-  { value: "INSURANCE", label_en: "Insurance" },
-  { value: "OTHER", label_en: "Other" },
+  { value: "CLAIMANT", labelKey: "disbursement.kind.CLAIMANT" },
+  { value: "HOSPITAL", labelKey: "disbursement.kind.HOSPITAL" },
+  { value: "MORTUARY", labelKey: "disbursement.kind.MORTUARY" },
+  { value: "PHARMACY", labelKey: "disbursement.kind.PHARMACY" },
+  { value: "TRANSPORT", labelKey: "disbursement.kind.TRANSPORT" },
+  { value: "GOVERNMENT", labelKey: "disbursement.kind.GOVERNMENT" },
+  { value: "INSURANCE", labelKey: "disbursement.kind.INSURANCE" },
+  { value: "OTHER", labelKey: "disbursement.kind.OTHER" },
 ];
 
-const EVENT_TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  DISBURSEMENT_RECORDED: { label: "Payment recorded", color: "bg-emerald-100 text-emerald-800" },
-  DISBURSEMENT_UPDATED: { label: "Payment updated", color: "bg-amber-100 text-amber-800" },
-  DISBURSEMENT_DELETED: { label: "Payment deleted", color: "bg-rose-100 text-rose-800" },
-  PROOF_UPLOADED: { label: "Proof uploaded", color: "bg-sky-100 text-sky-800" },
+const EVENT_TYPE_LABELS: Record<string, { color: string }> = {
+  DISBURSEMENT_RECORDED: { color: "bg-emerald-100 text-emerald-800" },
+  DISBURSEMENT_UPDATED: { color: "bg-amber-100 text-amber-800" },
+  DISBURSEMENT_DELETED: { color: "bg-rose-100 text-rose-800" },
+  PROOF_UPLOADED: { color: "bg-sky-100 text-sky-800" },
 };
 
 function fmt(n: number) {
@@ -193,7 +193,7 @@ function EditTab({ caseUid, disbursement: d, onClose }: { caseUid: string; disbu
         <label className="block">
           <span className="text-xs font-medium text-slate-600">{t("case.disbursements.recipient_kind", "Recipient kind")} *</span>
           <select value={recipientKind} onChange={(e) => setRecipientKind(e.target.value)} className="input mt-1">
-            {RECIPIENT_KINDS.map((k) => (<option key={k.value} value={k.value}>{k.label_en}</option>))}
+            {RECIPIENT_KINDS.map((k) => (<option key={k.value} value={k.value}>{t(k.labelKey, k.value)}</option>))}
           </select>
         </label>
         <label className="block sm:col-span-2">
@@ -255,7 +255,7 @@ function ProofTab({ caseUid, disbursement: d }: { caseUid: string; disbursement:
         size: file.size,
         case_uid: caseUid,
         file_type: "proof_of_payment",
-        description: `Proof of payment for disbursement #${d.id}`,
+        description: t("case.disbursements.proof_description", "Proof of payment for disbursement #{{id}}", { id: d.id }),
         uploaded_by_name: "WCS",
       }).unwrap();
       await fetch(presigned.url, {
@@ -275,7 +275,7 @@ function ProofTab({ caseUid, disbursement: d }: { caseUid: string; disbursement:
         submission_id: presigned.submission_id,
         case_uid: caseUid,
         file_type: "proof_of_payment",
-        description: `Proof of payment for disbursement #${d.id}`,
+        description: t("case.disbursements.proof_description", "Proof of payment for disbursement #{{id}}", { id: d.id }),
         uploaded_by_name: "WCS",
       }).unwrap();
       await attachProof({ caseUid, disbursementId: d.id, proof_of_payment_id: finished.id }).unwrap();
@@ -294,7 +294,7 @@ function ProofTab({ caseUid, disbursement: d }: { caseUid: string; disbursement:
         <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
           <div className="flex items-center gap-2 text-sm">
             <FileText size={14} className="text-sky-600" />
-            <span className="font-medium text-sky-800">Current: {d.proof_of_payment.filename}</span>
+            <span className="font-medium text-sky-800">{t("case.disbursements.current_proof", "Current:")} {d.proof_of_payment.filename}</span>
             <span className="text-sky-600">({(d.proof_of_payment.size_bytes / 1024).toFixed(1)} KB)</span>
           </div>
           <p className="mt-1 text-xs text-sky-600">
@@ -369,7 +369,7 @@ function HistoryTab({ caseUid }: { caseUid: string }) {
       </div>
       <div className="relative ml-3 border-l-2 border-slate-200 space-y-3">
         {events.map((ev) => {
-          const meta = EVENT_TYPE_LABELS[ev.event_type] ?? { label: ev.event_type, color: "bg-slate-100 text-slate-800" };
+          const meta = EVENT_TYPE_LABELS[ev.event_type] ?? { color: "bg-slate-100 text-slate-800" };
           return (
             <div key={ev.id} className="relative pl-5">
               <div className={`absolute -left-[9px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white ${
@@ -381,7 +381,7 @@ function HistoryTab({ caseUid }: { caseUid: string }) {
               <div className="rounded-lg border border-slate-100 bg-white p-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.color}`}>
-                    {meta.label}
+                    {t(`disbursement.event.${ev.event_type}`, ev.event_type)}
                   </span>
                   <span className="text-[10px] text-slate-400">{fmtDateTime(ev.occurred_at)}</span>
                 </div>
@@ -657,7 +657,7 @@ export default function DisbursementHistory({ caseUid }: Props) {
             <label className="block">
               <span className="text-xs font-medium text-slate-600">{t("case.disbursements.recipient_kind", "Recipient kind")} *</span>
               <select value={recipientKind} onChange={(e) => setRecipientKind(e.target.value)} className="input mt-1" data-testid="disbursement-recipient-kind">
-                {RECIPIENT_KINDS.map((k) => (<option key={k.value} value={k.value}>{k.label_en}</option>))}
+                {RECIPIENT_KINDS.map((k) => (<option key={k.value} value={k.value}>{t(k.labelKey, k.value)}</option>))}
               </select>
             </label>
             <label className="block sm:col-span-2">

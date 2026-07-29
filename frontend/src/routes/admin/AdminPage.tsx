@@ -414,10 +414,10 @@ function PaymentsPanel() {
         <p className="mt-1 text-sm text-slate-500">{t("payments.export.subtitle", "Generate a CSV or SEPA file for institutional providers (banks, mobile money operators).")}</p>
         <div className="mt-4 flex gap-2">
           <button className="btn-primary" onClick={() => exportFile("csv")} disabled={busy}>
-            <Download size={16} /> CSV
+            <Download size={16} /> {t("payments.export.csv", "CSV")}
           </button>
           <button className="btn-secondary" onClick={() => exportFile("sepa")} disabled={busy}>
-            <Building2 size={16} /> SEPA
+            <Building2 size={16} /> {t("payments.export.sepa", "SEPA")}
           </button>
           <span className="ml-auto text-xs text-slate-500">{selectedUids.length || approved.length} {t("payments.selected", "selected")}</span>
         </div>
@@ -446,10 +446,10 @@ function PaymentsPanel() {
                   <td className="px-3 py-2 font-mono">{c.amount_authorized ?? "—"}</td>
                   <td className="px-3 py-2 text-right">
                     <button className="btn-secondary mr-1" onClick={() => setMobileForm({ case_uid: c.uid, provider: "moov", phone: c.claimant_phone || "" })}>
-                      <Smartphone size={14} /> Mobile
+                      <Smartphone size={14} /> {t("payments.mobile_btn", "Mobile")}
                     </button>
                     <button className="btn-primary" onClick={() => confirm(c.uid)} disabled={busy}>
-                      <CheckCircle2 size={14} /> Confirm
+                      <CheckCircle2 size={14} /> {t("payments.confirm_btn", "Confirm")}
                     </button>
                   </td>
                 </tr>
@@ -602,7 +602,6 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
     phone: user?.phone ?? "",
     preferred_language: user?.preferred_language ?? "fr",
     is_active: user?.is_active ?? true,
-    password: "",
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -611,7 +610,6 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
     setBusy(true); setError(null);
     try {
       const body: any = { ...form };
-      if (!body.password) delete body.password;
       if (isNew) await createAdminUser(body);
       else await updateAdminUser(user!.id, body);
       await onSaved();
@@ -663,10 +661,11 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
             <label className="text-xs font-semibold text-slate-600">{t("users.active", "Active")}</label>
             <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
           </div>
-          <div className="col-span-2">
-            <label className="mb-1 block text-xs font-semibold text-slate-600">{t("users.password", "Password (leave blank to auto-generate)")}</label>
-            <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="input" placeholder="••••••••" />
-          </div>
+          {isNew && (
+            <div className="col-span-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">
+              {t("users.auto_password_info", "A temporary password will be auto-generated and sent to the user's email. They will be required to change it on first login.")}
+            </div>
+          )}
         </div>
         {error && <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2 text-sm text-rose-700">{error}</div>}
         <div className="mt-5 flex justify-end gap-2">
@@ -834,7 +833,6 @@ function ClosedPanel() {
                   <td className="px-3 py-2 font-medium text-slate-900">{c.claimant_name}</td>
                   <td className="px-3 py-2"><span className="chip bg-slate-100 text-slate-700">{c.case_type}</span></td>
                   <td className="px-3 py-2 font-mono">{c.amount_authorized ?? "—"}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{c.accelerated_benefit_amount_xaf ?? "—"}</td>
                   <td className="px-3 py-2 text-xs text-slate-500">{formatDateTime(c.reported_at, i18n.language as "en" | "fr")}</td>
                   <td className="px-3 py-2 text-xs text-slate-500">{(c as { closed_at?: string }).closed_at ? formatDateTime((c as { closed_at?: string }).closed_at!, i18n.language as "en" | "fr") : "—"}</td>
                   <td className="px-3 py-2 text-right">

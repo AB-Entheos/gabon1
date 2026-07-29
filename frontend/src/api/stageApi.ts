@@ -56,7 +56,6 @@ export interface StageCounts {
   approved: number;
   closed: number;
   rejected: number;
-  accelerated_benefit_released: number;
   total: number;
 }
 

@@ -9,6 +9,6 @@ Détails du dossier :
 - Type : {{ case.get_case_type_display }}
 
 Ouvrir le dossier dans le tableau de bord :
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 Fonds d'urgence HEC

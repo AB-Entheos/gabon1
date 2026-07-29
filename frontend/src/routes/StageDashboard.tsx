@@ -25,7 +25,7 @@ const STAGE_META_6: Record<number, { key: string; role: string; color: string; b
 
 const STAGE_META_3: Record<number, { key: string; role: string; color: string; bg: string; border: string; sub: string }> = {
   1: { key: "stage_cb",         role: "CB",          color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200", sub: "" },
-  2: { key: "stage_technical",   role: "TECHNICAL",   color: "text-sky-700",      bg: "bg-sky-50",      border: "border-sky-200",     sub: "AB Entheos · WCS · DGFC · DGFAP" },
+  2: { key: "stage_technical",   role: "TECHNICAL",   color: "text-sky-700",      bg: "bg-sky-50",      border: "border-sky-200",     sub: "pipeline.technical_sub" },
   3: { key: "stage_minister",    role: "MINISTER",    color: "text-rose-700",     bg: "bg-rose-50",     border: "border-rose-200",    sub: "" },
 };
 
@@ -74,7 +74,6 @@ export default function StageDashboard() {
         <KpiCard label={t("dash.stages.drafts", "Drafts")} value={stages?.drafts ?? 0} color="slate" />
         <KpiCard label={t("dash.stages.submitted", "Submitted")} value={stages?.submitted ?? 0} color="sky" />
         <KpiCard label={t("dash.stages.verified", "Verified")} value={stages?.verified ?? 0} color="sky" />
-        <KpiCard label={t("dash.stages.first_aid", "Accelerated benefit")} value={stages?.accelerated_benefit_released ?? 0} color="yellow" />
         <KpiCard label={t("dash.stages.approved", "Approved")} value={stages?.approved ?? 0} color="green" />
       </section>
 
@@ -124,11 +123,11 @@ export default function StageDashboard() {
                           <div className={`text-xs font-semibold uppercase tracking-wide ${meta.color}`}>
                             {t(`pipeline.${meta.key}`, meta.role)}
                           </div>
-                          <div className="text-[10px] text-slate-500">{meta.sub || meta.role}</div>
+                          <div className="text-[10px] text-slate-500">{meta.sub ? t(meta.sub, meta.sub) : meta.role}</div>
                         </div>
                       </div>
                       {isMine && (
-                        <span className="chip bg-emerald-100 text-emerald-700">YOU</span>
+                        <span className="chip bg-emerald-100 text-emerald-700">{t("dash.stages.you", "YOU")}</span>
                       )}
                     </div>
                     <div className="mt-3 flex items-end justify-between">
@@ -228,6 +227,7 @@ function TerminalCard({
 }
 
 function RecentCasesTable() {
+  const { t } = useTranslation();
   const { data } = useListCasesQuery();
   const lang = useSelector((s: RootState) => s.auth.language);
   if (!data) return null;
@@ -239,11 +239,11 @@ function RecentCasesTable() {
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
           <tr>
-            <th className="px-4 py-3">UID</th>
-            <th className="px-4 py-3">Claimant</th>
-            <th className="px-4 py-3">Type</th>
-            <th className="px-4 py-3">Step</th>
-            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">{t("table.uid", "UID")}</th>
+            <th className="px-4 py-3">{t("table.claimant", "Claimant")}</th>
+            <th className="px-4 py-3">{t("table.type", "Type")}</th>
+            <th className="px-4 py-3">{t("table.step", "Step")}</th>
+            <th className="px-4 py-3">{t("table.status", "Status")}</th>
           </tr>
         </thead>
         <tbody>
@@ -256,7 +256,7 @@ function RecentCasesTable() {
               </td>
               <td className="px-4 py-2 font-medium text-slate-900">{c.claimant_name}</td>
               <td className="px-4 py-2 text-slate-500">{c.case_type}</td>
-              <td className="px-4 py-2 text-slate-500">Step {c.current_step}</td>
+              <td className="px-4 py-2 text-slate-500">{t("dash.stages.step_prefix", "Step")} {c.current_step}</td>
               <td className="px-4 py-2"><StatusChip status={c.status} lang={lang} /></td>
             </tr>
           ))}

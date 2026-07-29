@@ -4,7 +4,6 @@ Drives the same code paths as the React UI:
   - CB creates draft case
   - Uploads 3 required case-file PNGs + 2 evidence PNGs
   - Submits, then walks the approval chain (AB → WCS → DGFC → DGFAP → Minister)
-  - Releases accelerated benefit at WCS
   - Sets amount at DGFAP
   - Closes at Admin
 Prints UX / process observations and recommendations at the end.
@@ -99,7 +98,7 @@ print("=" * 70)
 
 # 1. CB login
 SEED_PASSWORD = "HEC-Dev-2026!"
-cb_tok = login("cb@hec.local", SEED_PASSWORD)
+cb_tok = login("cb.libreville@hec.local", SEED_PASSWORD)
 print("[CB] logged in")
 
 # 2. Pick a village + form
@@ -160,15 +159,11 @@ print(f"[AB] identity: {me.get('email')} role={me.get('role')}")
 r = req("POST", f"/cases/{uid}/advance", token=ab_tok, body={"note": "AB review ok"})
 print(f"[AB] advance -> status={r.get('status')} step={r.get('current_step')}")
 
-# 9. WCS: set authorized amount + accelerated benefit + advance
+# 9. WCS: set authorized amount + advance
 wcs_tok = login("wcs@hec.local", SEED_PASSWORD)
 r = req("POST", f"/cases/{uid}/amount", token=wcs_tok,
         body={"amount_xaf": 450000, "reason": "Initial WCS amount"})
 print(f"[WCS] set amount (step 3) -> authorized={r.get('amount_authorized')}")
-r = req("POST", f"/cases/{uid}/accelerated-benefit", token=wcs_tok, body={"note": "Urgent need"})
-ab_status = r.get("accelerated_benefit_released", False)
-ab_amount = r.get("accelerated_benefit_amount_xaf", 0)
-print(f"[WCS] accelerated benefit -> released={ab_status} amount={ab_amount}")
 r = req("POST", f"/cases/{uid}/advance", token=wcs_tok, body={"note": "WCS review ok"})
 print(f"[WCS] advance -> status={r.get('status')} step={r.get('current_step')}")
 
@@ -231,8 +226,6 @@ print(f"  claimant        : {final.get('claimant_name')}")
 print(f"  status          : {final.get('status')}")
 print(f"  step            : {final.get('current_step')}")
 print(f"  amount_approved : {final.get('amount_authorized_xaf')}")
-print(f"  accel. benefit  : {final.get('accelerated_benefit_released')}"
-      f"  amount: {final.get('accelerated_benefit_amount_xaf')}")
 print(f"  events          : {len(events)}")
 print(f"  attachments     : {len(attachments)}")
 print()
@@ -295,7 +288,7 @@ PROCESS / UX ISSUES OBSERVED
      which approver is "current" from current_step. Better: a single
      endpoint that returns {current_role, sla_deadline, blocked, can_*}
      so the action panel can render "Advance as WCS" / "Set amount
-     (DGFAP)" / "Release accelerated benefit (WCS)" without a permissions
+     (DGFAP)" without a permissions
      lookup in the client.
 
   6. Dev-only PUT sink (/uploads/dev-put) is exposed in the URL conf

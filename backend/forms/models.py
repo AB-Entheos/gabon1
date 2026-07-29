@@ -95,6 +95,14 @@ class FormAttachment(models.Model):
         blank=True,
         related_name="deleted_attachments",
     )
+    superseded_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="supersedes",
+        help_text="If this attachment was replaced, points to the newer one.",
+    )
 
     class Meta:
         ordering = ["-uploaded_at"]

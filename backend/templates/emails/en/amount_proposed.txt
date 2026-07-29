@@ -10,6 +10,6 @@ Case details:
 - Amount proposed: {{ amount_xaf }} XAF
 
 Please review and authorize the amount in the dashboard:
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 HEC Emergency Fund

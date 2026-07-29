@@ -95,9 +95,8 @@ jobs:
             echo "==> Seeding production users..."
             sudo docker compose run --rm backend python manage.py seed_real_data || true
 
-            echo "==> Ensuring files directory is writable..."
+            echo "==> Ensuring files directory exists..."
             sudo mkdir -p /opt/hec/backend/files
-            sudo chmod -R 777 /opt/hec/backend/files
 
             echo "==> Restarting services..."
             sudo docker compose down

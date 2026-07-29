@@ -29,7 +29,6 @@ _TEMPLATE_DIR_MAP = {
     "case_verified": "case_verified",
     "amount_proposed": "amount_proposed",
     "amount_authorized": "amount_authorized",
-    "accelerated_benefit_released": "accelerated_benefit_released",
 }
 
 
@@ -44,8 +43,8 @@ def _template_path(notification_type: str, language: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def send_account_created(*, user) -> None:
-    """Notify the newly created user with their welcome email."""
+def send_account_created(*, user, temp_password: str = "") -> None:
+    """Notify the newly created user with their welcome email and one-time credentials."""
     from .tasks import send_notification_email
 
     lang = getattr(user, "preferred_language", "fr") or "fr"
@@ -53,7 +52,7 @@ def send_account_created(*, user) -> None:
         notification_type="account_created",
         recipient_email=user.email,
         language=lang,
-        template_context={"user": user},
+        template_context={"user": user, "temp_password": temp_password},
     )
 
 
@@ -234,22 +233,6 @@ def send_amount_authorized(*, case, actor=None) -> None:
                 "amount_xaf": case.amount_authorized,
                 "actor": actor,
             },
-        )
-
-
-def send_accelerated_benefit(*, case, amount_xaf: int) -> None:
-    """Notify CB + WCS that the accelerated benefit has been released."""
-    from accounts.models import User
-    from .tasks import send_notification_email
-
-    recipients = User.objects.filter(role__in=["CB", "WCS"], is_active=True)
-    for r in recipients:
-        lang = getattr(r, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="accelerated_benefit_released",
-            recipient_email=r.email,
-            language=lang,
-            template_context={"case": case, "amount_xaf": amount_xaf},
         )
 
 

@@ -12,6 +12,6 @@ Détails du dossier :
 Ce dossier nécessite désormais votre approbation finale.
 
 Ouvrir le dossier dans le tableau de bord :
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 Fonds d'urgence HEC

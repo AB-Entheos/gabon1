@@ -53,6 +53,7 @@ export default function DGFAPDashboard() {
 }
 
 function KpiCard({ label, value, color }: { label: string; value: number; color: "yellow" | "emerald" }) {
+  const { t } = useTranslation();
   const palette: Record<string, string> = {
     yellow: "bg-yellow-50 text-yellow-700 border-yellow-300",
     emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -62,7 +63,7 @@ function KpiCard({ label, value, color }: { label: string; value: number; color:
       <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</div>
       <div className="mt-2 flex items-end justify-between">
         <div className="text-3xl font-extrabold text-slate-900">{value}</div>
-        <span className={`chip border ${palette[color]}`}>{color === "yellow" ? "WAITING" : "READY"}</span>
+        <span className={`chip border ${palette[color]}`}>{color === "yellow" ? t("dash.dgfap.waiting", "WAITING") : t("dash.dgfap.ready", "READY")}</span>
       </div>
     </div>
   );
@@ -99,7 +100,7 @@ function AmountTable({ cases, lang }: { cases: Case[]; lang: "en" | "fr" }) {
               <td className="px-5 py-3 text-right font-mono font-semibold text-slate-900">
                 {c.amount_authorized ? formatXAF(Number(c.amount_authorized), lang) : (
                   <span className="inline-flex items-center gap-1 text-amber-600">
-                    <AlertCircle size={12} /> pending
+                    <AlertCircle size={12} /> {t("common.pending", "pending")}
                   </span>
                 )}
               </td>

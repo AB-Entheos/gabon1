@@ -13,6 +13,7 @@ export interface AuthUser {
   preferred_language: Language;
   is_2fa_enabled: boolean;
   requires_2fa: boolean;
+  must_change_password?: boolean;
 }
 
 interface AuthState {

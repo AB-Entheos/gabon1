@@ -88,9 +88,6 @@ export interface Case {
     | "CLOSED";
   amount_authorized: string | null;
   amount_proposed: string | null;
-  urgent_medical: boolean;
-  accelerated_benefit_released: boolean;
-  accelerated_benefit_amount_xaf: number | null;
   sla_deadline: string | null;
   created_by: number;
   created_by_email: string;
@@ -170,7 +167,7 @@ export const hecApi = createApi({
       query: () => "users/me",
       providesTags: ["Me"],
     }),
-    patchMe: build.mutation<User, Partial<Pick<User, "preferred_language" | "first_name" | "last_name">>>({
+    patchMe: build.mutation<User, Partial<Pick<User, "preferred_language" | "first_name" | "last_name" | "email">>>({
       query: (body) => ({
         url: "users/me",
         method: "PATCH",
@@ -606,7 +603,7 @@ export async function listAdminUsers(q?: string): Promise<{ results: AdminUser[]
   return adminJson(`/users${qs}`, { method: "GET" }, () => store.getState());
 }
 
-export async function createAdminUser(body: Partial<AdminUser> & { password?: string }): Promise<AdminUser> {
+export async function createAdminUser(body: Partial<AdminUser>): Promise<AdminUser> {
   const { store } = await import("@/store");
   return adminJson("/users", { method: "POST", body: JSON.stringify(body) }, () => store.getState());
 }

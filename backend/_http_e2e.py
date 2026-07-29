@@ -127,11 +127,6 @@ def main():
     assert body["current_step"] == 3, body
     print(f"   status={body['status']} step={body['current_step']}")
 
-    step("WCS: accelerated benefit (urgent)")
-    s, body = http("POST", f"/cases/{uid}/accelerated-benefit", token=wcs)
-    assert s == 200, f"accelerated: {s} {body}"
-    print(f"   accelerated benefit: {body.get('accelerated_benefit_amount_xaf')} XAF")
-
     step("WCS: advance")
     s, body = http("POST", f"/cases/{uid}/advance", token=wcs)
     assert s == 200, f"advance_wcs: {s} {body}"

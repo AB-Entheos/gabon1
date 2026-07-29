@@ -23,6 +23,7 @@ from .state_machine import (
     StateError,
     advance_transition_for_step,
     approver_role_for_step,
+    case_has_required_files,
     defer_for_step,
     transition,
 )
@@ -332,11 +333,19 @@ class CaseViewSet(ModelViewSet):
 
         Automatically selects the correct transition (advance_ab,
         advance_wcs, etc.) based on the case's current_step.
+
+        When advancing from step 2 (AB), required file uploads are verified.
         """
         case = self.get_object()
         if case.status not in (Case.Status.AT_APPROVAL, Case.Status.SUBMITTED):
             return Response(
                 {"detail": "Case is not in a state that can be advanced."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # File validation: AB advance (step 2→3) requires all required file slots
+        if case.current_step == 2 and not case_has_required_files(case):
+            return Response(
+                {"detail": "Required file uploads are missing. Please upload all required documents before advancing."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         notes = (request.data.get("notes") or "").strip()
@@ -565,19 +574,6 @@ class CaseViewSet(ModelViewSet):
                 "kind": "authorized" if event_type == Event.Type.AMOUNT_AUTHORIZED else "proposed",
                 "event_id": event.id,
             }
-        )
-
-    @action(detail=True, methods=["post"], url_path="accelerated-benefit")
-    def accelerated_benefit(self, request, uid=None):
-        """Accelerated benefit has been removed.
-
-        The full authorized amount is set by DGFAP at step 5 and approved by
-        the Minister at step 6. WCS then records multiple disbursements
-        against the authorized amount via POST /cases/{uid}/disbursements.
-        """
-        return Response(
-            {"detail": "Accelerated benefit has been removed. Use disbursements instead."},
-            status=status.HTTP_410_GONE,
         )
 
     @action(detail=True, methods=["post"], url_path="close")

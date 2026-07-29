@@ -11,6 +11,6 @@ Détails du dossier :
 - Montant autorisé : {{ case.amount_authorized|default:"-" }} FCFA
 
 Vous pouvez consulter l'historique complet du dossier dans le tableau de bord :
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 Fonds d'urgence HEC

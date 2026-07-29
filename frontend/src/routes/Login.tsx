@@ -48,7 +48,11 @@ export default function Login() {
       });
       const me: User = await meRes.json();
       dispatch(setCredentials({ user: me, access, refresh }));
-      navigate("/");
+      if (me.must_change_password) {
+        navigate("/profile?force_password=true");
+      } else {
+        navigate("/");
+      }
     } catch (e) {
       setError(String((e as Error).message));
     } finally {
@@ -94,8 +98,8 @@ export default function Login() {
             <GabonFlag />
           </div>
           <div>
-            <div className="text-lg font-bold">HEC Emergency Fund</div>
-            <div className="text-xs text-emerald-100">République Gabonaise</div>
+            <div className="text-lg font-bold">{t("app.name", "HEC Emergency Fund")}</div>
+            <div className="text-xs text-emerald-100">{t("login.republic", "République Gabonaise")}</div>
           </div>
         </div>
 
@@ -152,7 +156,7 @@ export default function Login() {
               <GabonFlag />
             </div>
             <div>
-              <div className="text-base font-bold text-slate-900 dark:text-slate-100">HEC Emergency Fund</div>
+              <div className="text-base font-bold text-slate-900 dark:text-slate-100">{t("app.name", "HEC Emergency Fund")}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">{t("login.subtitle_mobile", "Sign in to continue")}</div>
             </div>
           </div>
@@ -162,7 +166,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("login.email", "Email")}</label>
               <input
                 type="email"
                 value={email}
@@ -172,7 +176,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("login.password", "Password")}</label>
               <input
                 type="password"
                 value={password}

@@ -153,15 +153,6 @@ export default function CasePipeline({
           );
         })}
       </ol>
-      
-      {caseData.accelerated_benefit_released && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm">
-          <span className="chip chip-secondary">ACCELERATED_BENEFIT_RELEASED</span>
-          <span className="text-slate-600">
-            {t("pipeline.accelerated_benefit_released", "Accelerated benefit released (20% of ceiling).")}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

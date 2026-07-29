@@ -148,7 +148,8 @@ class Event(models.Model):
         DISBURSEMENT_UPDATED = "DISBURSEMENT_UPDATED", "Disbursement updated"
         DISBURSEMENT_DELETED = "DISBURSEMENT_DELETED", "Disbursement deleted"
         PROOF_UPLOADED = "PROOF_UPLOADED", "Proof of payment uploaded"
-        FILE_DELETED = "FILE_DELETED", "File deleted"
+        FILE_DELETED = "FILE_DELETED", "File deleted"  # legacy – kept for existing rows
+        FILE_SOFT_DELETED = "FILE_SOFT_DELETED", "File soft-deleted (retained for audit)"
         CLOSED = "CLOSED", "Closed"
         COMMENT = "COMMENT", "Comment"
 

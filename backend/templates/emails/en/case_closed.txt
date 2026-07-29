@@ -11,6 +11,6 @@ Case details:
 - Amount authorized: {{ case.amount_authorized|default:"-" }} XAF
 
 You can view the full case history in the dashboard:
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 HEC Emergency Fund

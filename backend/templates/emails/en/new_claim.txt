@@ -13,6 +13,6 @@ Case details:
 - Reported at: {{ case.reported_at }}
 
 Open the case in the dashboard:
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 HEC Emergency Fund

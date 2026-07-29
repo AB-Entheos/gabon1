@@ -123,15 +123,7 @@ TRANSITIONS: dict[str, Transition] = {
         to_status=None,
         description="DGFAP authorizes the amount at step 5 (locks amount_authorized).",
     ),
-    "wcs_close": Transition(
-        name="wcs_close",
-        event_type=Event.Type.CLOSED,
-        required_role="WCS",
-        from_step=6,
-        to_step=6,
-        to_status=Case.Status.CLOSED,
-        description="WCS closes the case after admin confirms payment.",
-    ),
+
     "reject": Transition(
         name="reject",
         event_type=Event.Type.REJECTED,
@@ -153,11 +145,11 @@ TRANSITIONS: dict[str, Transition] = {
     "close": Transition(
         name="close",
         event_type=Event.Type.CLOSED,
-        required_role="WCS",  # changed from None -> WCS is the closer
+        required_role="WCS",  # WCS or ADMIN can close (ADMIN exception in transition())
         from_step=6,
         to_step=6,
         to_status=Case.Status.CLOSED,
-        description="WCS closes the case after payment confirmation. Admin no longer closes.",
+        description="WCS or Admin closes the case after payment confirmation.",
     ),
     # Per-step defer transitions (step N → step N-1) are registered
     # at the very bottom of this module (after defer_for_step is defined).
@@ -277,9 +269,13 @@ def transition(
         raise StateError(_("Case is closed; no further transitions are allowed."))
 
     if t.required_role is not None and actor.role != t.required_role:
-        raise StateError(
-            _(f"Action '{action}' requires role {t.required_role}, not {actor.role}.")
-        )
+        # Special case: 'close' allows both WCS and ADMIN roles
+        if t.name == "close" and actor.role in ("WCS", "ADMIN"):
+            pass  # allowed
+        else:
+            raise StateError(
+                _(f"Action '{action}' requires role {t.required_role}, not {actor.role}.")
+            )
 
     if t.name in {"advance_ab", "advance_wcs", "advance_dgfc", "advance_dgfap", "approve_minister"}:
         if case.status != Case.Status.AT_APPROVAL:

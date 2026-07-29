@@ -12,6 +12,6 @@ Case details:
 Please verify the case details and proceed with the approval chain.
 
 Open the case in the dashboard:
-http://localhost:5173/cases/{{ case.uid }}
+{{ frontend_url }}/cases/{{ case.uid }}
 
 HEC Emergency Fund

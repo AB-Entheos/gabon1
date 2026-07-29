@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { Image as ImageIcon, FileText, Download, ExternalLink, Layers, Trash2 } from "lucide-react";
+import { Image as ImageIcon, FileText, Download, ExternalLink, Layers, RefreshCw } from "lucide-react";
 import { useDeleteAttachmentMutation, useListSubmissionsQuery } from "@/api/hecApi";
 import type { RootState } from "@/store";
 import { RoleBadge } from "@/components/StatusChip";
@@ -188,7 +188,7 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
                 className="btn-secondary border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
                 onClick={() => setPendingDelete(preview)}
               >
-                <Trash2 size={14} /> {t("case.gallery.delete", "Delete")}
+                <RefreshCw size={14} /> {t("case.gallery.replace", "Replace")}
               </button>
               <button className="btn-primary" onClick={() => setPreview(null)}>
                 <ExternalLink size={14} /> {t("common.close", "Close")}
@@ -202,12 +202,12 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => !deleting && setPendingDelete(null)}>
           <div className="card w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-semibold text-slate-900">
-              {t("case.gallery.delete_title", "Delete this file?")}
+              {t("case.gallery.replace_title", "Replace this file?")}
             </h3>
             <p className="mt-2 text-sm text-slate-600">
               {t(
-                "case.gallery.delete_body",
-                'Are you sure you want to delete "{{filename}}"? This cannot be undone.',
+                "case.gallery.replace_body",
+                'This will hide "{{filename}}" from the gallery and upload a new version. The original file is retained for audit purposes.',
                 { filename: pendingDelete.filename },
               )}
             </p>
@@ -222,7 +222,7 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
               </button>
               <button
                 type="button"
-                className="btn-primary bg-rose-600 hover:bg-rose-700"
+                className="btn-primary bg-amber-600 hover:bg-amber-700"
                 disabled={deleting}
                 data-testid="confirm-delete-attachment"
                 onClick={async () => {
@@ -235,11 +235,11 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
                     setPendingDelete(null);
                     setPreview(null);
                   } catch (err) {
-                    console.error("delete attachment failed", err);
+                    console.error("replace attachment failed", err);
                   }
                 }}
               >
-                <Trash2 size={14} /> {deleting ? t("common.deleting", "Deleting…") : t("case.gallery.delete", "Delete")}
+                <RefreshCw size={14} /> {deleting ? t("common.replacing", "Replacing…") : t("case.gallery.replace", "Replace")}
               </button>
             </div>
           </div>
@@ -299,11 +299,11 @@ function AttachmentTile({ att, onOpen, onDelete }: { att: AttachmentRow; onOpen:
           e.stopPropagation();
           onDelete();
         }}
-        title={t("case.gallery.delete", "Delete")}
-        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-white/90 text-rose-600 opacity-0 shadow-sm transition-opacity hover:bg-rose-50 hover:text-rose-700 group-hover:opacity-100"
+        title={t("case.gallery.replace", "Replace")}
+        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-white/90 text-amber-600 opacity-0 shadow-sm transition-opacity hover:bg-amber-50 hover:text-amber-700 group-hover:opacity-100"
         data-testid={`delete-tile-${att.id}`}
       >
-        <Trash2 size={10} />
+        <RefreshCw size={10} />
       </button>
 
     </div>
