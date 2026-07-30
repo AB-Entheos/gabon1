@@ -542,14 +542,9 @@ function ActionPanel({
                 try {
                   await onSetAmount(amt, reason);
                   setAmountSuccess(
-                    t("case.amount_proposed_success", "Amount of {{amount}} FCFA has been recorded. See the activity card below.")
+                    t("case.amount_proposed_success", "Amount of {{amount}} FCFA has been recorded. Click \"Advance to DGFAP\" below to continue.")
                       .replace("{{amount}}", amt.toLocaleString("fr-FR"))
                   );
-                  // Scroll to the activity card
-                  setTimeout(() => {
-                    const el = document.getElementById("case-timeline");
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }, 300);
                 } catch (e: any) {
                   const detail = e?.data?.detail || e?.detail || String(e);
                   setError(detail);

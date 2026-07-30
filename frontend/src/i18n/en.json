@@ -496,7 +496,7 @@
       "confirm": "Close Claim"
     },
     "amount_proposed": "Proposed",
-    "amount_proposed_success": "Amount of {{amount}} FCFA has been recorded. See the activity card below.",
+    "amount_proposed_success": "Amount of {{amount}} FCFA has been recorded. Click 'Advance to DGFAP' below to continue.",
     "error": {
       "missing_files": "Cannot advance: missing required files: {{slots}}"
     },

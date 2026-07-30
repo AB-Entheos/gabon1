@@ -496,7 +496,7 @@
       "confirm": "Clôturer le dossier"
     },
     "amount_proposed": "Proposé",
-    "amount_proposed_success": "Le montant de {{amount}} FCFA a été enregistré. Voir la carte d'activité ci-dessous.",
+    "amount_proposed_success": "Le montant de {{amount}} FCFA a été enregistré. Cliquez sur « Transmettre au DGFAP » ci-dessous pour continuer.",
     "error": {
       "missing_files": "Impossible de transmettre : fichiers requis manquants : {{slots}}"
     },
