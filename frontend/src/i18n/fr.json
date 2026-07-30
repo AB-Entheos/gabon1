@@ -556,6 +556,12 @@
     "max": "Doit être <= {max}",
     "locked": "Verrouillé par le dossier"
   },
+  "signature": {
+    "typed_label": "Tapez votre nom complet comme signature",
+    "placeholder": "Tapez votre nom complet",
+    "draw_label": "Ou dessinez votre signature ci-dessous :",
+    "clear": "Effacer"
+  },
 
   "theme": {
     "toggle_to_dark": "Passer en mode sombre",

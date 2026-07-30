@@ -556,6 +556,12 @@
     "max": "Must be <= {max}",
     "locked": "Locked from case"
   },
+  "signature": {
+    "typed_label": "Type your full name as your signature",
+    "placeholder": "Type your full name",
+    "draw_label": "Or draw your signature below:",
+    "clear": "Clear"
+  },
 
   "theme": {
     "toggle_to_dark": "Switch to dark mode",
