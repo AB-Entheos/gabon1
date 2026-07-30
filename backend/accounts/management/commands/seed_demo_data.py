@@ -72,20 +72,20 @@ INCIDENT_FORM_SCHEMA = {
     "title": {"en": "CB Incident Report", "fr": "Rapport d'incident CB"},
     "description": {
         "en": "Initial incident report submitted by a field reporter (CB or DP) within 48 hours of the event.",
-        "fr": "Rapport d'incident initial soumis par un rapporteur terrain (CB ou DP) dans les 48 heures suivant l'evenement.",
+        "fr": "Rapport d'incident initial soumis par un rapporteur terrain (CB ou DP) dans les 48 heures suivant l'événement.",
     },
     "fields": [
         {
             "id": "claimant_name",
             "type": "text",
-            "label": {"en": "Claimant full name", "fr": "Nom complet du requerant"},
-            "help": {"en": "As it appears on the national ID.", "fr": "Tel qu'il figure sur la piece d'identite."},
+            "label": {"en": "Claimant full name", "fr": "Nom complet du requérant"},
+            "help": {"en": "As it appears on the national ID.", "fr": "Tel qu'il figure sur la pièce d'identité."},
             "required": True,
         },
         {
             "id": "claimant_phone",
             "type": "tel",
-            "label": {"en": "Claimant phone", "fr": "Telephone du requerant"},
+            "label": {"en": "Claimant phone", "fr": "Téléphone du requérant"},
             "required": True,
         },
         {
@@ -98,14 +98,14 @@ INCIDENT_FORM_SCHEMA = {
             "id": "village_name_text",
             "type": "text",
             "label": {"en": "Village name", "fr": "Nom du village"},
-            "help": {"en": "Name of the village where the incident occurred.", "fr": "Nom du village ou l'incident a eu lieu."},
+            "help": {"en": "Name of the village where the incident occurred.", "fr": "Nom du village où l'incident a eu lieu."},
             "required": True,
         },
         {
             "id": "chef_de_village",
             "type": "text",
             "label": {"en": "Chef de village (village chief)", "fr": "Chef de village"},
-            "help": {"en": "Full name of the village chief who witnessed or reported the incident.", "fr": "Nom complet du chef de village temoin ou rapporteur."},
+            "help": {"en": "Full name of the village chief who witnessed or reported the incident.", "fr": "Nom complet du chef de village témoin ou rapporteur."},
             "required": False,
         },
         {
@@ -113,15 +113,15 @@ INCIDENT_FORM_SCHEMA = {
             "type": "select",
             "label": {"en": "Case type", "fr": "Type de dossier"},
             "options": [
-                {"value": "MEDICAL", "label": {"en": "Medical (injury)", "fr": "Medical (blessure)"}},
-                {"value": "BURIAL",  "label": {"en": "Burial (death)",   "fr": "Funeraire (deces)"}},
+                {"value": "MEDICAL", "label": {"en": "Medical (injury)", "fr": "Médical (blessure)"}},
+                {"value": "BURIAL",  "label": {"en": "Burial (death)",   "fr": "Funéraire (décès)"}},
             ],
             "required": True,
         },
         {
             "id": "elephant_count",
             "type": "number",
-            "label": {"en": "Number of elephants involved", "fr": "Nombre d'elephants impliques"},
+            "label": {"en": "Number of elephants involved", "fr": "Nombre d'éléphants impliqués"},
             "min": 1,
             "max": 20,
             "required": True,
@@ -129,19 +129,19 @@ INCIDENT_FORM_SCHEMA = {
         {
             "id": "witness_names",
             "type": "textarea",
-            "label": {"en": "Witness names (one per line)", "fr": "Noms des temoins (un par ligne)"},
+            "label": {"en": "Witness names (one per line)", "fr": "Noms des témoins (un par ligne)"},
         },
         {
             "id": "narrative",
             "type": "textarea",
             "label": {"en": "Incident narrative", "fr": "Description de l'incident"},
-            "help": {"en": "What happened, in chronological order.", "fr": "Ce qui s'est passe, dans l'ordre chronologique."},
+            "help": {"en": "What happened, in chronological order.", "fr": "Ce qui s'est passé, dans l'ordre chronologique."},
             "required": True,
         },
         {
             "id": "claimant_signature",
             "type": "signature",
-            "label": {"en": "Claimant signature", "fr": "Signature du requerant"},
+            "label": {"en": "Claimant signature", "fr": "Signature du requérant"},
             "required": True,
         },
     ],
