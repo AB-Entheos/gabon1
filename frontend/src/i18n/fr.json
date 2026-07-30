@@ -33,7 +33,11 @@
     "yes": "Oui",
     "no": "Non",
     "pending": "en attente",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "submit": "Soumettre",
+    "submitting": "Envoi…",
+    "deleting": "Suppression…",
+    "creating": "Création…"
   },
   "online": {
     "label": "En ligne",
@@ -162,6 +166,8 @@
     "urgent": "Besoin médical urgent",
     "urgent_hint": "Traitement prioritaire",
     "create": "Créer le brouillon",
+    "id_type": "Type de pièce",
+    "id_number": "Numéro de pièce",
     "village_name_text": "Nom du village",
     "village_name_placeholder": "Nom du village où l'incident a eu lieu",
     "chef_de_village": "Chef de village",
@@ -170,7 +176,34 @@
     "crop_type": "Type de culture",
     "area_destroyed_ha": "Superficie détruite (ha)",
     "estimated_loss_xaf": "Perte estimée (FCFA)",
-    "crop_ceiling_hint": "Plafond dégâts aux cultures : 400 000 FCFA."
+    "crop_ceiling_hint": "Plafond dégâts aux cultures : 400 000 FCFA.",
+    "date_of_birth": "Date de naissance",
+    "gender": "Genre",
+    "address": "Adresse",
+    "address_placeholder": "Adresse complète du requérant",
+    "incident_location": "Lieu de l'incident",
+    "incident_location_placeholder": "Où l'incident a-t-il eu lieu ?",
+    "relationship": "Lien de parenté avec le requérant"
+  },
+  "id_type": {
+    "national_id": "Carte nationale d'identité",
+    "passport": "Passeport",
+    "driver_license": "Permis de conduire",
+    "other": "Autre"
+  },
+  "gender": {
+    "select": "Sélectionner…",
+    "male": "Homme",
+    "female": "Femme",
+    "other": "Autre"
+  },
+  "relationship": {
+    "self": "Lui-même",
+    "spouse": "Conjoint(e)",
+    "parent": "Parent",
+    "child": "Enfant",
+    "sibling": "Frère / sœur",
+    "other": "Autre"
   },
   "closed": {
     "ready": {
@@ -312,7 +345,11 @@
       "dgfap_authorize_amount": "Autoriser le montant",
       "dgfap_authorize_hint": "Autoriser le montant final. Cela verrouille le montant pour le reste de la chaîne.",
       "propose_amount": "Proposer le montant",
-      "advance_to_dgfap": "Transmettre au DGFAP"
+      "advance_to_dgfap": "Transmettre au DGFAP",
+      "close_hint": "Enregistrer les décaissements, puis clôturer ce dossier.",
+      "amount_decider_authorized": "Montant autorisé. Revérifiez et transmettez au Ministre.",
+      "authorize_section": "Autorisation",
+      "dgfap_authorized": "Montant autorisé par le DGFAP"
     },
     "defer_modal": {
       "title": "Renvoyer ce dossier",
@@ -386,7 +423,13 @@
       "amount_positive": "Le montant doit être > 0.",
       "current_proof": "Actuel :",
       "proof_description": "Preuve de paiement pour le décaissement #{{id}}",
-      "recipient_name": "Nom du bénéficiaire"
+      "recipient_name": "Nom du bénéficiaire",
+      "recipient_kind_other": "Autre (préciser)",
+      "no_history": "Aucune activité de décaissement pour l'instant.",
+      "audit_trail": "Piste d'audit",
+      "delete_confirm": "Êtes-vous sûr de vouloir supprimer ce paiement ?",
+      "delete_hint": "Cette action sera enregistrée dans la piste d'audit. Le paiement ne comptera plus dans le budget.",
+      "delete": "Supprimer le paiement"
     },
     "files": {
       "title": "Fichiers du dossier",
@@ -434,7 +477,9 @@
       "title": "Approuver ce dossier ?",
       "body": "Le dossier sera transmis au prochain approbateur. Ajoutez un commentaire d'approbation optionnel pour la piste d'audit.",
       "notes_label": "Commentaire d'approbation (optionnel)",
-      "notes_placeholder": "ex. Identité vérifiée et reçu d'ambulance, transmission au WCS."
+      "notes_placeholder": "ex. Identité vérifiée et reçu d'ambulance, transmission au WCS.",
+      "success_title": "Dossier approuvé",
+      "success_body": "Le dossier a été transmis au prochain approbateur avec succès."
     },
     "reject_modal": {
       "title": "Rejeter ce dossier ?",
@@ -457,7 +502,14 @@
     "submit_button": "Soumettre le dossier",
     "submitted_hint": "Dossier soumis. Cliquez sur Vérifier pour transmettre à la chaîne d'approbation.",
     "close_claim": "Clôturer le dossier",
-    "close_no_disbursements": "Au moins un décaissement est requis avant la clôture."
+    "close_no_disbursements": "Au moins un décaissement est requis avant la clôture.",
+    "delete_case": "Supprimer le dossier",
+    "delete_modal": {
+      "title": "Supprimer ce dossier ?",
+      "body": "Cette action supprimera définitivement le dossier du système. La piste d'audit sera conservée. Cette action est irréversible.",
+      "confirm": "Supprimer le dossier"
+    },
+    "disbursement_warning": "{{disbursed}} sur {{authorized}} FCFA décaissés ({{pct}}%). Planifiez les paiements restants avec soin."
   },
   "disbursement": {
     "kind": {
@@ -475,13 +527,35 @@
       "DISBURSEMENT_UPDATED": "Paiement mis à jour",
       "DISBURSEMENT_DELETED": "Paiement supprimé",
       "PROOF_UPLOADED": "Preuve téléchargée"
-    }
+    },
+    "tab_details": "Détails",
+    "tab_edit": "Modifier",
+    "tab_proof": "Preuve",
+    "tab_history": "Historique"
   },
   "upload": {
     "file_type": "Type de fichier (optionnel)",
     "file_type_placeholder": "ex. reçu",
-    "max_size": "25 Mo max"
+    "max_size": "25 Mo max",
+    "cta": "Cliquez ou déposez des fichiers ici pour téléverser",
+    "many": "Sélectionnez 1 fichier ou plus",
+    "queued": "En file (hors ligne). Synchronisation à la reconnexion.",
+    "queued_n": "Prêt à téléverser ({{n}} fichier)",
+    "queued_n_plural": "Prêt à téléverser ({{n}} fichiers)",
+    "submit_button": "Envoyer",
+    "description_label": "Description / texte alternatif",
+    "description_placeholder": "Que montre ce document ?",
+    "uploader_label": "Téléversé par",
+    "uploader_placeholder": "ex. CB Jean Mboumba"
   },
+  "form": {
+    "required": "Obligatoire",
+    "invalid_number": "Doit être un nombre",
+    "min": "Doit être >= {min}",
+    "max": "Doit être <= {max}",
+    "locked": "Verrouillé par le dossier"
+  },
+
   "theme": {
     "toggle_to_dark": "Passer en mode sombre",
     "toggle_to_light": "Passer en mode clair"

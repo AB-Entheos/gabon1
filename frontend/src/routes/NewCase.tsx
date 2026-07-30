@@ -78,7 +78,7 @@ export default function NewCase() {
         claimant_id_number: idNumber,
         claimant_id_type: idType,
         claimant_date_of_birth: dateOfBirth || null,
-        claimant_gender: gender || null,
+        claimant_gender: gender || "",
         claimant_address: address,
         incident_location: incidentLocation,
         relationship_to_claimant: relationship,

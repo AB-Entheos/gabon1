@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck, CircleDollarSign, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck, CircleDollarSign, Loader2, Trash2 } from "lucide-react";
 import {
   useGetCaseQuery,
   useVerifyCaseMutation,
@@ -14,6 +14,7 @@ import {
   useSubmitCaseMutation,
   useGetFormQuery,
   useSubmitFormMutation,
+  useDeleteCaseMutation,
   closeCase,
 } from "@/api/hecApi";
 import type { RootState } from "@/store";
@@ -29,6 +30,7 @@ import DisbursementHistory from "@/components/DisbursementHistory";
 
 export default function CaseWorkspace() {
   const { uid } = useParams<{ uid: string }>();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const lang = useSelector((s: RootState) => s.auth.language);
   const user = useSelector((s: RootState) => s.auth.user);
@@ -45,13 +47,14 @@ export default function CaseWorkspace() {
   const [resumeCase] = useResumeCaseMutation();
   const [setAmount] = useSetAmountMutation();
   const [submitCase] = useSubmitCaseMutation();
+  const [deleteCaseMutation] = useDeleteCaseMutation();
   const [progressiveMissingSlots, setProgressiveMissingSlots] = useState<string[] | null>(null);
   const [, setProgressiveWarning] = useState<string | null>(null);
 
   if (isLoading) return <div className="p-6 text-slate-500">{t("common.loading")}</div>;
   if (!caseData) return <div className="p-6 text-rose-600">{t("case.not_found", "Case not found.")}</div>;
 
-  const isCB = (user?.role === "CB" || user?.role === "DP") && caseData.created_by === user.id;
+  const isCB = caseData.created_by === user.id;
   const isCurrentApprover =
     caseData.status === "AT_APPROVAL" &&
     caseData.current_approver_role === user?.role;
@@ -126,8 +129,15 @@ export default function CaseWorkspace() {
               )}
             </div>
             <div className="mt-1 text-xs">
-              {fmt(caseData.disbursement_summary.disbursed_xaf)} of {fmt(caseData.disbursement_summary.authorized_xaf)} FCFA disbursed
-              ({caseData.disbursement_summary.utilization_pct.toFixed(1)}%). Plan remaining payments carefully.
+              {t(
+                "case.disbursement_warning",
+                "{{disbursed}} of {{authorized}} FCFA disbursed ({{pct}}%). Plan remaining payments carefully.",
+                {
+                  disbursed: fmt(caseData.disbursement_summary.disbursed_xaf),
+                  authorized: fmt(caseData.disbursement_summary.authorized_xaf),
+                  pct: caseData.disbursement_summary.utilization_pct.toFixed(1),
+                },
+              )}
             </div>
           </div>
         </div>
@@ -225,11 +235,12 @@ export default function CaseWorkspace() {
                   result.warning ??
                     "This case was advanced with one or more required file slots still empty.",
                 );
+                void refetch();
               } else {
-                setProgressiveMissingSlots(null);
-                setProgressiveWarning(null);
+                // Case moved to next step — navigate away since the current
+                // approver may no longer have visibility.
+                navigate("/stages");
               }
-              void refetch();
             }}
             onReject={async (notes) => { await reject({ uid: caseData.uid, notes }).unwrap(); void refetch(); }}
             onDefer={async (notes) => { await deferCase({ uid: caseData.uid, notes }).unwrap(); void refetch(); }}
@@ -237,6 +248,9 @@ export default function CaseWorkspace() {
             onSetAmount={async (amount, reason) => {
               await setAmount({ uid: caseData.uid, amount_xaf: amount, reason }).unwrap();
               void refetch();
+            }}
+            onDelete={async () => {
+              await deleteCaseMutation(caseData.uid).unwrap();
             }}
           />
         </div>
@@ -287,18 +301,18 @@ function CaseMetadata({ caseData, lang }: { caseData: any; lang: "en" | "fr" }) 
           <>
             <Row
               label={t("case.disbursements.authorized", "Authorized")}
-              value={`${caseData.disbursement_summary.authorized_xaf.toLocaleString()} FCFA`}
+              value={formatXAF(Number(caseData.disbursement_summary.authorized_xaf), lang)}
               mono
             />
             <Row
               label={t("case.disbursements.disbursed", "Disbursed")}
-              value={`${caseData.disbursement_summary.disbursed_xaf.toLocaleString()} FCFA (${caseData.disbursement_summary.utilization_pct}%)`}
+              value={`${formatXAF(Number(caseData.disbursement_summary.disbursed_xaf), lang)} (${caseData.disbursement_summary.utilization_pct}%)`}
               mono
               accent={caseData.disbursement_summary.approaching_limit ? "yellow" : undefined}
             />
             <Row
               label={t("case.disbursements.remaining", "Remaining")}
-              value={`${caseData.disbursement_summary.remaining_xaf.toLocaleString()} FCFA`}
+              value={formatXAF(Number(caseData.disbursement_summary.remaining_xaf), lang)}
               mono
             />
           </>
@@ -345,7 +359,7 @@ const ROLE_FOR_STEP: Record<number, string> = {
 
 function ActionPanel({
   caseData, isCB, isCurrentApprover, isAdmin, lang, refetch,
-  onVerify, onSubmit, onAdvance, onReject, onDefer, onResume, onSetAmount,
+  onVerify, onSubmit, onAdvance, onReject, onDefer, onResume, onSetAmount, onDelete,
 }: {
   caseData: any; isCB: boolean; isCurrentApprover: boolean; isAdmin: boolean; lang: "en" | "fr";
   refetch: () => void;
@@ -356,6 +370,7 @@ function ActionPanel({
   onDefer: (notes: string) => Promise<void>;
   onResume: (notes: string) => Promise<void>;
   onSetAmount: (amount: number, reason: string) => Promise<void>;
+  onDelete: () => Promise<void>;
 }) {
   const { t } = useTranslation();
   const user = useSelector((s: RootState) => s.auth.user);
@@ -364,16 +379,18 @@ function ActionPanel({
   const [deferOpen, setDeferOpen] = useState(false);
   const [deferNotes, setDeferNotes] = useState("");
   const [approveOpen, setApproveOpen] = useState(false);
+  const [approveSuccess, setApproveSuccess] = useState(false);
   const [approveNotes, setApproveNotes] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectNotes, setRejectNotes] = useState("");
   const [closeOpen, setCloseOpen] = useState(false);
   const [closeComment, setCloseComment] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [amountSuccess, setAmountSuccess] = useState<string | null>(null);
 
-  const canDefer = isCurrentApprover && caseData.current_step >= 3;
+  const canDefer = isCurrentApprover && caseData.current_step >= 3 && !isCB;
   const isDeferred = caseData.status === "DEFERRED";
   const canResume =
     isDeferred &&
@@ -451,7 +468,7 @@ function ActionPanel({
               <button
                 className="btn-primary flex-1"
                 disabled={busy}
-                onClick={() => { setApproveNotes(""); setApproveOpen(true); }}
+                onClick={() => { setApproveNotes(""); setApproveSuccess(false); setApproveOpen(true); }}
                 data-testid="approve-button"
               >
                 <CheckCircle2 size={16} />
@@ -554,7 +571,7 @@ function ActionPanel({
             <button
               className="btn-primary w-full"
               disabled={busy}
-              onClick={() => { setApproveNotes(""); setApproveOpen(true); }}
+              onClick={() => { setApproveNotes(""); setApproveSuccess(false); setApproveOpen(true); }}
               data-testid="advance-to-dgfap"
             >
               <CheckCircle2 size={16} />
@@ -648,7 +665,7 @@ function ActionPanel({
                 <button
                   className="btn-primary w-full"
                   disabled={busy}
-                  onClick={() => { setApproveNotes(""); setApproveOpen(true); }}
+                  onClick={() => { setApproveNotes(""); setApproveSuccess(false); setApproveOpen(true); }}
                   data-testid="verify-and-send"
                 >
                   <CheckCircle2 size={16} />
@@ -763,54 +780,102 @@ function ActionPanel({
               .replace("{role}", caseData.current_approver_role ?? "—")}
           </p>
         )}
+
+        {isAdmin && (
+          <div className="pt-2 border-t border-slate-100">
+            <button
+              className="btn-danger w-full"
+              disabled={busy}
+              onClick={() => setDeleteOpen(true)}
+              data-testid="delete-case-button"
+            >
+              <Trash2 size={16} />
+              {t("case.delete_case", "Delete Case")}
+            </button>
+          </div>
+        )}
       </div>
 
       {approveOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => !busy && setApproveOpen(false)}>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => !busy && !approveSuccess && setApproveOpen(false)}>
           <div className="card w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} data-testid="approve-modal">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t("case.approve_modal.title", "Approve this case?")}
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              {t(
-                "case.approve_modal.body",
-                "The case will move to the next approver. Add an optional approval comment for the audit trail.",
-              )}
-            </p>
-            <div className="mt-3">
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t("case.approve_modal.notes_label", "Approval comment (optional)")}
-              </label>
-              <textarea
-                rows={3}
-                value={approveNotes}
-                onChange={(e) => setApproveNotes(e.target.value)}
-                className="input resize-none"
-                placeholder={t("case.approve_modal.notes_placeholder", "e.g. Verified ID and ambulance receipt, advancing to WCS.")}
-                data-testid="approve-notes"
-              />
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                className="btn-secondary"
-                onClick={() => setApproveOpen(false)}
-                disabled={busy}
-                data-testid="approve-cancel"
-              >
-                {t("common.no", "No")}
-              </button>
-              <button
-                className="btn-primary"
-                disabled={busy}
-                data-testid="approve-confirm"
-                onClick={async () => {
-                  await wrap(() => onAdvance(approveNotes.trim()));
-                  setApproveOpen(false);
-                }}
-              >
-                <CheckCircle2 size={14} /> {t("common.yes", "Yes")}
-              </button>
-            </div>
+            {approveSuccess ? (
+              /* ── Success state ── */
+              <div className="flex flex-col items-center py-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                  <CheckCircle2 size={40} className="text-emerald-600" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                  {t("case.approve_modal.success_title", "Case Approved")}
+                </h3>
+                <p className="mt-2 text-sm text-slate-500 text-center">
+                  {t("case.approve_modal.success_body", "The case has been advanced to the next approver successfully.")}
+                </p>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-base font-semibold text-slate-900">
+                  {t("case.approve_modal.title", "Approve this case?")}
+                </h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  {t(
+                    "case.approve_modal.body",
+                    "The case will move to the next approver. Add an optional approval comment for the audit trail.",
+                  )}
+                </p>
+                <div className="mt-3">
+                  <label className="mb-1 block text-xs font-semibold text-slate-600">
+                    {t("case.approve_modal.notes_label", "Approval comment (optional)")}
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={approveNotes}
+                    onChange={(e) => setApproveNotes(e.target.value)}
+                    className="input resize-none"
+                    placeholder={t("case.approve_modal.notes_placeholder", "e.g. Verified ID and ambulance receipt, advancing to WCS.")}
+                    data-testid="approve-notes"
+                  />
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => setApproveOpen(false)}
+                    disabled={busy}
+                    data-testid="approve-cancel"
+                  >
+                    {t("common.no", "No")}
+                  </button>
+                  <button
+                    className="btn-primary"
+                    disabled={busy}
+                    data-testid="approve-confirm"
+                    onClick={async () => {
+                      setBusy(true); setError(null);
+                      try {
+                        await onAdvance(approveNotes.trim());
+                        setApproveSuccess(true);
+                        setTimeout(() => navigate("/stages"), 1500);
+                      } catch (e: any) {
+                        const data = e?.data ?? e;
+                        let detail: string;
+                        if (typeof data === "string") detail = data;
+                        else if (data?.detail) detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+                        else detail = String(e);
+                        setError(detail);
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {busy ? (
+                      <span className="inline-flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> {t("common.saving", "Saving…")}</span>
+                    ) : (
+                      <><CheckCircle2 size={14} /> {t("common.yes", "Yes")}</>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -967,6 +1032,50 @@ function ActionPanel({
               >
                 <RotateCcw size={14} />
                 {t("case.defer_modal.confirm", "Send back")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => !busy && setDeleteOpen(false)}>
+          <div className="card w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} data-testid="delete-modal">
+            <h3 className="text-base font-semibold text-slate-900">
+              {t("case.delete_modal.title", "Delete this case?")}
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {t(
+                "case.delete_modal.body",
+                "This action will permanently remove the case from the system. The audit trail will be retained. This action cannot be undone.",
+              )}
+            </p>
+            <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+              <strong>{caseData.claimant_name}</strong> — {caseData.uid}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="btn-secondary"
+                onClick={() => setDeleteOpen(false)}
+                disabled={busy}
+                data-testid="delete-cancel"
+              >
+                {t("common.cancel", "Cancel")}
+              </button>
+              <button
+                className="btn-danger"
+                disabled={busy}
+                data-testid="delete-confirm"
+                onClick={async () => {
+                  await wrap(async () => {
+                    await onDelete();
+                  });
+                  setDeleteOpen(false);
+                  // Navigate back to case list after successful delete
+                  window.location.href = "/";
+                }}
+              >
+                <Trash2 size={14} /> {t("case.delete_modal.confirm", "Delete Case")}
               </button>
             </div>
           </div>

@@ -33,7 +33,11 @@
     "yes": "Yes",
     "no": "No",
     "pending": "pending",
-    "retry": "Retry"
+    "retry": "Retry",
+    "submit": "Submit",
+    "submitting": "Submitting…",
+    "deleting": "Deleting…",
+    "creating": "Creating…"
   },
   "online": {
     "label": "Online",
@@ -162,6 +166,8 @@
     "urgent": "Urgent medical need",
     "urgent_hint": "Flag for priority processing",
     "create": "Create draft",
+    "id_type": "ID type",
+    "id_number": "ID number",
     "village_name_text": "Village name",
     "village_name_placeholder": "Name of the village where the incident occurred",
     "chef_de_village": "Chef de village",
@@ -170,7 +176,34 @@
     "crop_type": "Crop type",
     "area_destroyed_ha": "Area destroyed (ha)",
     "estimated_loss_xaf": "Estimated loss (FCFA)",
-    "crop_ceiling_hint": "Crop-damage ceiling is 400,000 FCFA."
+    "crop_ceiling_hint": "Crop-damage ceiling is 400,000 FCFA.",
+    "date_of_birth": "Date of birth",
+    "gender": "Gender",
+    "address": "Address",
+    "address_placeholder": "Full address of the claimant",
+    "incident_location": "Incident location",
+    "incident_location_placeholder": "Where did the incident occur?",
+    "relationship": "Relationship to claimant"
+  },
+  "id_type": {
+    "national_id": "National ID",
+    "passport": "Passport",
+    "driver_license": "Driver License",
+    "other": "Other"
+  },
+  "gender": {
+    "select": "Select…",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other"
+  },
+  "relationship": {
+    "self": "Self",
+    "spouse": "Spouse",
+    "parent": "Parent",
+    "child": "Child",
+    "sibling": "Sibling",
+    "other": "Other"
   },
   "closed": {
     "ready": {
@@ -305,15 +338,18 @@
       "defer_help": "Send the case back one level for clarification or extra evidence. A comment is required.",
       "yours": "Stage {step} is yours to advance",
       "amount_decider": "You are the amount-decider. Review the proposed amount, authorize or propose a new amount, then verify.",
-      "amount_proposer": "You are the amount proposer. Propose an amount before advancing.",
+      "amount_proposer": "You are the amount proposer. Propose an amount to advance to DGFAP.",
       "dgfc_proposed": "DGFC Proposed Amount",
       "dgfc_propose_amount": "Propose amount",
       "dgfc_propose_hint": "Propose a draft amount for DGFAP to authorize. This is not yet locked.",
       "dgfap_authorize_amount": "Authorize amount",
       "dgfap_authorize_hint": "Authorize the final amount. This locks the amount for the rest of the chain.",
       "propose_amount": "Propose amount",
-      "amount_proposer": "You are the amount proposer. Propose an amount to advance to DGFAP.",
-      "advance_to_dgfap": "Advance to DGFAP"
+      "advance_to_dgfap": "Advance to DGFAP",
+      "close_hint": "Record disbursements, then close this claim.",
+      "amount_decider_authorized": "Amount authorized. Review and verify to send to the Minister.",
+      "authorize_section": "Authorization",
+      "dgfap_authorized": "DGFAP Authorized Amount"
     },
     "defer_modal": {
       "title": "Defer this case",
@@ -387,7 +423,13 @@
       "amount_positive": "Amount must be > 0.",
       "current_proof": "Current:",
       "proof_description": "Proof of payment for disbursement #{{id}}",
-      "recipient_name": "Recipient name"
+      "recipient_name": "Recipient name",
+      "recipient_kind_other": "Other (specify)",
+      "no_history": "No disbursement activity yet.",
+      "audit_trail": "Audit Trail",
+      "delete_confirm": "Are you sure you want to delete this payment?",
+      "delete_hint": "This action will be recorded in the audit trail. The payment will no longer count toward the budget.",
+      "delete": "Delete payment"
     },
     "files": {
       "title": "Case files",
@@ -435,7 +477,9 @@
       "title": "Approve this case?",
       "body": "The case will move to the next approver. Add an optional approval comment for the audit trail.",
       "notes_label": "Approval comment (optional)",
-      "notes_placeholder": "e.g. Verified ID and ambulance receipt, advancing to WCS."
+      "notes_placeholder": "e.g. Verified ID and ambulance receipt, advancing to WCS.",
+      "success_title": "Case Approved",
+      "success_body": "The case has been advanced to the next approver successfully."
     },
     "reject_modal": {
       "title": "Reject this case?",
@@ -458,7 +502,14 @@
     "submit_button": "Submit case",
     "submitted_hint": "Case submitted. Click Verify to advance to the approval chain.",
     "close_claim": "Close Claim",
-    "close_no_disbursements": "At least one disbursement is required before closing."
+    "close_no_disbursements": "At least one disbursement is required before closing.",
+    "delete_case": "Delete Case",
+    "delete_modal": {
+      "title": "Delete this case?",
+      "body": "This action will permanently remove the case from the system. The audit trail will be retained. This action cannot be undone.",
+      "confirm": "Delete Case"
+    },
+    "disbursement_warning": "{{disbursed}} of {{authorized}} FCFA disbursed ({{pct}}%). Plan remaining payments carefully."
   },
   "disbursement": {
     "kind": {
@@ -476,13 +527,35 @@
       "DISBURSEMENT_UPDATED": "Payment updated",
       "DISBURSEMENT_DELETED": "Payment deleted",
       "PROOF_UPLOADED": "Proof uploaded"
-    }
+    },
+    "tab_details": "Details",
+    "tab_edit": "Edit",
+    "tab_proof": "Proof",
+    "tab_history": "History"
   },
   "upload": {
     "file_type": "File type (optional)",
     "file_type_placeholder": "e.g. receipt",
-    "max_size": "25 MB max"
+    "max_size": "25 MB max",
+    "cta": "Click or drop files to upload",
+    "many": "Select 1 or more files",
+    "queued": "Queued (offline). Will sync when online.",
+    "queued_n": "Ready to upload ({{n}} file)",
+    "queued_n_plural": "Ready to upload ({{n}} files)",
+    "submit_button": "Submit",
+    "description_label": "Description / alt text",
+    "description_placeholder": "What does this document show?",
+    "uploader_label": "Uploaded by",
+    "uploader_placeholder": "e.g. CB Jean Mboumba"
   },
+  "form": {
+    "required": "Required",
+    "invalid_number": "Must be a number",
+    "min": "Must be >= {min}",
+    "max": "Must be <= {max}",
+    "locked": "Locked from case"
+  },
+
   "theme": {
     "toggle_to_dark": "Switch to dark mode",
     "toggle_to_light": "Switch to light mode"

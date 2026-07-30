@@ -494,7 +494,10 @@ function ExpandedCard({ caseUid, disbursement: d, isWCS, onClose }: {
               {tab === "edit" && <Pencil size={12} className="mr-1 inline" />}
               {tab === "proof" && <Upload size={12} className="mr-1 inline" />}
               {tab === "history" && <Clock size={12} className="mr-1 inline" />}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === "details" && t("disbursement.tab_details", "Details")}
+              {tab === "edit" && t("disbursement.tab_edit", "Edit")}
+              {tab === "proof" && t("disbursement.tab_proof", "Proof")}
+              {tab === "history" && t("disbursement.tab_history", "History")}
             </button>
           ))}
         </div>
