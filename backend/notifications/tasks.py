@@ -47,15 +47,10 @@ def do_send_email(
     ctx.setdefault("frontend_url", getattr(settings, "FRONTEND_URL", "https://hec.ab-entheos.com"))
 
     with translation.override(language):
-        # Render without HTML autoescaping — these are plain text emails.
+        # All email templates already include {% autoescape off %} — just render directly.
         from django.template.loader import get_template
-        from django.template import engines
-        raw_source = get_template(tpl_path).source
-        # Wrap in autoescape off to prevent & → &amp; etc. in plain text emails
-        safe_source = "{% autoescape off %}" + raw_source + "{% endautoescape %}"
-        engine = engines['django']
-        template = engine.from_string(safe_source)
-        raw = template.render(ctx)
+        tpl = get_template(tpl_path)
+        raw = tpl.render(ctx)
         lines = raw.strip().splitlines()
         if lines and lines[0].startswith("Subject:"):
             subject = lines[0].replace("Subject:", "", 1).strip()
