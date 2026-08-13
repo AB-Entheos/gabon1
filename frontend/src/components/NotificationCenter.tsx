@@ -23,6 +23,13 @@ export default function NotificationCenter() {
   const unread = data?.unread_count ?? 0;
 
   useEffect(() => {
+    if (!user || typeof Notification === "undefined") return;
+    const disabled = localStorage.getItem(`hec.desktop-disabled.${user.id}`) === "true";
+    setDesktopPermission(disabled ? "disabled" : Notification.permission);
+    if (!disabled && Notification.permission === "default") setOpen(true);
+  }, [user]);
+
+  useEffect(() => {
     if (!data || !user || desktopPermission === "disabled" || typeof Notification === "undefined" || Notification.permission !== "granted") return;
     const storageKey = `hec.desktop-notifications.${user.id}`;
     const previous = localStorage.getItem(storageKey);
