@@ -31,6 +31,13 @@ def _serialize(obj: Any) -> Any:
             "amount_authorized": getattr(obj, "amount_authorized", None),
             "current_step": getattr(obj, "current_step", ""),
             "status": getattr(obj, "status", ""),
+            # Case-specific fields used by email templates
+            "case_type": getattr(obj, "case_type", ""),
+            "get_case_type_display": getattr(obj, "get_case_type_display", lambda: "")(),
+            "incident_at": getattr(obj, "incident_at", None),
+            "reported_at": getattr(obj, "reported_at", None),
+            "village": getattr(getattr(obj, "village", None), "name", "")
+            or getattr(obj, "village_name_text", ""),
         }
     return obj
 
@@ -95,50 +102,57 @@ def send_password_reset(*, user, reset_url: str) -> None:
 
 
 def send_new_claim(*, case, recipients=None) -> None:
-    """Notify relevant parties when a new case is submitted.
+    """Notify all active users when a new case is created.
 
-    By default all DGFC+DGFAP+ADMIN+SUPER_ADMIN users are notified.
+    Every user receives an email; the case creator is excluded.
     An explicit *recipients* queryset overrides this.
+
+    Sends synchronously via Resend — critical notification must not be
+    silently dropped by a broken Celery broker.
     """
     from accounts.models import User
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     if recipients is None:
-        recipients = User.objects.filter(
-            role__in=["DGFC", "DGFAP", "ADMIN", "SUPER_ADMIN"],
-            is_active=True,
-        )
+        recipients = User.objects.filter(is_active=True)
 
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="new_claim",
-            recipient_email=r.email,
-            language=lang,
-            template_context={"case": _serialize(case), "recipient": _serialize(r)},
-        )
+        try:
+            do_send_email(
+                notification_type="new_claim",
+                recipient_email=r.email,
+                language=lang,
+                template_context={"case": _serialize(case), "recipient": _serialize(r)},
+            )
+        except Exception:
+            # Individual email failures must never block case creation.
+            pass
 
 
 def send_case_submitted(*, case) -> None:
     """Notify the AB Entheos that a case has been submitted and is awaiting verification."""
     from accounts.models import User
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     recipients = User.objects.filter(role="AB", is_active=True)
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="case_submitted",
-            recipient_email=r.email,
-            language=lang,
-            template_context={"case": _serialize(case), "recipient": _serialize(r)},
-        )
+        try:
+            do_send_email(
+                notification_type="case_submitted",
+                recipient_email=r.email,
+                language=lang,
+                template_context={"case": _serialize(case), "recipient": _serialize(r)},
+            )
+        except Exception:
+            pass
 
 
 def send_case_verified(*, case) -> None:
     """Notify the next approver that a case has been verified."""
     from cases.state_machine import approver_role_for_step, StateError
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     try:
         next_role = approver_role_for_step(case.current_step)
@@ -150,60 +164,72 @@ def send_case_verified(*, case) -> None:
     recipients = User.objects.filter(role=next_role, is_active=True)
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="case_verified",
-            recipient_email=r.email,
-            language=lang,
-            template_context={"case": _serialize(case), "recipient": _serialize(r), "step": case.current_step},
-        )
+        try:
+            do_send_email(
+                notification_type="case_verified",
+                recipient_email=r.email,
+                language=lang,
+                template_context={"case": _serialize(case), "recipient": _serialize(r), "step": case.current_step},
+            )
+        except Exception:
+            pass
 
 
 def send_case_approved(*, case) -> None:
     """Notify the CB that a case has been fully approved."""
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     if case.created_by:
         lang = getattr(case.created_by, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="case_approved",
-            recipient_email=case.created_by.email,
-            language=lang,
-            template_context={"case": _serialize(case), "step": case.current_step},
-        )
+        try:
+            do_send_email(
+                notification_type="case_approved",
+                recipient_email=case.created_by.email,
+                language=lang,
+                template_context={"case": _serialize(case), "step": case.current_step},
+            )
+        except Exception:
+            pass
 
 
 def send_case_rejected(*, case, actor=None) -> None:
     """Notify the CB that a case was rejected."""
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     if case.created_by:
         lang = getattr(case.created_by, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="case_rejected",
-            recipient_email=case.created_by.email,
-            language=lang,
-            template_context={"case": _serialize(case), "actor": _serialize(actor)},
-        )
+        try:
+            do_send_email(
+                notification_type="case_rejected",
+                recipient_email=case.created_by.email,
+                language=lang,
+                template_context={"case": _serialize(case), "actor": _serialize(actor)},
+            )
+        except Exception:
+            pass
 
 
 def send_case_deferred(*, case, actor=None) -> None:
     """Notify the CB that a case was deferred (sent back for clarification)."""
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     if case.created_by:
         lang = getattr(case.created_by, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="case_deferred",
-            recipient_email=case.created_by.email,
-            language=lang,
-            template_context={"case": _serialize(case), "actor": _serialize(actor), "step": case.current_step},
-        )
+        try:
+            do_send_email(
+                notification_type="case_deferred",
+                recipient_email=case.created_by.email,
+                language=lang,
+                template_context={"case": _serialize(case), "actor": _serialize(actor), "step": case.current_step},
+            )
+        except Exception:
+            pass
 
 
 def send_case_closed(*, case, actor=None) -> None:
     """Notify relevant parties that a case has been closed after payment."""
     from accounts.models import User
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     # Notify CB + DGFC + DGFAP
     recipients = set()
@@ -213,52 +239,61 @@ def send_case_closed(*, case, actor=None) -> None:
 
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="case_closed",
-            recipient_email=r.email,
-            language=lang,
-            template_context={"case": _serialize(case), "actor": _serialize(actor), "recipient": _serialize(r)},
-        )
+        try:
+            do_send_email(
+                notification_type="case_closed",
+                recipient_email=r.email,
+                language=lang,
+                template_context={"case": _serialize(case), "actor": _serialize(actor), "recipient": _serialize(r)},
+            )
+        except Exception:
+            pass
 
 
 def send_amount_proposed(*, case, actor=None) -> None:
     """Notify the DGFAP that an amount has been proposed by DGFC."""
     from accounts.models import User
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     recipients = User.objects.filter(role="DGFAP", is_active=True)
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="amount_proposed",
-            recipient_email=r.email,
-            language=lang,
-            template_context={
-                "case": _serialize(case),
-                "amount_xaf": case.amount_proposed,
-                "actor": _serialize(actor),
-            },
-        )
+        try:
+            do_send_email(
+                notification_type="amount_proposed",
+                recipient_email=r.email,
+                language=lang,
+                template_context={
+                    "case": _serialize(case),
+                    "amount_xaf": case.amount_proposed,
+                    "actor": _serialize(actor),
+                },
+            )
+        except Exception:
+            pass
 
 
 def send_amount_authorized(*, case, actor=None) -> None:
     """Notify the Minister that an amount has been authorized by DGFAP."""
     from accounts.models import User
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     recipients = User.objects.filter(role="MINISTER", is_active=True)
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="amount_authorized",
-            recipient_email=r.email,
-            language=lang,
-            template_context={
-                "case": _serialize(case),
-                "amount_xaf": case.amount_authorized,
-                "actor": _serialize(actor),
-            },
-        )
+        try:
+            do_send_email(
+                notification_type="amount_authorized",
+                recipient_email=r.email,
+                language=lang,
+                template_context={
+                    "case": _serialize(case),
+                    "amount_xaf": case.amount_authorized,
+                    "actor": _serialize(actor),
+                },
+            )
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -269,7 +304,7 @@ def send_amount_authorized(*, case, actor=None) -> None:
 def notify_approver(case, from_step: int | None = None) -> None:
     """Compatibility shim used by approvals.notifications — sends approver email."""
     from cases.state_machine import approver_role_for_step, StateError
-    from .tasks import send_notification_email
+    from .tasks import do_send_email
 
     if case.status == "AT_APPROVAL":
         try:
@@ -287,9 +322,12 @@ def notify_approver(case, from_step: int | None = None) -> None:
             return
 
         lang = getattr(recipient, "preferred_language", "fr") or "fr"
-        send_notification_email.delay(
-            notification_type="case_approved",
-            recipient_email=recipient.email,
-            language=lang,
-            template_context={"case": _serialize(case), "step": case.current_step, "role": role},
-        )
+        try:
+            do_send_email(
+                notification_type="case_verified",
+                recipient_email=recipient.email,
+                language=lang,
+                template_context={"case": _serialize(case), "step": case.current_step, "role": role},
+            )
+        except Exception:
+            pass

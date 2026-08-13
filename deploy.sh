@@ -86,9 +86,8 @@ else
     exit 1
 fi
 
-echo "[7/9] Seed demo data (idempotent — always runs)"
-cd "$BACKEND_DIR"
-$COMPOSE_CMD run --rm backend python manage.py seed_demo_data || true
+echo "[7/9] Seed demo data (SKIPPED on production — real data present)"
+echo "  Skipped. seed_demo_data would overwrite real production users."
 
 echo "[8/9] Seed real production users (only if --seed-real flag passed)"
 if [[ "$SEED_REAL" -eq 1 ]]; then

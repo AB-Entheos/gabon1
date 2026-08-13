@@ -10,7 +10,7 @@ class FundSettings(models.Model):
     """Singleton row. Per-case ceilings."""
 
     medical_ceiling_xaf = models.PositiveIntegerField(default=2_000_000)
-    burial_ceiling_xaf = models.PositiveIntegerField(default=1_500_000)
+    burial_ceiling_xaf = models.PositiveIntegerField(default=3_000_000)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -48,6 +48,7 @@ class Case(models.Model):
         REJECTED = "REJECTED", "Rejected"
         DEFERRED = "DEFERRED", "Deferred"
         CLOSED = "CLOSED", "Closed"
+        DELETED = "DELETED", "Deleted"
 
     uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     case_type = models.CharField(max_length=16, choices=Type.choices, default=Type.MEDICAL)
@@ -134,6 +135,14 @@ class Case(models.Model):
         on_delete=models.PROTECT,
         related_name="created_cases",
     )
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="deleted_cases",
+    )
 
     class Meta:
         ordering = ["-reported_at"]
@@ -168,6 +177,7 @@ class Event(models.Model):
         FILE_SOFT_DELETED = "FILE_SOFT_DELETED", "File soft-deleted (retained for audit)"
         FILE_SUPERSEDED = "FILE_SUPERSEDED", "File replaced (old version retained for history)"
         CLOSED = "CLOSED", "Closed"
+        CASE_DELETED = "CASE_DELETED", "Case deleted"
         COMMENT = "COMMENT", "Comment"
 
     case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="events")
