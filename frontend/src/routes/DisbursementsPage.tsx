@@ -32,10 +32,10 @@ export default function DisbursementsPage() {
           {t("nav.disbursements")}
         </div>
         <h1 className="mt-1 text-3xl font-bold text-slate-900">
-          {t("dash.wcs_disburse.title", "Minister Approved — Disbursements")}
+          {t("dash.wcs_disburse.title", "DGFAP Approved — Payment Initiation")}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          {t("dash.wcs_disburse.subtitle", "Cases approved by the Minister, ready for disbursement processing.")}
+          {t("dash.wcs_disburse.subtitle", "Cases approved by DGFAP, ready for payment processing.")}
         </p>
       </header>
 
@@ -81,7 +81,7 @@ export default function DisbursementsPage() {
         )}
         {data && cases.length === 0 && (
           <div className="p-10 text-center text-slate-500">
-            {t("dash.wcs_disburse.empty", "No minister-approved cases pending disbursement.")}
+            {t("dash.wcs_disburse.empty", "No DGFAP-approved cases pending payment.")}
           </div>
         )}
         {data && cases.length > 0 && <DisbursementsTable cases={cases} lang={lang} />}

@@ -29,9 +29,9 @@ type Item = {
 const ITEMS: Item[] = [
   { to: "/", icon: LayoutDashboard, key: "dashboard", roles: "all" },
   { to: "/stages", icon: Layers, key: "stages", roles: "all" },
-  { to: "/cases/new", icon: FilePlus, key: "new_case", roles: ["CB", "DP"] },
+  { to: "/cases/new", icon: FilePlus, key: "new_case", roles: "all" },
   { to: "/cases", icon: FileStack, key: "cases", roles: "all" },
-  { to: "/queue", icon: ClipboardList, key: "committee", roles: ["AB", "WCS", "DGFC", "DGFAP", "MINISTER"] },
+  { to: "/queue", icon: ClipboardList, key: "committee", roles: ["AB", "WCS", "DGFC", "DGFAP", "SUPER_ADMIN"] },
   { to: "/disbursements", icon: Banknote, key: "disbursements", roles: ["WCS"] as Role[] },
   { to: "/audit", icon: ScrollText, key: "audit", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
   { to: "/reports", icon: BarChart3, key: "reports", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
@@ -115,7 +115,7 @@ export default function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean;
         ))}
       </nav>
       <div className="border-t border-slate-200 p-4 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
-        {t("app.version", "v0.2.0 · Gabon 2026")}
+        {t("app.version", "v1.0.1 · Gabon 2026")}
       </div>
     </aside>
 
@@ -176,7 +176,7 @@ export default function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean;
               ))}
             </nav>
             <div className="border-t border-slate-200 p-4 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
-              {t("app.version", "v0.2.0 · Gabon 2026")}
+              {t("app.version", "v1.0.1 · Gabon 2026")}
             </div>
           </aside>
         </div>

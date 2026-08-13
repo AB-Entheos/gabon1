@@ -14,6 +14,7 @@ GET /api/v1/cases-stages returns:
 """
 from __future__ import annotations
 
+from django.db.models import Q
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -33,13 +34,24 @@ def cases_stages(request):
     stage-dashboard cards.
     """
     u: User = request.user
-    qs = Case.objects.all()
+    qs = Case.objects.exclude(deleted_at__isnull=False)
 
-    if u.role in u.FIELD_REPORTER_ROLES:
+    if u.role in ("ADMIN", "SUPER_ADMIN"):
+        # Admins see everything
+        pass
+    elif u.role in ("CB", "DP"):
+        # Field reporters see only their own cases
         qs = qs.filter(created_by=u)
-    elif u.role not in ("ADMIN", "SUPER_ADMIN"):
-        # Approvers see all non-draft cases
-        qs = qs.exclude(status=Case.Status.DRAFT)
+    else:
+        # Approvers see their own cases + cases at their step
+        from cases.state_machine import APPROVER_FOR_STEP
+        own = Q(created_by=u)
+        at_my_step = Q(
+            status__in=[Case.Status.AT_APPROVAL, Case.Status.SUBMITTED, Case.Status.DEFERRED],
+            current_step__in=[step for step, role in APPROVER_FOR_STEP.items() if role == u.role],
+        )
+        submitted = Q(status=Case.Status.SUBMITTED) if u.role == "AB" else Q()
+        qs = qs.filter(own | at_my_step | submitted)
 
     by_step = {str(s): qs.filter(
         status=Case.Status.AT_APPROVAL, current_step=s

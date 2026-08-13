@@ -149,7 +149,7 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "HEC Emergency Fund API",
     "DESCRIPTION": "Approval chain for human–elephant conflict compensation claims in Gabon.",
-    "VERSION": "0.1.0",
+    "VERSION": "1.0.1",
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": r"/api/v1",
     "CAMELIZE_NAMES": False,
@@ -199,7 +199,7 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="hec@ab-entheos.com")
 FRONTEND_URL = config("FRONTEND_URL", default="https://hec.ab-entheos.com")
 
 MEDICAL_CEILING_XAF = 2_000_000
-BURIAL_CEILING_XAF = 1_500_000
+BURIAL_CEILING_XAF = 3_000_000
 
 LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"

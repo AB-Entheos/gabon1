@@ -2,7 +2,7 @@ Subject: Nouveau dossier d'indemnisation HEC soumis
 
 Bonjour,
 
-Un nouveau dossier d'indemnisation a été soumis sur la plateforme du Fonds d'urgence HEC.
+Un nouveau dossier a été soumis sur la plateforme du Fonds d'urgence HEC.
 
 Détails du dossier :
 - ID du dossier : {{ case.uid }}

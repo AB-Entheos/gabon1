@@ -1,0 +1,17 @@
+Subject: Desktop notifications enabled — HEC Emergency Fund
+
+Hello {{ user.first_name|default:"" }},
+
+You have enabled desktop notifications for the HEC Emergency Fund.
+
+You will receive both email notifications and desktop notifications when:
+- a case you created changes status; or
+- an action or review is required from you.
+
+You can manage browser notification permissions in your browser site settings.
+
+Open the HEC Emergency Fund dashboard:
+{{ frontend_url }}
+
+HEC Emergency Fund
+Pipeline d'approbation des dossiers HEC

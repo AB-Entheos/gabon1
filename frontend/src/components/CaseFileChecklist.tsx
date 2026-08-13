@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useSelector } from "react-redux";
-import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, RefreshCw, X, History, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, FileText, Image as ImageIcon, FileType2, Download, ExternalLink, RefreshCw, X, History, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useDeleteAttachmentMutation,
   useListSlotHistoryQuery,
@@ -48,7 +48,7 @@ const REQUIRED_FILE_SLOTS: Record<string, Slot[]> = {
   MEDICAL: [
     { id: "medical_report", labelKey: "case.files.slot_medical_report" },
     { id: "claimant_id", labelKey: "case.files.slot_claimant_id" },
-    { id: "receipt", labelKey: "case.files.slot_receipt" },
+    { id: "ambulance_receipt", labelKey: "case.files.slot_ambulance_receipt" },
   ],
   BURIAL: [
     { id: "death_certificate", labelKey: "case.files.slot_death_certificate" },
@@ -389,7 +389,7 @@ export default function CaseFileChecklist({ caseUid, caseType }: Props) {
           className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
           onClick={() => setPreviewFile(null)}
         >
-          <div className="card w-full max-w-3xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="card w-full max-w-5xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <button
@@ -619,6 +619,7 @@ function PreviewBody({ caseUid, file }: { caseUid: string; file: FileRow }) {
     mime: file.mime,
   });
   const isImg = file.mime.startsWith("image/");
+  const isPdf = file.mime.toLowerCase() === "application/pdf";
   if (isImg && url) {
     return (
       <img
@@ -633,6 +634,34 @@ function PreviewBody({ caseUid, file }: { caseUid: string; file: FileRow }) {
       <div className="flex flex-col items-center gap-2 text-slate-500">
         <ImageIcon size={48} />
         <p className="text-xs">{file.mime}</p>
+      </div>
+    );
+  }
+  if (isPdf && url) {
+    return (
+      <div className="w-full">
+        <iframe
+          src={url}
+          title={file.filename}
+          className="h-[65vh] min-h-[420px] w-full rounded-md border border-slate-200 bg-white"
+        />
+        <div className="mt-3 flex justify-center">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+          >
+            <ExternalLink size={14} /> View PDF in new tab
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (isPdf) {
+    return (
+      <div className="flex min-h-24 flex-col items-center justify-center gap-2 text-slate-500">
+        <FileType2 size={48} />
+        <p className="text-xs">Loading PDF preview…</p>
       </div>
     );
   }

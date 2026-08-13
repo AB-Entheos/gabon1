@@ -2,9 +2,8 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export type Role = "CB" | "DP" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN" | "SUPER_ADMIN";
 
-// Field-reporting roles — can open cases, attach files, and submit for review.
-// Used by the sidebar, dashboard routing, and case-create guards.
-export const FIELD_REPORTER_ROLES: Role[] = ["CB", "DP"];
+// All authenticated users can create new cases.
+export const FIELD_REPORTER_ROLES: Role[] = ["CB", "DP", "AB", "WCS", "DGFC", "DGFAP", "MINISTER", "ADMIN", "SUPER_ADMIN"];
 export type Language = "en" | "fr";
 export type Theme = "light" | "dark";
 
@@ -12,12 +11,17 @@ export interface AuthUser {
   id: number;
   email: string;
   role: Role;
+  roles?: Role[];
   first_name?: string;
   last_name?: string;
   preferred_language: Language;
   is_2fa_enabled: boolean;
   requires_2fa: boolean;
   must_change_password?: boolean;
+}
+
+export function userHasRole(user: AuthUser | null, role: Role): boolean {
+  return !!user && (user.roles?.includes(role) ?? user.role === role);
 }
 
 interface AuthState {

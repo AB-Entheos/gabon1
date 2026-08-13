@@ -1,0 +1,25 @@
+Subject: Décaissement enregistré pour le dossier {{ case.uid }}
+
+Bonjour,
+
+Un décaissement WCS a été enregistré pour le dossier HEC ci-dessous.
+
+Requérant :           {{ case.claimant_name }}
+Type de dossier :     {{ case.case_type }}
+Décaissement :        {{ disbursement.amount_xaf }} XAF
+Bénéficiaire :        {{ disbursement.recipient_name }}
+Type de bénéficiaire : {{ disbursement.recipient_kind }}
+Objet :               {{ disbursement.purpose }}
+Date de paiement :    {{ disbursement.payment_date }}
+Référence :           {{ disbursement.payment_reference|default:"-" }}
+Enregistré par :      {{ disbursement.paid_by }}
+
+Total décaissé :      {{ disbursement.disbursed_total_xaf }} XAF
+Restant :             {{ disbursement.remaining_xaf }} XAF
+Autorisé :            {{ disbursement.authorized_xaf }} XAF
+
+Ouvrir le dossier dans le tableau de bord :
+{{ frontend_url }}/cases/{{ case.uid }}
+
+Fonds d'urgence HEC
+Circuit d'approbation des dossiers HEC

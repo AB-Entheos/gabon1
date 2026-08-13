@@ -6,11 +6,11 @@ without going through `transition()`.
 
 The chain is strictly sequential:
 
-  ① CB → ② AB Entheos → ③ WCS → ④ DGFC → ⑤ DGFAP → ⑥ Minister
+    ① CB → ② AB Entheos → ③ WCS → ④ DGFC → ⑤ DGFAP → APPROVED
 
-DGFAP (step 5) is the amount-decider. DGFAP's advance is only valid if
-`amount_authorized` has been set on the case (separately, via
-`/cases/{uid}/amount`). The Minister step is the terminal approval.
+DGFAP (step 5) is the amount-decider and final approver. DGFAP's advance is
+only valid if `amount_authorized` has been set on the case (separately, via
+`/cases/{uid}/amount`).
 
 Reject-bounce-back: any current approver may transition the case back to
 REJECTED with a note. From REJECTED the case can be re-submitted by CB.
@@ -90,20 +90,12 @@ TRANSITIONS: dict[str, Transition] = {
     ),
     "advance_dgfap": Transition(
         name="advance_dgfap",
-        event_type=Event.Type.ADVANCED,
+        event_type=Event.Type.APPROVED,
         required_role="DGFAP",
         from_step=5,
-        to_step=6,
-        to_status=Case.Status.AT_APPROVAL,
-    ),
-    "approve_minister": Transition(
-        name="approve_minister",
-        event_type=Event.Type.APPROVED,
-        required_role="MINISTER",
-        from_step=6,
-        to_step=6,
+        to_step=5,
         to_status=Case.Status.APPROVED,
-        description="Minister terminal approval. case AT_APPROVAL(6) → APPROVED.",
+        description="DGFAP terminal approval. case AT_APPROVAL(5) → APPROVED.",
     ),
     "dgfc_propose_amount": Transition(
         name="dgfc_propose_amount",
@@ -146,8 +138,8 @@ TRANSITIONS: dict[str, Transition] = {
         name="close",
         event_type=Event.Type.CLOSED,
         required_role="WCS",  # WCS or ADMIN can close (ADMIN exception in transition())
-        from_step=6,
-        to_step=6,
+        from_step=5,
+        to_step=5,
         to_status=Case.Status.CLOSED,
         description="WCS or Admin closes the case after payment confirmation.",
     ),
@@ -162,7 +154,6 @@ APPROVER_FOR_STEP = {
     3: "WCS",
     4: "DGFC",
     5: "DGFAP",
-    6: "MINISTER",
 }
 
 ADVANCE_FOR_STEP = {
@@ -170,7 +161,6 @@ ADVANCE_FOR_STEP = {
     3: "advance_wcs",
     4: "advance_dgfc",
     5: "advance_dgfap",
-    6: "approve_minister",
 }
 
 # Map step → role that owns it (used by the defer UI to say "back to AB Entheos").
@@ -180,11 +170,10 @@ ROLE_FOR_STEP = {
     3: "WCS",
     4: "DGFC",
     5: "DGFAP",
-    6: "MINISTER",
 }
 
 REQUIRED_FILE_SLOTS: dict[str, list[str]] = {
-    Case.Type.MEDICAL: ["medical_report", "claimant_id", "receipt"],
+    Case.Type.MEDICAL: ["medical_report", "claimant_id", "ambulance_receipt"],
     Case.Type.BURIAL: ["death_certificate", "claimant_id", "funeral_receipt"],
 }
 
@@ -273,16 +262,18 @@ def transition(
     if case.status == Case.Status.CLOSED:
         raise StateError(_("Case is closed; no further transitions are allowed."))
 
-    if t.required_role is not None and actor.role != t.required_role:
-        # Special case: 'close' allows both WCS and ADMIN roles
-        if t.name == "close" and actor.role in ("WCS", "ADMIN"):
+    if t.required_role is not None and not actor.has_role(t.required_role):
+        # Special cases: bypass role check
+        if actor.has_role("SUPER_ADMIN"):
+            pass  # super admin can do anything
+        elif t.name == "close" and actor.has_any_role("WCS", "ADMIN"):
             pass  # allowed
         else:
             raise StateError(
                 _(f"Action '{action}' requires role {t.required_role}, not {actor.role}.")
             )
 
-    if t.name in {"advance_ab", "advance_wcs", "advance_dgfc", "advance_dgfap", "approve_minister"}:
+    if t.name in {"advance_ab", "advance_wcs", "advance_dgfc", "advance_dgfap"}:
         if case.status != Case.Status.AT_APPROVAL:
             raise StateError(_("Case is not at approval."))
         if case.current_step != t.from_step:
@@ -295,10 +286,10 @@ def transition(
             _("Cannot advance: amount_authorized must be set first (DGFAP at step 5).")
         )
 
-    # Minister's terminal approval requires the amount to be authorized.
-    if t.name == "approve_minister" and case.amount_authorized is None:
+    # DGFAP's terminal approval requires the amount to be authorized.
+    if t.name == "advance_dgfap" and case.amount_authorized is None:
         raise StateError(
-            _("Minister cannot approve until DGFAP has authorized an amount at step 5.")
+            _("DGFAP cannot approve until an amount has been authorized at step 5.")
         )
 
     # Files are optional at the CB stage — the CB can submit and verify
@@ -310,6 +301,13 @@ def transition(
 
     if t.name == "reject" and case.status != Case.Status.AT_APPROVAL:
         raise StateError(_("Only AT_APPROVAL cases can be rejected."))
+
+    if t.name in {"reject", "defer_from_3", "defer_from_4", "defer_from_5"}:
+        if case.status != Case.Status.AT_APPROVAL:
+            raise StateError(_("Case is not at approval."))
+        expected_role = ROLE_FOR_STEP.get(case.current_step)
+        if not actor.has_any_role(expected_role, "SUPER_ADMIN"):
+            raise StateError(_(f"Action '{action}' requires the current approver."))
 
     from_status = case.status
     from_step = case.current_step
@@ -352,5 +350,5 @@ def transition(
 # ---------------------------------------------------------------------------
 # Register per-step defer transitions now that defer_for_step is defined.
 # ---------------------------------------------------------------------------
-for _n in (3, 4, 5, 6):
+for _n in (3, 4, 5):
     TRANSITIONS[f"defer_from_{_n}"] = defer_for_step(_n)

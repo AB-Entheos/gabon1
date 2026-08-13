@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -16,9 +17,9 @@ class User(AbstractUser):
         ADMIN = "ADMIN", "Administrator"
         SUPER_ADMIN = "SUPER_ADMIN", "Super Administrator"
 
-    # Field-reporting roles — these are the only roles that can create
-    # new cases from the field.  Mirrors IsCB and IsDP permission classes.
-    FIELD_REPORTER_ROLES = ("CB", "DP")
+    # All active roles can create cases and see only their own.
+    # ADMIN / SUPER_ADMIN see everything (checked separately in views).
+    FIELD_REPORTER_ROLES = ("CB", "DP", "AB", "WCS", "DGFC", "DGFAP", "MINISTER")
 
     class Status(models.TextChoices):
         ACTIVE = "ACTIVE", "Active"
@@ -62,10 +63,55 @@ class User(AbstractUser):
         # CB and DP are field reporters operating in remote areas — they
         # cannot be expected to manage a TOTP device per login.  All other
         # roles are office-bound and must use 2FA.
-        return self.role not in self.FIELD_REPORTER_ROLES
+        return not self.has_any_role(*self.FIELD_REPORTER_ROLES)
+
+    @property
+    def active_roles(self) -> set[str]:
+        if not self.pk:
+            return {self.role}
+        assignments = self.role_assignments.filter(revoked_at__isnull=True).filter(
+            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
+        )
+        # Keep the user's primary role effective as well as any temporary or
+        # additional active assignments.  This also keeps legacy accounts and
+        # admin-edited primary roles compatible with role-based permissions.
+        return {self.role} | set(assignments.values_list("role", flat=True))
+
+    def has_role(self, role: str) -> bool:
+        return role in self.active_roles
+
+    def has_any_role(self, *roles: str) -> bool:
+        return bool(self.active_roles.intersection(roles))
 
     def __str__(self) -> str:
         return f"{self.get_role_display()} — {self.email}"
+
+
+class RoleAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="role_assignments")
+    role = models.CharField(max_length=16, choices=User.Role.choices)
+    assigned_by = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name="role_assignments_created"
+    )
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    reason = models.CharField(max_length=512, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "role"),
+                condition=models.Q(revoked_at__isnull=True),
+                name="unique_active_role_assignment",
+            )
+        ]
+
+    @property
+    def is_active(self) -> bool:
+        return self.revoked_at is None and (
+            self.expires_at is None or self.expires_at > timezone.now()
+        )
 
 
 class Village(models.Model):

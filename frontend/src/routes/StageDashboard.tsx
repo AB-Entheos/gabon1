@@ -8,11 +8,7 @@ import type { RootState } from "@/store";
 import { StatusChip } from "@/components/StatusChip";
 
 /*
- * 6-step pipeline (default for all roles):
- *   1. CB → 2. AB Entheos → 3. WCS → 4. DGFC → 5. DGFAP → 6. Minister
- *
- * 3-step pipeline (minister only):
- *   1. CB → 2. Technical team (AB · WCS · DGFC · DGFAP) → 3. Minister
+ * Five-stage approval pipeline ending with DGFAP final approval.
  */
 const STAGE_META_6: Record<number, { key: string; role: string; color: string; bg: string; border: string; sub: string }> = {
   1: { key: "stage_cb",     role: "CB / DP", color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200", sub: "" },
@@ -20,21 +16,7 @@ const STAGE_META_6: Record<number, { key: string; role: string; color: string; b
   3: { key: "stage_wcs",    role: "WCS",     color: "text-amber-700",    bg: "bg-amber-50",    border: "border-amber-200",   sub: "" },
   4: { key: "stage_dgfc",   role: "DGFC",    color: "text-indigo-700",   bg: "bg-indigo-50",   border: "border-indigo-200",  sub: "" },
   5: { key: "stage_dgfap",  role: "DGFAP",   color: "text-yellow-700",   bg: "bg-yellow-50",   border: "border-yellow-300",  sub: "" },
-  6: { key: "stage_minister", role: "MINISTER", color: "text-rose-700",  bg: "bg-rose-50",     border: "border-rose-200",    sub: "" },
 };
-
-const STAGE_META_3: Record<number, { key: string; role: string; color: string; bg: string; border: string; sub: string }> = {
-  1: { key: "stage_cb",         role: "CB / DP",     color: "text-emerald-700",  bg: "bg-emerald-50",  border: "border-emerald-200", sub: "" },
-  2: { key: "stage_technical",   role: "TECHNICAL",   color: "text-sky-700",      bg: "bg-sky-50",      border: "border-sky-200",     sub: "pipeline.technical_sub" },
-  3: { key: "stage_minister",    role: "MINISTER",    color: "text-rose-700",     bg: "bg-rose-50",     border: "border-rose-200",    sub: "" },
-};
-
-/** Map backend step → visual group (1, 2, or 3) for minister. */
-function backendToVisual(step: number): number {
-  if (step <= 1) return 1;
-  if (step <= 5) return 2;
-  return 3;
-}
 
 export default function StageDashboard() {
   const { t } = useTranslation();
@@ -60,12 +42,10 @@ export default function StageDashboard() {
             {t("dash.stages.subtitle", "Live counts per approval stage. Click a stage to see its queue.")}
           </p>
         </div>
-        {(user?.role === "CB" || user?.role === "DP") && (
-          <Link to="/cases/new" className="btn-primary">
-            <FilePlus size={16} />
-            {t("dash.stages.new_case", "New case")}
-          </Link>
-        )}
+        <Link to="/cases/new" className="btn-primary">
+          <FilePlus size={16} />
+          {t("dash.stages.new_case", "New case")}
+        </Link>
       </header>
 
       {/* Top KPI strip */}
@@ -83,31 +63,18 @@ export default function StageDashboard() {
           {t("dash.stages.funnel", "Approval funnel")}
         </h2>
         {(() => {
-          const isMinister = user?.role === "MINISTER";
-          const STAGE_META = isMinister ? STAGE_META_3 : STAGE_META_6;
-          const steps = isMinister ? [1, 2, 3] : [2, 3, 4, 5, 6];
-          const gridCols = isMinister ? "md:grid-cols-3" : "md:grid-cols-2 xl:grid-cols-5";
+          const STAGE_META = STAGE_META_6;
+          const steps = [2, 3, 4, 5];
+          const gridCols = "md:grid-cols-2 xl:grid-cols-4";
           return (
             <div className={`grid grid-cols-1 gap-3 ${gridCols}`}>
               {steps.map((step) => {
                 const meta = STAGE_META[step];
-                const count = isMinister
-                  ? step === 2
-                    ? [2, 3, 4, 5].reduce((sum, bs) => sum + (stages?.by_step?.[String(bs) as "2" | "3" | "4" | "5"] ?? 0), 0)
-                    : step === 3
-                      ? (stages?.by_step?.["6"] ?? 0)
-                      : (stages?.verified ?? 0) + (stages?.submitted ?? 0) + (stages?.drafts ?? 0)
-                  : (stages?.by_step?.[String(step) as "2" | "3" | "4" | "5" | "6"] ?? 0);
-                const isMine = isMinister
-                  ? user?.role === meta.role || (step === 2 && ["AB", "WCS", "DGFC", "DGFAP"].includes(user?.role ?? ""))
-                  : user?.role === meta.role;
-                const queued = isMinister
-                  ? (cases?.results ?? []).filter(
-                      (c) => c.status === "AT_APPROVAL" && backendToVisual(c.current_step) === step
-                    )
-                  : (cases?.results ?? []).filter(
-                      (c) => c.status === "AT_APPROVAL" && c.current_step === step
-                    );
+                const count = stages?.by_step?.[String(step) as "2" | "3" | "4" | "5"] ?? 0;
+                const isMine = user?.role === meta.role || user?.role === "SUPER_ADMIN";
+                const queued = (cases?.results ?? []).filter(
+                  (c) => c.status === "AT_APPROVAL" && c.current_step === step
+                );
                 return (
                   <Link
                     key={step}

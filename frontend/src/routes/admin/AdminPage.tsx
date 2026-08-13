@@ -28,6 +28,8 @@ import {
   createAdminUser,
   updateAdminUser,
   deleteAdminUser,
+  assignUserRole,
+  revokeUserRole,
   exportPayments,
   pushMobileMoney,
   confirmCasePayment,
@@ -560,7 +562,7 @@ function UsersPanel() {
                 <tr key={u.id} className="border-t border-slate-100">
                   <td className="px-3 py-2 font-medium text-slate-900">{u.full_name || u.email}</td>
                   <td className="px-3 py-2 font-mono text-xs">{u.email}</td>
-                  <td className="px-3 py-2"><span className="chip bg-slate-100 text-slate-700">{u.role}</span></td>
+                  <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{u.roles.map((role) => <span key={role} className="chip bg-slate-100 text-slate-700">{role}</span>)}</div></td>
                   <td className="px-3 py-2">{u.preferred_language}</td>
                   <td className="px-3 py-2">{u.is_2fa_enabled ? "✓" : "—"}</td>
                   <td className="px-3 py-2">{u.is_active ? "✓" : "✗"}</td>
@@ -569,8 +571,8 @@ function UsersPanel() {
                       <Pencil size={14} />
                     </button>
                     <button className="btn-danger" onClick={async () => {
-                      if (!confirm(t("users.confirm_delete", "Delete this user?"))) return;
-                      try { await deleteAdminUser(u.id); await load(); }
+                      if (!confirm(t("users.confirm_delete", "Deactivate this user? They will no longer be able to log in. Their audit trail and cases are preserved."))) return;
+                      try { await deleteAdminUser(u.id); setError(null); await load(); }
                       catch (e) { setError(String((e as Error).message)); }
                     }}>
                       <Trash2 size={14} />
@@ -603,6 +605,8 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
     preferred_language: user?.preferred_language ?? "fr",
     is_active: user?.is_active ?? true,
   });
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(user?.roles ?? [user?.role ?? "CB"]);
+  const [expiresAt, setExpiresAt] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -610,8 +614,19 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
     setBusy(true); setError(null);
     try {
       const body: any = { ...form };
+      body.role = selectedRoles[0] ?? "CB";
       if (isNew) await createAdminUser(body);
-      else await updateAdminUser(user!.id, body);
+      else {
+        await updateAdminUser(user!.id, body);
+        const currentRoles = new Set<AdminUser["role"]>(user!.roles);
+        const selectedRoleValues = selectedRoles as AdminUser["role"][];
+        for (const role of selectedRoleValues.filter((r) => !currentRoles.has(r))) {
+          await assignUserRole(user!.id, { role: role as AdminUser["role"], expires_at: expiresAt ? new Date(expiresAt).toISOString() : null, reason: "Assigned by super admin" });
+        }
+        for (const role of user!.roles.filter((r) => !selectedRoleValues.includes(r))) {
+          await revokeUserRole(user!.id, role);
+        }
+      }
       await onSaved();
     } catch (e) {
       setError(String((e as Error).message));
@@ -642,9 +657,12 @@ function UserEditor({ user, onClose, onSaved }: { user: AdminUser | null; onClos
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-600">{t("users.role", "Role")}</label>
-            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as any })} className="input">
-              {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+            <div className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 p-3">
+              {ROLES.map((r) => <label key={r} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={selectedRoles.includes(r)} onChange={(e) => setSelectedRoles(e.target.checked ? [...selectedRoles, r] : selectedRoles.filter((x) => x !== r))} />{r}</label>)}
+            </div>
+            {!isNew && (
+              <input type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="input mt-2" aria-label="Role expiration" />
+            )}
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-600">{t("users.phone", "Phone")}</label>

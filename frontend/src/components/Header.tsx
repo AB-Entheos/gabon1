@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Wifi, WifiOff, Sun, Moon, Menu } from "lucide-react";
 import type { AppDispatch, RootState } from "@/store";
 import { setLanguage, toggleTheme, logout, type Language } from "@/store/authSlice";
+import NotificationCenter from "@/components/NotificationCenter";
 
 export default function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const { i18n, t } = useTranslation();
@@ -69,6 +70,8 @@ export default function Header({ onMenuToggle }: { onMenuToggle?: () => void }) 
         >
           {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
         </button>
+
+        <NotificationCenter />
 
         <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white text-xs font-bold dark:border-slate-700 dark:bg-slate-800">
           {(["en", "fr"] as const).map((l) => (

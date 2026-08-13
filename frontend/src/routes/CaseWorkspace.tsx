@@ -18,6 +18,7 @@ import {
   closeCase,
 } from "@/api/hecApi";
 import type { RootState } from "@/store";
+import { userHasRole } from "@/store/authSlice";
 import { StatusChip, RoleBadge } from "@/components/StatusChip";
 import { formatDateTime, formatXAF } from "@/api/format";
 import CasePipeline from "@/components/CasePipeline";
@@ -54,11 +55,16 @@ export default function CaseWorkspace() {
   if (isLoading) return <div className="p-6 text-slate-500">{t("common.loading")}</div>;
   if (!caseData) return <div className="p-6 text-rose-600">{t("case.not_found", "Case not found.")}</div>;
 
-  const isCB = caseData.created_by === user.id;
+  const isCB = caseData.created_by === user?.id;
+  const userRoles = user?.roles ?? (user ? [user.role] : []);
+  const isSuperAdmin = userRoles.includes("SUPER_ADMIN");
   const isCurrentApprover =
     caseData.status === "AT_APPROVAL" &&
-    caseData.current_approver_role === user?.role;
-  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+    (caseData.current_approver_role === user?.role ||
+      (caseData.current_approver_role !== null && userRoles.includes(caseData.current_approver_role as typeof userRoles[number])) ||
+      isSuperAdmin);
+  const isAdmin = userRoles.includes("ADMIN") || isSuperAdmin;
+  const isMinister = user?.role === "MINISTER";
 
   async function onSubmitForm(payload: Record<string, unknown>) {
     if (!cbForm || !uid) return;
@@ -223,6 +229,7 @@ export default function CaseWorkspace() {
             isCB={isCB}
             isCurrentApprover={isCurrentApprover}
             isAdmin={isAdmin}
+            isSuperAdmin={isSuperAdmin}
             lang={lang}
             refetch={refetch}
             onVerify={async () => { await verifyCase(caseData.uid).unwrap(); void refetch(); }}
@@ -257,16 +264,18 @@ export default function CaseWorkspace() {
 
         <aside className="space-y-6">
           <CaseMetadata caseData={caseData} lang={lang} />
-          <FileUploader
-            caseUid={caseData.uid}
-            accept="image/*,application/pdf"
-            capture="environment"
-            label={t("case.upload_evidence", "Upload evidence (camera)")}
-            showTypeInput={false}
-            attachToCase
-            showMetadataForm
-            requireSubmit
-          />
+          {!isMinister && (
+            <FileUploader
+              caseUid={caseData.uid}
+              accept="image/*,application/pdf"
+              capture="environment"
+              label={t("case.upload_evidence", "Upload evidence (camera)")}
+              showTypeInput={false}
+              attachToCase
+              showMetadataForm
+              requireSubmit
+            />
+          )}
 
         </aside>
       </div>
@@ -354,14 +363,13 @@ const ROLE_FOR_STEP: Record<number, string> = {
   3: "WCS",
   4: "DGFC",
   5: "DGFAP",
-  6: "MINISTER",
 };
 
 function ActionPanel({
-  caseData, isCB, isCurrentApprover, isAdmin, lang, refetch,
+  caseData, isCB, isCurrentApprover, isAdmin, isSuperAdmin, lang, refetch,
   onVerify, onSubmit, onAdvance, onReject, onDefer, onResume, onSetAmount, onDelete,
 }: {
-  caseData: any; isCB: boolean; isCurrentApprover: boolean; isAdmin: boolean; lang: "en" | "fr";
+  caseData: any; isCB: boolean; isCurrentApprover: boolean; isAdmin: boolean; isSuperAdmin: boolean; lang: "en" | "fr";
   refetch: () => void;
   onVerify: () => Promise<void>;
   onSubmit: () => Promise<void>;
@@ -518,7 +526,7 @@ function ActionPanel({
                 value={amount}
                 onChange={(e) => setAmountValue(e.target.value)}
                 className="input border-blue-300 focus:border-blue-500 focus:ring-blue-500/20"
-                placeholder="1500000"
+                placeholder="3000000"
               />
             </div>
             <div>
@@ -546,7 +554,23 @@ function ActionPanel({
                       .replace("{{amount}}", amt.toLocaleString("fr-FR"))
                   );
                 } catch (e: any) {
-                  const detail = e?.data?.detail || e?.detail || String(e);
+                  const data = e?.data ?? e;
+                  let detail: string;
+                  if (typeof data === "string") {
+                    detail = data;
+                  } else if (data?.detail) {
+                    detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+                  } else if (data && typeof data === "object") {
+                    const msgs = Object.entries(data)
+                      .flatMap(([k, v]) => {
+                        if (k === "non_field_errors" || k === "detail") return [];
+                        const vals = Array.isArray(v) ? v : [v];
+                        return vals.map((m: any) => typeof m === "string" ? `${k}: ${m}` : `${k}: ${JSON.stringify(m)}`);
+                      });
+                    detail = msgs.length ? msgs.join("; ") : JSON.stringify(data);
+                  } else {
+                    detail = String(e);
+                  }
                   setError(detail);
                 } finally {
                   setBusy(false);
@@ -586,7 +610,7 @@ function ActionPanel({
             <div className="flex items-center gap-2 text-xs font-semibold text-amber-700">
               <ShieldAlert size={14} />
               {caseData.amount_authorized
-                ? t("case.actions.amount_decider_authorized", "Amount authorized. Review and verify to send to the Minister.")
+                  ? t("case.actions.amount_decider_authorized", "Amount authorized. Review and verify to approve.")
                 : t("case.actions.amount_decider", "You are the amount-decider. Review the proposed amount, authorize or propose a new amount, then verify.")}
             </div>
 
@@ -617,7 +641,7 @@ function ActionPanel({
                     value={amount}
                     onChange={(e) => setAmountValue(e.target.value)}
                     className="input border-amber-300 focus:border-amber-500 focus:ring-amber-500/20"
-                    placeholder={caseData.amount_proposed ? String(caseData.amount_proposed) : "1500000"}
+                    placeholder={caseData.amount_proposed ? String(caseData.amount_proposed) : "3000000"}
                   />
                 </div>
                 <div>
@@ -664,7 +688,7 @@ function ActionPanel({
                   data-testid="verify-and-send"
                 >
                   <CheckCircle2 size={16} />
-                  {t("case.verify_and_send", "Verify & Send to Minister")}
+                    {t("case.verify_and_send", "Verify & Approve")}
                 </button>
               )}
               {canDefer && (
@@ -703,7 +727,15 @@ function ActionPanel({
         )}
         {isCB && caseData.status === "REJECTED" && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-            {t("case.rejected_note", "This case was rejected. Contact AB Entheos for next steps.")}
+            {t("case.rejected_note", "This case was rejected. Review the audit notes, update the case, then submit it again.")}
+            <button
+              className="btn-primary mt-3 w-full"
+              disabled={busy}
+              onClick={() => wrap(onSubmit)}
+              data-testid="resubmit-rejected-case"
+            >
+              {t("case.resubmit", "Resubmit case")}
+            </button>
           </div>
         )}
 
@@ -731,7 +763,7 @@ function ActionPanel({
           </div>
         )}
 
-        {caseData.status === "APPROVED" && user?.role === "WCS" && (
+        {caseData.status === "APPROVED" && userHasRole(user, "WCS") && (
           <div className="space-y-3">
             <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
               {t("case.approved_msg", "Approved. Awaiting payment confirmation.")}
@@ -758,7 +790,7 @@ function ActionPanel({
             </div>
           </div>
         )}
-        {caseData.status === "APPROVED" && user?.role !== "WCS" && (
+        {caseData.status === "APPROVED" && !userHasRole(user, "WCS") && (
           <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
             {t("case.approved_msg", "Approved. Awaiting payment confirmation.")}
           </p>
@@ -769,7 +801,7 @@ function ActionPanel({
           </p>
         )}
 
-        {isAdmin && !isCurrentApprover && !isCB && (
+        {isAdmin && !isSuperAdmin && !isCurrentApprover && !isCB && (
           <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
             {t("case.admin_hint", "As an administrator you can view this case and add comments, but cannot act on it. Only the current approver role ({role}) can advance.")
               .replace("{role}", caseData.current_approver_role ?? "—")}
@@ -849,7 +881,6 @@ function ActionPanel({
                       try {
                         await onAdvance(approveNotes.trim());
                         setApproveSuccess(true);
-                        setTimeout(() => navigate("/stages"), 1500);
                       } catch (e: any) {
                         const data = e?.data ?? e;
                         let detail: string;

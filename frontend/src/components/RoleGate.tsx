@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { useSelector } from "react-redux";
 import type { Role } from "@/store/authSlice";
+import { userHasRole } from "@/store/authSlice";
 import type { RootState } from "@/store";
 
 interface Props {
@@ -12,6 +13,6 @@ interface Props {
 export default function RoleGate({ allow, children, fallback = null }: Props) {
   const user = useSelector((s: RootState) => s.auth.user);
   if (!user) return <>{fallback}</>;
-  if (!allow.includes(user.role)) return <>{fallback}</>;
+  if (!allow.some((role) => userHasRole(user, role))) return <>{fallback}</>;
   return <>{children}</>;
 }

@@ -30,7 +30,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.permissions import IsAdmin, IsRole
+from accounts.permissions import IsAdmin, IsRole, IsWCS
 from cases.idempotency import with_idempotency
 from cases.models import Case
 from cases.uploads import is_s3_backend, new_attachment_key, presign_put, save_attachment_bytes
@@ -258,7 +258,7 @@ class _ConfirmResponseSerializer(serializers.Serializer):
 
 @extend_schema(responses=_ConfirmResponseSerializer)
 @api_view(["POST"])
-@permission_classes([IsAuthenticated, IsAdmin])
+@permission_classes([IsAuthenticated, IsWCS])
 @with_idempotency
 def confirm_payment(request, uid: str):
     """Log proof-of-treatment / proof-of-burial / proof-of-crop-loss + close the case.

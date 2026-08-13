@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
-# HEC Emergency Fund — idempotent deploy script.
+# HEC Emergency Fund — production deploy script.
 # Run from the repo root on the production VPS (Ubuntu 22.04).
-# Usage:  ./deploy.sh [--seed-real]   # pass --seed-real to create production users
 set -euo pipefail
 
 REPO_DIR="/opt/hec"
 BACKEND_DIR="$REPO_DIR/backend"
 FRONTEND_DIR="$REPO_DIR/frontend"
-SEED_REAL=0
-
-for arg in "$@"; do
-    case "$arg" in
-        --seed-real) SEED_REAL=1 ;;
-    esac
-done
 
 # Check if Docker is available
 if ! command -v docker &> /dev/null; then
@@ -86,18 +78,10 @@ else
     exit 1
 fi
 
-echo "[7/9] Seed demo data (SKIPPED on production — real data present)"
-echo "  Skipped. seed_demo_data would overwrite real production users."
+echo "[7/7] Data seeding disabled"
+echo "  Existing production users, villages, forms, and cases are left unchanged."
 
-echo "[8/9] Seed real production users (only if --seed-real flag passed)"
-if [[ "$SEED_REAL" -eq 1 ]]; then
-    cd "$BACKEND_DIR"
-    $COMPOSE_CMD run --rm backend python manage.py seed_real_data
-else
-    echo "  Skipped. Run with --seed-real to create production accounts."
-fi
-
-echo "[9/9] Done."
+echo "[7/7] Done."
 
 # Print status
 echo ""

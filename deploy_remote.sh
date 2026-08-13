@@ -7,20 +7,12 @@
 #   - .env file configured for production
 #
 # Usage:
-#   ./deploy_remote.sh              # Deploy code only
-#   ./deploy_remote.sh --seed-real  # Deploy + create production user accounts
+#   ./deploy_remote.sh              # Deploy code only; production data is unchanged
 set -euo pipefail
 
 SERVER="ubuntu@100.58.123.184"
 REMOTE_DIR="/opt/hec"
 SSH_KEY="$HOME/.ssh/id_ed25519"
-SEED_FLAG=""
-
-for arg in "$@"; do
-    case "$arg" in
-        --seed-real) SEED_FLAG="--seed-real" ;;
-    esac
-done
 
 # Use explicit SSH key if it exists, otherwise use default
 SSH_OPTS=""
@@ -52,7 +44,7 @@ fi
 
 # 3. Run deploy on server
 echo "[3/4] Running deploy on server..."
-ssh $SSH_OPTS "$SERVER" "cd $REMOTE_DIR && chmod +x deploy.sh && ./deploy.sh $SEED_FLAG"
+ssh $SSH_OPTS "$SERVER" "cd $REMOTE_DIR && chmod +x deploy.sh && ./deploy.sh"
 
 # 4. Verify
 echo "[4/4] Verifying..."

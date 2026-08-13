@@ -16,6 +16,33 @@ from django.db import models
 logger = logging.getLogger(__name__)
 
 
+def create_in_app_notification(*, recipient, event_key, title, message, kind="INFO", case=None, payload=None):
+    from .models import InAppNotification
+
+    return InAppNotification.objects.create(
+        recipient=recipient,
+        case=case,
+        kind=kind,
+        event_key=event_key,
+        title=title,
+        message=message,
+        payload=payload or {},
+    )
+
+
+def notify_in_app(*, recipients, event_key, title, message, kind="INFO", case=None, payload=None):
+    for recipient in recipients:
+        create_in_app_notification(
+            recipient=recipient,
+            event_key=event_key,
+            title=title,
+            message=message,
+            kind=kind,
+            case=case,
+            payload=payload,
+        )
+
+
 def _serialize(obj: Any) -> Any:
     """Convert a Django model instance to a plain dict for Celery serialization."""
     if isinstance(obj, models.Model):
@@ -57,6 +84,9 @@ _TEMPLATE_DIR_MAP = {
     "case_verified": "case_verified",
     "amount_proposed": "amount_proposed",
     "amount_authorized": "amount_authorized",
+    "desktop_notifications_enabled": "desktop_notifications_enabled",
+    "desktop_notifications_disabled": "desktop_notifications_disabled",
+    "disbursement_recorded": "disbursement_recorded",
 }
 
 
@@ -86,6 +116,58 @@ def send_account_created(*, user, temp_password: str = "") -> None:
         language=lang,
         template_context={"user": _serialize(user), "temp_password": temp_password},
     )
+
+
+def send_desktop_notifications_enabled(*, user) -> None:
+    """Confirm that desktop and email notification delivery is enabled."""
+    from .tasks import send_notification_email
+
+    lang = getattr(user, "preferred_language", "fr") or "fr"
+    send_notification_email.delay(
+        notification_type="desktop_notifications_enabled",
+        recipient_email=user.email,
+        language=lang,
+        template_context={"user": _serialize(user)},
+    )
+
+
+def send_desktop_notifications_disabled(*, user) -> None:
+    from .tasks import send_notification_email
+
+    send_notification_email.delay(
+        notification_type="desktop_notifications_disabled",
+        recipient_email=user.email,
+        language=getattr(user, "preferred_language", "fr") or "fr",
+        template_context={"user": _serialize(user)},
+    )
+
+
+def send_disbursement_recorded(*, case, disbursement, recipients) -> None:
+    """Notify operational, finance, and administration users of a WCS payment."""
+    from .tasks import send_notification_email
+
+    context = {
+        "case": _serialize(case),
+        "disbursement": {
+            "amount_xaf": disbursement.amount_xaf,
+            "recipient_name": disbursement.recipient_name,
+            "recipient_kind": disbursement.get_recipient_kind_display(),
+            "purpose": disbursement.purpose,
+            "payment_date": disbursement.payment_date,
+            "payment_reference": disbursement.payment_reference,
+            "paid_by": disbursement.paid_by.email,
+            "disbursed_total_xaf": getattr(disbursement, "disbursed_total_xaf", ""),
+            "remaining_xaf": getattr(disbursement, "remaining_xaf", ""),
+            "authorized_xaf": getattr(disbursement, "authorized_xaf", ""),
+        },
+    }
+    for recipient in recipients:
+        send_notification_email.delay(
+            notification_type="disbursement_recorded",
+            recipient_email=recipient.email,
+            language=getattr(recipient, "preferred_language", "fr") or "fr",
+            template_context={**context, "recipient": _serialize(recipient)},
+        )
 
 
 def send_password_reset(*, user, reset_url: str) -> None:
@@ -274,11 +356,11 @@ def send_amount_proposed(*, case, actor=None) -> None:
 
 
 def send_amount_authorized(*, case, actor=None) -> None:
-    """Notify the Minister that an amount has been authorized by DGFAP."""
+    """Notify WCS that DGFAP has authorized the payment amount."""
     from accounts.models import User
     from .tasks import do_send_email
 
-    recipients = User.objects.filter(role="MINISTER", is_active=True)
+    recipients = User.objects.filter(role="WCS", is_active=True)
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
         try:

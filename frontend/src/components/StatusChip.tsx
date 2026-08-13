@@ -10,6 +10,7 @@ export function StatusChip({ status, lang: _lang }: { status: string; lang: Lang
     APPROVED: "chip-success",
     REJECTED: "chip-error",
     CLOSED: "chip-neutral",
+    DELETED: "chip-error",
     FIRST_AID_RELEASED: "chip-secondary",
   };
   const { t } = useTranslation();

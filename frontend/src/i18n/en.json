@@ -2,7 +2,7 @@
   "app": {
     "name": "HEC Emergency Fund",
     "tagline": "From the herd to the cheque",
-    "version": "v0.2.0 · Gabon 2026"
+    "version": "v1.0.1 · Gabon 2026"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -17,6 +17,8 @@
     "users": "Users",
     "closed": "Closed",
     "logout": "Log out"
+    ,"profile": "Profile"
+    ,"admin": "Admin"
   },
   "common": {
     "refresh": "Refresh",
@@ -37,11 +39,32 @@
     "submit": "Submit",
     "submitting": "Submitting…",
     "deleting": "Deleting…",
-    "creating": "Creating…"
+    "creating": "Creating…",
+    "replacing": "Replacing…",
+    "save": "Save",
+    "open": "Open",
+    "cases": "Cases"
   },
   "online": {
     "label": "Online",
     "offline": "Offline"
+  },
+  "notifications": {
+    "open": "Open notifications",
+    "title": "Notifications",
+    "mark_all": "Mark all read",
+    "empty": "No notifications yet.",
+    "desktop_hint": "Enable desktop notifications to receive alerts for new case activity.",
+    "enable_desktop": "Enable desktop notifications",
+    "desktop_enabled": "Desktop notifications are enabled.",
+    "desktop_blocked": "Desktop notifications are blocked. Allow them in your browser site settings.",
+    "enabled_title": "Desktop notifications enabled",
+    "enabled_body": "You will receive alerts for new case activity while this app is open."
+    ,"history_link": "View notification history"
+    ,"history_title": "Notification history"
+    ,"history_subtitle": "Review current and previous notifications."
+    ,"disable_desktop": "Disable desktop notifications"
+    ,"desktop_disabled": "Desktop notifications are disabled."
   },
   "table": {
     "id": "ID",
@@ -318,7 +341,8 @@
     "sla": "SLA",
     "amount": "Amount",
     "created_by": "Created by",
-    "rejected_note": "This case was rejected. Contact AB Entheos for next steps.",
+    "rejected_note": "This case was rejected. Review the audit notes, update the case, then submit it again.",
+    "resubmit": "Resubmit case",
     "approved_msg": "Approved. Awaiting payment confirmation.",
     "closed_msg": "Case closed.",
     "fill_form_hint": "Fill the form on the left, then submit below.",
@@ -329,7 +353,7 @@
     "reason_placeholder": "Hospital + 2 weeks salary + transport",
     "set_amount": "Authorize amount",
     "authorize_amount": "Authorize amount",
-    "verify_and_send": "Verify & Send to Minister",
+    "verify_and_send": "Verify & Approve",
     "advance_to_minister": "Advance to Minister",
     "reject_placeholder": "Reason for rejection (required)",
     "admin_hint": "As an administrator you can view this case and add comments, but cannot act on it. Only the current approver role ({role}) can advance.",
@@ -348,7 +372,7 @@
       "propose_amount": "Propose amount",
       "advance_to_dgfap": "Advance to DGFAP",
       "close_hint": "Record disbursements, then close this claim.",
-      "amount_decider_authorized": "Amount authorized. Review and verify to send to the Minister.",
+      "amount_decider_authorized": "Amount authorized. Review and verify to approve.",
       "authorize_section": "Authorization",
       "dgfap_authorized": "DGFAP Authorized Amount"
     },
@@ -403,6 +427,20 @@
     },
     "disbursements": {
       "global_warning_title": "Disbursements approaching the authorized limit",
+      "title": "Disbursements",
+      "subtitle": "Payments made against the authorized amount.",
+      "add": "Record payment",
+      "save": "Record payment",
+      "new_title": "Record a new disbursement",
+      "wcs_only": "Only WCS users can edit payments or attach proof of payment.",
+      "utilized": "of budget used",
+      "warning_title": "Approaching budget limit",
+      "warning_body": "Disbursements have reached {{pct}}% of the authorized amount. Plan remaining payments carefully.",
+      "empty": "No disbursements recorded yet.",
+      "empty_no_budget": "No amount has been authorized yet.",
+      "document_preview_unavailable": "Preview is not available for this document type.",
+      "open_pdf": "Open PDF",
+      "pdf_preview_failed": "PDF preview unavailable. Use Open PDF to view it.",
       "authorized": "Authorized",
       "disbursed": "Disbursed",
       "remaining": "Remaining",
@@ -449,7 +487,7 @@
       "other_slot": "Other",
       "slot_medical_report": "Medical report or hospital bill",
       "slot_claimant_id": "Claimant ID",
-      "slot_receipt": "Receipt",
+      "slot_ambulance_receipt": "Ambulance receipt",
       "slot_death_certificate": "Death certificate or burial permit",
       "slot_funeral_receipt": "Funeral expenses receipt",
       "slot_supporting_document": "Supporting document",
@@ -712,7 +750,8 @@
     "active": "Active",
     "password": "Password (leave blank to auto-generate)",
     "empty": "No users.",
-    "confirm_delete": "Delete this user?"
+    "confirm_delete": "Deactivate this user? They will no longer be able to log in. Their audit trail and cases are preserved.",
+    "deleted_success": "User deactivated."
   },
   "stages": {
     "title": "Approval stages overview",
@@ -740,6 +779,9 @@
     "change_required": "Change Your Password",
     "first_login": "You must change your temporary password to continue.",
     "changed": "Password changed successfully!",
+    "changed_hint": "You can now use your new password to sign in.",
+    "go_home": "Go to Home",
+    "close": "Close",
     "current": "Current Password",
     "new": "New Password",
     "confirm": "Confirm New Password",

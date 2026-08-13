@@ -2,7 +2,7 @@
   "app": {
     "name": "Fonds d'urgence HEC",
     "tagline": "Du troupeau au chèque",
-    "version": "v0.2.0 · Gabon 2026"
+    "version": "v1.0.1 · Gabon 2026"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -17,6 +17,8 @@
     "users": "Utilisateurs",
     "closed": "Clôturés",
     "logout": "Déconnexion"
+    ,"profile": "Profil"
+    ,"admin": "Administration"
   },
   "common": {
     "refresh": "Actualiser",
@@ -37,11 +39,32 @@
     "submit": "Soumettre",
     "submitting": "Envoi…",
     "deleting": "Suppression…",
-    "creating": "Création…"
+    "creating": "Création…",
+    "replacing": "Remplacement…",
+    "save": "Enregistrer",
+    "open": "Ouvrir",
+    "cases": "Dossiers"
   },
   "online": {
     "label": "En ligne",
     "offline": "Hors ligne"
+  },
+  "notifications": {
+    "open": "Ouvrir les notifications",
+    "title": "Notifications",
+    "mark_all": "Tout marquer comme lu",
+    "empty": "Aucune notification pour l'instant.",
+    "desktop_hint": "Activez les notifications de bureau pour recevoir les alertes concernant l'activité des dossiers.",
+    "enable_desktop": "Activer les notifications de bureau",
+    "desktop_enabled": "Les notifications de bureau sont activées.",
+    "desktop_blocked": "Les notifications de bureau sont bloquées. Autorisez-les dans les paramètres du site de votre navigateur.",
+    "enabled_title": "Notifications de bureau activées",
+    "enabled_body": "Vous recevrez les alertes d'activité des dossiers lorsque l'application est ouverte."
+    ,"history_link": "Voir l'historique des notifications"
+    ,"history_title": "Historique des notifications"
+    ,"history_subtitle": "Consultez les notifications actuelles et précédentes."
+    ,"disable_desktop": "Désactiver les notifications de bureau"
+    ,"desktop_disabled": "Les notifications de bureau sont désactivées."
   },
   "table": {
     "id": "ID",
@@ -318,7 +341,8 @@
     "sla": "SLA",
     "amount": "Montant",
     "created_by": "Créé par",
-    "rejected_note": "Ce dossier a été rejeté. Contactez AB Entheos pour la suite.",
+    "rejected_note": "Ce dossier a été rejeté. Consultez les notes d'audit, mettez-le à jour, puis soumettez-le à nouveau.",
+    "resubmit": "Soumettre à nouveau",
     "approved_msg": "Approuvé. En attente de confirmation de paiement.",
     "closed_msg": "Dossier clôturé.",
     "fill_form_hint": "Remplissez le formulaire à gauche, puis soumettez ci-dessous.",
@@ -329,7 +353,7 @@
     "reason_placeholder": "Hôpital + 2 semaines de salaire + transport",
     "set_amount": "Autoriser le montant",
     "authorize_amount": "Autoriser le montant",
-    "verify_and_send": "Vérifier et envoyer au Ministre",
+    "verify_and_send": "Vérifier et approuver",
     "advance_to_minister": "Transmettre au Ministre",
     "reject_placeholder": "Motif du rejet (requis)",
     "admin_hint": "En tant qu'administrateur vous pouvez consulter ce dossier et ajouter des commentaires, mais pas agir dessus. Seul le rôle approbateur actuel ({role}) peut avancer.",
@@ -348,7 +372,7 @@
       "propose_amount": "Proposer le montant",
       "advance_to_dgfap": "Transmettre au DGFAP",
       "close_hint": "Enregistrer les décaissements, puis clôturer ce dossier.",
-      "amount_decider_authorized": "Montant autorisé. Revérifiez et transmettez au Ministre.",
+      "amount_decider_authorized": "Montant autorisé. Vérifiez et approuvez.",
       "authorize_section": "Autorisation",
       "dgfap_authorized": "Montant autorisé par le DGFAP"
     },
@@ -403,6 +427,20 @@
     },
     "disbursements": {
       "global_warning_title": "Décaissements proches de la limite autorisée",
+      "title": "Décaissements",
+      "subtitle": "Paiements effectués sur le montant autorisé.",
+      "add": "Enregistrer un paiement",
+      "save": "Enregistrer le paiement",
+      "new_title": "Enregistrer un nouveau décaissement",
+      "wcs_only": "Seuls les utilisateurs WCS peuvent modifier les paiements ou joindre une preuve de paiement.",
+      "utilized": "du budget utilisé",
+      "warning_title": "Limite budgétaire bientôt atteinte",
+      "warning_body": "Les décaissements atteignent {{pct}} % du montant autorisé. Planifiez soigneusement les paiements restants.",
+      "empty": "Aucun décaissement enregistré pour l'instant.",
+      "empty_no_budget": "Aucun montant n'a encore été autorisé.",
+      "document_preview_unavailable": "L'aperçu n'est pas disponible pour ce type de document.",
+      "open_pdf": "Ouvrir le PDF",
+      "pdf_preview_failed": "Aperçu PDF indisponible. Utilisez « Ouvrir le PDF » pour le consulter.",
       "authorized": "Autorisé",
       "disbursed": "Décaissé",
       "remaining": "Restant",
@@ -449,7 +487,7 @@
       "other_slot": "Autre",
       "slot_medical_report": "Rapport médical ou facture d'hôpital",
       "slot_claimant_id": "Pièce d'identité du requérant",
-      "slot_receipt": "Reçu",
+      "slot_ambulance_receipt": "Reçu d'ambulance",
       "slot_death_certificate": "Acte de décès ou permis d'ensevelissement",
       "slot_funeral_receipt": "Reçu de frais funéraires",
       "slot_supporting_document": "Document justificatif",
@@ -712,7 +750,8 @@
     "active": "Actif",
     "password": "Mot de passe (laisser vide pour générer)",
     "empty": "Aucun utilisateur.",
-    "confirm_delete": "Supprimer cet utilisateur ?"
+    "confirm_delete": "Désactiver cet utilisateur ? Il ne pourra plus se connecter. Son historique et ses dossiers sont conservés.",
+    "deleted_success": "Utilisateur désactivé."
   },
   "stages": {
     "title": "Aperçu des étapes d'approbation",
@@ -740,6 +779,9 @@
     "change_required": "Changez votre mot de passe",
     "first_login": "Vous devez changer votre mot de passe temporaire pour continuer.",
     "changed": "Mot de passe changé avec succès !",
+    "changed_hint": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
+    "go_home": "Retour à l'accueil",
+    "close": "Fermer",
     "current": "Mot de passe actuel",
     "new": "Nouveau mot de passe",
     "confirm": "Confirmer le nouveau mot de passe",

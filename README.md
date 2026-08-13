@@ -45,7 +45,7 @@ See `docs/process_flow.md` for the Mermaid diagram, `docs/user_and_claims_journe
 | Code | Label (en / fr) | Default ceiling (XAF) | SLA | First-aid eligible |
 | --- | --- | --- | --- | --- |
 | `MEDICAL` | Medical (injury) / Médical (blessure) | 2,000,000 | 48 h | yes (urgent) |
-| `BURIAL` | Burial (death) / Funéraire (décès) | 1,500,000 | 72 h | no |
+| `BURIAL` | Burial (death) / Funéraire (décès) | 3,000,000 | 72 h | no |
 | `CROP_DAMAGE` | Crop damage / Dégâts aux cultures | 400,000 | 7 d | no |
 
 CROP_DAMAGE covers elephant raids on subsistence fields (cassava, plantain, maize,

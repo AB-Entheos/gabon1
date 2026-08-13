@@ -16,13 +16,18 @@ import DisbursementsPage from "@/routes/DisbursementsPage";
 import StageDashboard from "@/routes/StageDashboard";
 import AdminPage from "@/routes/admin/AdminPage";
 import Profile from "@/routes/Profile";
+import NotificationHistory from "@/routes/NotificationHistory";
 import type { RootState, AppDispatch } from "@/store";
 import { setUser, logout } from "@/store/authSlice";
 
 function HomeRouter() {
   const { t } = useTranslation();
-  const role = useSelector((s: RootState) => s.auth.user?.role);
-  if (!role) return <Navigate to="/login" replace />;
+  const user = useSelector((s: RootState) => s.auth.user);
+  const role = user?.role;
+  if (!role || !user) return <Navigate to="/login" replace />;
+  if (user.roles?.includes("SUPER_ADMIN")) return <AdminDashboard />;
+  if (user.roles?.includes("ADMIN")) return <AdminDashboard />;
+  if (user.roles?.includes("DGFAP")) return <DGFAPDashboard />;
   switch (role) {
     case "CB": return <CBDashboard />;
     case "DP": return <CBDashboard />;
@@ -30,7 +35,7 @@ function HomeRouter() {
     case "WCS": return <ApproverDashboard step={3} title={t("dash.wcs.title", "WCS — Step 3")} subtitle={t("dash.wcs.subtitle", "Technical partner review.")} />;
     case "DGFC": return <ApproverDashboard step={4} title={t("dash.dgfc.title", "DGFC — Step 4")} subtitle={t("dash.dgfc.subtitle", "Faune & contrôle review.")} />;
     case "DGFAP": return <DGFAPDashboard />;
-    case "MINISTER": return <ApproverDashboard step={6} title={t("dash.minister.title", "Minister — Step 3")} subtitle={t("dash.minister.subtitle", "Terminal ministerial approval.")} />;
+    case "MINISTER": return <StageDashboard />;
     case "ADMIN": return <AdminDashboard />;
     case "SUPER_ADMIN": return <AdminDashboard />;
     default: return <div>{t("dash.unknown_role", "Unknown role")}</div>;
@@ -102,6 +107,7 @@ export default function App() {
           <Route path="payments" element={<AdminPage kind="payments" />} />
           <Route path="users" element={<AdminPage kind="users" />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="notifications" element={<NotificationHistory />} />
           <Route path="closed" element={<AdminPage kind="closed" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

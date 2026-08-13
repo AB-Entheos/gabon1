@@ -31,7 +31,7 @@ export default function DGFAPDashboard() {
         </div>
         <h1 className="mt-1 text-3xl font-bold text-slate-900">{t("dash.dgfap.title", "Amount-decider")}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          {t("dash.dgfap.subtitle", "Review the DGFC proposed amount, authorize or set a new amount, then verify to send to the Minister.")}
+          {t("dash.dgfap.subtitle", "Review the DGFC proposed amount, authorize or set a new amount, then approve for WCS payment processing.")}
         </p>
       </header>
 

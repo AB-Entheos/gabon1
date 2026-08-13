@@ -3,13 +3,14 @@ import secrets
 import string
 
 from drf_spectacular.utils import extend_schema
+from django.utils import timezone
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import User
-from .permissions import IsSuperAdmin
+from .models import RoleAssignment, User
+from .permissions import IsAdmin, IsSuperAdmin
 
 
 class _UserSerializer(serializers.Serializer):
@@ -17,6 +18,7 @@ class _UserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     username = serializers.CharField(read_only=True)
     role = serializers.CharField(read_only=True)
+    roles = serializers.SerializerMethodField()
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
     phone = serializers.CharField(required=False, allow_blank=True)
@@ -26,6 +28,9 @@ class _UserSerializer(serializers.Serializer):
     requires_2fa = serializers.BooleanField(read_only=True)
     must_change_password = serializers.BooleanField(read_only=True)
     village = serializers.IntegerField(read_only=True, allow_null=True)
+
+    def get_roles(self, obj):
+        return sorted(obj.active_roles)
 
 
 @extend_schema(responses=_UserSerializer)
@@ -40,6 +45,7 @@ def me(request):  # noqa: F811  - see decorator above
                 "email": user.email,
                 "username": user.username,
                 "role": user.role,
+                "roles": sorted(user.active_roles),
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "phone": user.phone,
@@ -111,11 +117,13 @@ def me(request):  # noqa: F811  - see decorator above
 class _AdminUserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     requires_2fa = serializers.SerializerMethodField()
+    roles = serializers.SerializerMethodField()
+    role_assignments = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ("id", "email", "username", "first_name", "last_name", "full_name",
-                  "role", "phone", "preferred_language", "is_2fa_enabled",
+                  "role", "roles", "role_assignments", "phone", "preferred_language", "is_2fa_enabled",
                   "requires_2fa", "is_active", "village", "telegram_chat_id")
         read_only_fields = ("id", "username", "is_2fa_enabled", "requires_2fa", "full_name")
 
@@ -124,6 +132,23 @@ class _AdminUserSerializer(serializers.ModelSerializer):
 
     def get_requires_2fa(self, obj):
         return obj.requires_2fa()
+
+    def get_roles(self, obj):
+        return sorted(obj.active_roles)
+
+    def get_role_assignments(self, obj):
+        return [
+            {
+                "id": assignment.id,
+                "role": assignment.role,
+                "assigned_at": assignment.assigned_at,
+                "expires_at": assignment.expires_at,
+                "revoked_at": assignment.revoked_at,
+                "reason": assignment.reason,
+                "active": assignment.is_active,
+            }
+            for assignment in obj.role_assignments.all().order_by("role")
+        ]
 
 
 class _AdminUserWriteSerializer(serializers.ModelSerializer):
@@ -161,6 +186,12 @@ def list_users(request):
     u.set_password(temp_password)
     u.must_change_password = True
     u.save()
+    RoleAssignment.objects.create(
+        user=u,
+        role=u.role,
+        assigned_by=request.user,
+        reason="Initial role assignment",
+    )
 
     # Send welcome email with one-time credentials.
     try:
@@ -191,7 +222,15 @@ def user_detail(request, pk):
     if request.method == "DELETE":
         if u.id == request.user.id:
             return Response({"detail": "Cannot delete yourself."}, status=400)
-        u.delete()
+        # Soft-delete: deactivate the account instead of hard-deleting.
+        # Users may be referenced by protected FKs (Case.created_by,
+        # Event.actor, FormSubmission.submitted_by, FormAttachment.uploaded_by)
+        # and the audit trail (cases_event) is append-only, so a hard delete
+        # would raise ProtectedError. Deactivating preserves the audit trail
+        # while removing the user from active use.
+        u.is_active = False
+        u.status = User.Status.SUSPENDED
+        u.save(update_fields=["is_active", "status"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     s = _AdminUserWriteSerializer(u, data=request.data, partial=True)
@@ -201,6 +240,59 @@ def user_detail(request, pk):
         setattr(u, k, v)
     u.save()
     return Response(_AdminUserSerializer(u).data)
+
+
+class _RoleAssignmentSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=User.Role.choices)
+    expires_at = serializers.DateTimeField(required=False, allow_null=True)
+    reason = serializers.CharField(required=False, allow_blank=True, max_length=512)
+
+
+@extend_schema(responses=_AdminUserSerializer)
+@api_view(["POST", "DELETE"])
+@permission_classes([IsAuthenticated, IsAdmin])
+def user_roles(request, pk):
+    """Add or revoke a temporary role assignment for a user.
+
+    Only ADMIN and SUPER_ADMIN accounts may grant or revoke roles. In
+    particular, WCS assignments cannot be created by operational roles.
+    """
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "POST":
+        serializer = _RoleAssignmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        values = serializer.validated_data
+        assignment, created = RoleAssignment.objects.get_or_create(
+            user=user,
+            role=values["role"],
+            revoked_at__isnull=True,
+            defaults={
+                "assigned_by": request.user,
+                "expires_at": values.get("expires_at"),
+                "reason": values.get("reason", ""),
+            },
+        )
+        if not created:
+            assignment.expires_at = values.get("expires_at")
+            assignment.reason = values.get("reason", assignment.reason)
+            assignment.save(update_fields=["expires_at", "reason"])
+    else:
+        role = request.data.get("role")
+        if role not in dict(User.Role.choices):
+            return Response({"role": "Unknown role."}, status=status.HTTP_400_BAD_REQUEST)
+        assignment = RoleAssignment.objects.filter(
+            user=user, role=role, revoked_at__isnull=True
+        ).first()
+        if not assignment:
+            return Response({"detail": "Active role assignment not found."}, status=status.HTTP_404_NOT_FOUND)
+        assignment.revoked_at = timezone.now()
+        assignment.save(update_fields=["revoked_at"])
+
+    return Response(_AdminUserSerializer(user).data)
 
 
 # ---- Password reset (admin-initiated) ----------------------------------------

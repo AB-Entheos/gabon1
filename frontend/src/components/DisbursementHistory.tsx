@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import {
@@ -17,6 +17,9 @@ import {
   History,
   Eye,
   Shield,
+  Download,
+  ExternalLink,
+  FileType2,
 } from "lucide-react";
 import {
   useListDisbursementsQuery,
@@ -29,6 +32,12 @@ import {
   useFinishUploadMutation,
 } from "@/api/hecApi";
 import type { RootState } from "@/store";
+import { userHasRole } from "@/store/authSlice";
+import { useAttachmentUrl } from "@/hooks/useAttachmentUrl";
+import { downloadAttachment } from "@/hooks/downloadAttachment";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+
+GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
 interface Props {
   caseUid: string;
@@ -85,9 +94,92 @@ function InfoField({ label, children, className = "" }: { label: string; childre
   );
 }
 
+type ProofFile = NonNullable<DisbItem["proof_of_payment"]>;
+
+function ProofPreview({ file, caseUid, onClose }: { file: ProofFile; caseUid: string; onClose: () => void }) {
+  const { t } = useTranslation();
+  const token = useSelector((s: RootState) => s.auth.accessToken);
+  const url = useAttachmentUrl({
+    caseUid,
+    submissionId: file.submission_id,
+    attachmentId: file.id,
+    mime: file.mime,
+  });
+  const isImage = file.mime.startsWith("image/");
+  const isPdf = file.mime.toLowerCase() === "application/pdf";
+
+  async function handleDownload() {
+    await downloadAttachment(file.submission_id, file.id, file.filename, token);
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/70 p-4" onClick={onClose}>
+      <div className="card flex max-h-[90vh] w-full max-w-4xl flex-col p-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-slate-900">{file.filename}</h3>
+            <p className="text-xs text-slate-500">{file.mime} · {(file.size_bytes / 1024).toFixed(1)} KB</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100" aria-label={t("common.close", "Close")}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className="flex min-h-64 flex-1 items-center justify-center overflow-auto bg-slate-100 p-4">
+          {isImage && url && <img src={url} alt={file.filename} className="max-h-[68vh] max-w-full rounded object-contain" />}
+          {isPdf && url && <PdfPreview url={url} filename={file.filename} />}
+          {!url && (isImage || isPdf) && <div className="text-sm text-slate-500">{t("common.loading", "Loading…")}</div>}
+          {!isImage && !isPdf && (
+            <div className="flex flex-col items-center gap-2 text-center text-slate-500">
+              <FileType2 size={52} />
+              <p className="text-sm">{t("case.disbursements.document_preview_unavailable", "Preview is not available for this document type.")}</p>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3">
+          {isPdf && url && <button type="button" className="btn-secondary" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}><ExternalLink size={14} /> {t("case.disbursements.open_pdf", "Open PDF")}</button>}
+          <button type="button" className="btn-secondary" onClick={() => void handleDownload()}><Download size={14} /> {t("common.download", "Download")}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PdfPreview({ url, filename }: { url: string; filename: string }) {
+  const { t } = useTranslation();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(false);
+    (async () => {
+      try {
+        const pdf = await getDocument({ url }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = canvasRef.current;
+        if (!canvas || cancelled) return;
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Canvas unavailable");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvas, canvasContext: context, viewport }).promise;
+      } catch {
+        if (!cancelled) setError(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (error) {
+    return <div className="flex min-h-[420px] flex-col items-center justify-center gap-2 text-sm text-slate-500">{t("case.disbursements.pdf_preview_failed", "PDF preview unavailable. Use Open PDF to view it.")}</div>;
+  }
+  return <canvas ref={canvasRef} aria-label={filename} className="max-h-[68vh] max-w-full rounded bg-white shadow" />;
+}
+
 /* ── Details Tab ───────────────────────────────────────────────────────── */
 
-function DetailsTab({ disbursement: d }: { disbursement: NonNullable<ReturnType<typeof useListDisbursementsQuery>["data"]>["results"][number] }) {
+function DetailsTab({ disbursement: d, onPreview }: { disbursement: NonNullable<ReturnType<typeof useListDisbursementsQuery>["data"]>["results"][number]; onPreview: (file: ProofFile) => void }) {
   const { t } = useTranslation();
   const displayKind = d.recipient_kind === "OTHER" && d.recipient_kind_other
     ? `${d.recipient_kind_other}`
@@ -128,13 +220,16 @@ function DetailsTab({ disbursement: d }: { disbursement: NonNullable<ReturnType<
         </InfoField>
       )}
       {d.proof_of_payment ? (
-        <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
-          <div className="flex items-center gap-2 text-sm">
+        <button type="button" onClick={() => onPreview(d.proof_of_payment!)} className="w-full rounded-lg border border-sky-200 bg-sky-50 p-3 text-left hover:bg-sky-100">
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <span className="flex items-center gap-2">
             <FileText size={14} className="text-sky-600" />
             <span className="font-medium text-sky-800">{d.proof_of_payment.filename}</span>
             <span className="text-sky-600">({(d.proof_of_payment.size_bytes / 1024).toFixed(1)} KB)</span>
+            </span>
+            <Eye size={14} className="text-sky-600" />
           </div>
-        </div>
+        </button>
       ) : (
         <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-center text-xs text-slate-500">
           {t("case.disbursements.no_proof", "No proof of payment attached yet.")}
@@ -243,7 +338,7 @@ function EditTab({ caseUid, disbursement: d, onClose }: { caseUid: string; disbu
 
 /* ── Proof Upload Tab ──────────────────────────────────────────────────── */
 
-function ProofTab({ caseUid, disbursement: d }: { caseUid: string; disbursement: NonNullable<ReturnType<typeof useListDisbursementsQuery>["data"]>["results"][number] }) {
+function ProofTab({ caseUid, disbursement: d, onPreview }: { caseUid: string; disbursement: NonNullable<ReturnType<typeof useListDisbursementsQuery>["data"]>["results"][number]; onPreview: (file: ProofFile) => void }) {
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [presignUpload] = usePresignUploadMutation();
@@ -269,11 +364,14 @@ function ProofTab({ caseUid, disbursement: d }: { caseUid: string; disbursement:
         description: t("case.disbursements.proof_description", "Proof of payment for disbursement #{{id}}", { id: d.id }),
         uploaded_by_name: "WCS",
       }).unwrap();
-      await fetch(presigned.url, {
+      const uploadResponse = await fetch(presigned.url, {
         method: "PUT",
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed (${uploadResponse.status})`);
+      }
       const buf = await file.arrayBuffer();
       const hashBuffer = await crypto.subtle.digest("SHA-256", buf);
       const sha256 = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -302,16 +400,19 @@ function ProofTab({ caseUid, disbursement: d }: { caseUid: string; disbursement:
   return (
     <div className="space-y-4">
       {d.proof_of_payment && (
-        <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
-          <div className="flex items-center gap-2 text-sm">
+        <button type="button" onClick={() => onPreview(d.proof_of_payment!)} className="w-full rounded-lg border border-sky-200 bg-sky-50 p-3 text-left hover:bg-sky-100">
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <span className="flex items-center gap-2">
             <FileText size={14} className="text-sky-600" />
             <span className="font-medium text-sky-800">{t("case.disbursements.current_proof", "Current:")} {d.proof_of_payment.filename}</span>
             <span className="text-sky-600">({(d.proof_of_payment.size_bytes / 1024).toFixed(1)} KB)</span>
+            </span>
+            <Eye size={14} className="text-sky-600" />
           </div>
           <p className="mt-1 text-xs text-sky-600">
             {t("case.disbursements.replace_proof_hint", "Upload a new file to replace the current proof.")}
           </p>
-        </div>
+        </button>
       )}
       <div
         className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6 transition-colors hover:border-emerald-400 hover:bg-emerald-50/30"
@@ -465,6 +566,7 @@ function ExpandedCard({ caseUid, disbursement: d, isWCS, onClose }: {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"details" | "edit" | "proof" | "history">("details");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [previewFile, setPreviewFile] = useState<ProofFile | null>(null);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={onClose}>
@@ -503,9 +605,14 @@ function ExpandedCard({ caseUid, disbursement: d, isWCS, onClose }: {
         </div>
         {/* Tab Content */}
         <div className="p-5">
-          {activeTab === "details" && <DetailsTab disbursement={d} />}
+          {activeTab === "details" && <DetailsTab disbursement={d} onPreview={setPreviewFile} />}
           {activeTab === "edit" && isWCS && <EditTab caseUid={caseUid} disbursement={d} onClose={onClose} />}
-          {activeTab === "proof" && isWCS && <ProofTab caseUid={caseUid} disbursement={d} />}
+          {activeTab === "proof" && isWCS && <ProofTab caseUid={caseUid} disbursement={d} onPreview={setPreviewFile} />}
+          {(activeTab === "edit" || activeTab === "proof") && !isWCS && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              {t("case.disbursements.wcs_only", "Only WCS users can edit payments or attach proof of payment.")}
+            </div>
+          )}
           {activeTab === "history" && <HistoryTab caseUid={caseUid} />}
           {/* Delete action */}
           {activeTab === "details" && isWCS && (
@@ -525,6 +632,7 @@ function ExpandedCard({ caseUid, disbursement: d, isWCS, onClose }: {
             </div>
           )}
         </div>
+        {previewFile && <ProofPreview file={previewFile} caseUid={caseUid} onClose={() => setPreviewFile(null)} />}
       </div>
     </div>
   );
@@ -535,7 +643,7 @@ function ExpandedCard({ caseUid, disbursement: d, isWCS, onClose }: {
 export default function DisbursementHistory({ caseUid }: Props) {
   const { t } = useTranslation();
   const user = useSelector((s: RootState) => s.auth.user);
-  const isWCS = user?.role === "WCS";
+  const isWCS = userHasRole(user, "WCS") || userHasRole(user, "SUPER_ADMIN");
   const { data, isLoading, refetch } = useListDisbursementsQuery(caseUid, { skip: !caseUid });
   const [recordDisbursement, { isLoading: recording }] = useRecordDisbursementMutation();
   const [showForm, setShowForm] = useState(false);

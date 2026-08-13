@@ -9,7 +9,7 @@ class IsRole(BasePermission):
         return bool(
             request.user
             and request.user.is_authenticated
-            and getattr(request.user, "role", None) in self.allowed_roles
+            and request.user.has_any_role(*self.allowed_roles)
         )
 
 
@@ -64,13 +64,13 @@ class IsSuperAdmin(BasePermission):
         return bool(
             request.user
             and request.user.is_authenticated
-            and getattr(request.user, "role", None) == "SUPER_ADMIN"
+            and request.user.has_role("SUPER_ADMIN")
         )
 
 
 class IsApprover(IsRole):
-    """Any of the five approval roles (② through ⑥)."""
-    allowed_roles = ("AB", "WCS", "DGFC", "DGFAP", "MINISTER")
+    """Any of the four approval roles (② through ⑤)."""
+    allowed_roles = ("AB", "WCS", "DGFC", "DGFAP")
 
 
 class CanSetAmount(BasePermission):
@@ -79,5 +79,5 @@ class CanSetAmount(BasePermission):
         return bool(
             request.user
             and request.user.is_authenticated
-            and getattr(request.user, "role", None) == "DGFAP"
+            and request.user.has_role("DGFAP")
         )

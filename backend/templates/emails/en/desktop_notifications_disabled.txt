@@ -1,0 +1,11 @@
+Subject: Desktop notifications disabled — HEC Emergency Fund
+
+Hello {{ user.first_name|default:"" }},
+
+Desktop notifications have been disabled for your HEC Emergency Fund account.
+
+You will continue to receive email notifications for case activity and actions requiring your attention. You can re-enable desktop notifications from the notification center in the dashboard.
+
+{{ frontend_url }}
+
+HEC Emergency Fund

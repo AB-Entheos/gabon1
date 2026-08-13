@@ -166,10 +166,22 @@ export interface PresignResult {
   submission_id?: number;
 }
 
+export interface InAppNotification {
+  id: number;
+  case_uid: string | null;
+  kind: "INFO" | "ACTION" | "SUCCESS" | "WARNING";
+  event_key: string;
+  title: { en: string; fr: string };
+  message: { en: string; fr: string };
+  payload: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+}
+
 export const hecApi = createApi({
   reducerPath: "hecApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Case", "Cases", "Form", "Forms", "Me", "Audit", "Disbursements", "Submissions"],
+  tagTypes: ["Case", "Cases", "Form", "Forms", "Me", "Audit", "Disbursements", "Submissions", "Notifications"],
   endpoints: (build) => ({
     me: build.query<User, void>({
       query: () => "users/me",
@@ -182,6 +194,24 @@ export const hecApi = createApi({
         body,
       }),
       invalidatesTags: ["Me"],
+    }),
+    listNotifications: build.query<{ results: InAppNotification[]; unread_count: number }, { unread?: boolean; limit?: number } | void>({
+      query: (arg) => ({ url: "notifications", params: arg ?? undefined }),
+      providesTags: ["Notifications"],
+    }),
+    markNotificationRead: build.mutation<InAppNotification, number>({
+      query: (id) => ({ url: `notifications/${id}/read`, method: "POST" }),
+      invalidatesTags: ["Notifications"],
+    }),
+    markAllNotificationsRead: build.mutation<{ updated: number }, void>({
+      query: () => ({ url: "notifications/read-all", method: "POST" }),
+      invalidatesTags: ["Notifications"],
+    }),
+    notifyDesktopEnabled: build.mutation<{ sent: boolean }, void>({
+      query: () => ({ url: "notifications/desktop-enabled", method: "POST" }),
+    }),
+    notifyDesktopDisabled: build.mutation<{ sent: boolean }, void>({
+      query: () => ({ url: "notifications/desktop-disabled", method: "POST" }),
     }),
     listCases: build.query<{ results: Case[]; count: number }, { status?: string } | void>({
       query: (arg) => ({
@@ -300,6 +330,7 @@ export const hecApi = createApi({
           proof_of_payment_id: number | null;
           proof_of_payment?: {
             id: number;
+            submission_id: number;
             filename: string;
             mime: string;
             size_bytes: number;
@@ -626,6 +657,8 @@ export interface AdminUser {
   last_name: string;
   full_name: string;
   role: "CB" | "DP" | "AB" | "WCS" | "DGFC" | "DGFAP" | "MINISTER" | "ADMIN" | "SUPER_ADMIN";
+  roles: AdminUser["role"][];
+  role_assignments: { id: number; role: AdminUser["role"]; assigned_at: string; expires_at: string | null; revoked_at: string | null; reason: string; active: boolean }[];
   phone: string;
   preferred_language: "en" | "fr";
   is_2fa_enabled: boolean;
@@ -650,11 +683,23 @@ async function adminJson<T>(path: string, init: RequestInit, getState: () => unk
     },
   });
   if (!r.ok) {
-    const j = await r.json().catch(() => ({}));
-    throw new Error(j.detail || `Request failed: ${r.status}`);
+    const text = await r.text();
+    let detail = `Request failed: ${r.status}`;
+    try {
+      const j = JSON.parse(text) as { detail?: string };
+      detail = j.detail || detail;
+    } catch {
+      if (text.includes("<!DOCTYPE html>")) detail = `${detail} (server returned an HTML error page)`;
+    }
+    throw new Error(detail);
   }
   if (r.status === 204) return undefined as T;
-  return (await r.json()) as T;
+  const text = await r.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error("The server returned an invalid response. Check that the API is running and the request URL is correct.");
+  }
 }
 
 export async function listAuditEvents(opts: { case_uid?: string; actor_email?: string; event_type?: string; signal?: AbortSignal } = {}): Promise<{ results: AuditEvent[]; count: number }> {
@@ -700,6 +745,16 @@ export async function deleteAdminUser(id: number): Promise<void> {
   return adminJson(`/users/${id}`, { method: "DELETE" }, () => store.getState());
 }
 
+export async function assignUserRole(id: number, body: { role: AdminUser["role"]; expires_at?: string | null; reason?: string }): Promise<AdminUser> {
+  const { store } = await import("@/store");
+  return adminJson(`/users/${id}/roles`, { method: "POST", body: JSON.stringify(body) }, () => store.getState());
+}
+
+export async function revokeUserRole(id: number, role: AdminUser["role"]): Promise<AdminUser> {
+  const { store } = await import("@/store");
+  return adminJson(`/users/${id}/roles`, { method: "DELETE", body: JSON.stringify({ role }) }, () => store.getState());
+}
+
 export async function exportPayments(format: "csv" | "sepa", caseUids?: string[]): Promise<{ key: string; size: number; sha256: string; rows: number; download_url: string | null }> {
   const { store } = await import("@/store");
   return adminJson("/payments/export", { method: "POST", body: JSON.stringify({ format, case_uids: caseUids }) }, () => store.getState());
@@ -723,6 +778,11 @@ export async function closeCase(uid: string, notes: string = ""): Promise<{ stat
 export const {
   useMeQuery,
   usePatchMeMutation,
+  useListNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  useNotifyDesktopEnabledMutation,
+  useNotifyDesktopDisabledMutation,
   useListCasesQuery,
   useGetCaseQuery,
   useCreateCaseMutation,

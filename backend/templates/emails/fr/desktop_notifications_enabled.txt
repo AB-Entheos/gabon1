@@ -1,0 +1,17 @@
+Subject: Notifications de bureau activées — Fonds d'urgence HEC
+
+Bonjour {{ user.first_name|default:"" }},
+
+Vous avez activé les notifications de bureau pour le Fonds d'urgence HEC.
+
+Vous recevrez des notifications par email et sur votre bureau lorsque :
+- le statut d'un dossier que vous avez créé change ; ou
+- une action ou une revue est requise de votre part.
+
+Vous pouvez gérer les autorisations de notification du navigateur dans les paramètres du site.
+
+Ouvrir le tableau de bord du Fonds d'urgence HEC :
+{{ frontend_url }}
+
+Fonds d'urgence HEC
+Circuit d'approbation des dossiers HEC

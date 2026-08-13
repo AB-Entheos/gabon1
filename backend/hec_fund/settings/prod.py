@@ -68,7 +68,7 @@ else:
     _files_dir.mkdir(parents=True, exist_ok=True)
 
 MEDICAL_CEILING_XAF = config("MEDICAL_CEILING_XAF", default=2_000_000, cast=int)
-BURIAL_CEILING_XAF = config("BURIAL_CEILING_XAF", default=1_500_000, cast=int)
+BURIAL_CEILING_XAF = config("BURIAL_CEILING_XAF", default=3_000_000, cast=int)
 CROP_CEILING_XAF = config("CROP_CEILING_XAF", default=400_000, cast=int)
 
 

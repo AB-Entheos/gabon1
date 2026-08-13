@@ -1,0 +1,11 @@
+Subject: Notifications de bureau désactivées — Fonds d'urgence HEC
+
+Bonjour {{ user.first_name|default:"" }},
+
+Les notifications de bureau ont été désactivées pour votre compte du Fonds d'urgence HEC.
+
+Vous continuerez à recevoir les notifications par email concernant l'activité des dossiers et les actions nécessitant votre attention. Vous pouvez réactiver les notifications de bureau depuis le centre de notifications du tableau de bord.
+
+{{ frontend_url }}
+
+Fonds d'urgence HEC

@@ -163,7 +163,7 @@ export default function EvidenceGallery({ caseUid, lang }: Props) {
 
       {preview && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => setPreview(null)}>
-          <div className="card w-full max-w-3xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="card w-full max-w-5xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <button
@@ -341,6 +341,7 @@ function PreviewBody({ att }: { att: AttachmentRow }) {
     attachmentId: att.id,
     mime: att.mime,
   });
+  const isPdf = att.mime.toLowerCase() === "application/pdf";
   if (isImage(att.mime) && url) {
     return (
       <img
@@ -355,6 +356,34 @@ function PreviewBody({ att }: { att: AttachmentRow }) {
       <div className="flex flex-col items-center gap-2 text-slate-500">
         <ImageIcon size={48} />
         <p className="text-xs">{att.mime}</p>
+      </div>
+    );
+  }
+  if (isPdf && url) {
+    return (
+      <div className="w-full">
+        <iframe
+          src={url}
+          title={att.filename}
+          className="h-[65vh] min-h-[420px] w-full rounded-md border border-slate-200 bg-white"
+        />
+        <div className="mt-3 flex justify-center">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+          >
+            <ExternalLink size={14} /> View PDF in new tab
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (isPdf) {
+    return (
+      <div className="flex min-h-24 flex-col items-center justify-center gap-2 text-slate-500">
+        <FileText size={48} />
+        <p className="text-xs">Loading PDF preview…</p>
       </div>
     );
   }
