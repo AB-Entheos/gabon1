@@ -1,4 +1,12 @@
+import hashlib
+import json
+
 from django.db import migrations
+
+
+def migration_payload_hash(payload):
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def migrate_minister_pending_cases(apps, schema_editor):
@@ -32,7 +40,7 @@ def migrate_minister_pending_cases(apps, schema_editor):
                 "Migrated from the former Minister approval stage to DGFAP final approval. "
                 "The case remains pending and was not automatically approved."
             ),
-            payload_hash=Event.compute_hash(
+            payload_hash=migration_payload_hash(
                 {"migration": "dgfap_final_approval", "from_step": 6, "to_step": 5}
             ),
         )
