@@ -86,12 +86,10 @@ jobs:
 
             echo "==> Creating database backup before migrations..."
             sudo mkdir -p ${{ env.DEPLOY_PATH }}/backups
-            sudo docker compose up -d db
-            set -a
-            . .env
-            set +a
+            sudo docker compose up -d --wait db
             BACKUP_FILE="${{ env.DEPLOY_PATH }}/backups/hec-$(date +%F-%H%M%S).dump"
-            sudo sh -c "docker compose exec -T db pg_dump -U '${DB_USER:-hec}' -d '${DB_NAME:-hec}' -Fc > '$BACKUP_FILE'"
+            sudo sh -c "docker compose exec -T db sh -c 'pg_dump -U postgres -d \"\$POSTGRES_DB\" -Fc' > '$BACKUP_FILE'"
+            test -s "$BACKUP_FILE"
 
             echo "==> Running migrations..."
             sudo docker compose run --rm backend python manage.py migrate --noinput
