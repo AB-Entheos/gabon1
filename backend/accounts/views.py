@@ -171,7 +171,9 @@ def list_users(request):
     """List / create users (super-admin only)."""
     if request.method == "GET":
         q = (request.query_params.get("q") or "").strip().lower()
-        qs = User.objects.all().order_by("role", "email")
+        include_inactive = request.query_params.get("include_inactive") == "true"
+        qs = User.objects.all() if include_inactive else User.objects.filter(is_active=True)
+        qs = qs.order_by("role", "email")
         if q:
             qs = qs.filter(email__icontains=q)
         return Response({"results": _AdminUserSerializer(qs, many=True).data, "count": qs.count()})
@@ -230,6 +232,10 @@ def user_detail(request, pk):
         # while removing the user from active use.
         u.is_active = False
         u.status = User.Status.SUSPENDED
+        u.role_assignments.filter(revoked_at__isnull=True).update(
+            revoked_at=timezone.now(),
+            reason="Account deactivated by super admin",
+        )
         u.save(update_fields=["is_active", "status"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
