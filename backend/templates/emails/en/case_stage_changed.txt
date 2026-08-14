@@ -1,13 +1,16 @@
-Subject: Case {{ claim_id }}: {{ action_taken }} by {{ actor.actor_role }} {{ actor.actor_name }}
+Subject: Case {{ claim_id }}: {{ action_taken }} by {{ actor.actor_role }}
 
 Hello,
 
-Case {{ claim_id }}: {{ action_taken }} by {{ actor.actor_role }} {{ actor.actor_name }}.
+Case {{ claim_id }} has been {{ action_taken }} by {{ actor.actor_role }} {{ actor.actor_name }}, {{ actor.actor_email }}.
 
 Current stage: {{ current_stage }}
 
 Case number: {{ case.uid }}
 Claimant: {{ case.claimant_name }}
+{% if action_code == "approved" %}
+Authorized amount: {{ authorized_amount_xaf }} FCFA
+{% endif %}
 
 Log in to view the case:
 {{ frontend_url }}/cases/{{ case.uid }}

@@ -252,8 +252,35 @@ def _actor_context(actor) -> dict[str, str]:
     actor_data = _serialize(actor) or {}
     role = getattr(actor, "get_role_display", lambda: getattr(actor, "role", ""))()
     name = getattr(actor, "get_full_name", lambda: "")() or getattr(actor, "email", "")
-    actor_data.update({"actor_role": role, "actor_name": name})
+    actor_data.update({"actor_role": role, "actor_name": name, "actor_email": getattr(actor, "email", "")})
     return actor_data
+
+
+def _historical_stage_actor(case, stage: str, fallback):
+    from cases.models import Event
+
+    event_type = {
+        "created": Event.Type.CREATED,
+        "submitted": Event.Type.SUBMITTED,
+        "verified": Event.Type.VERIFIED,
+        "amount_proposed": Event.Type.AMOUNT_PROPOSED,
+        "amount_authorized": Event.Type.AMOUNT_AUTHORIZED,
+        "approved": Event.Type.APPROVED,
+        "rejected": Event.Type.REJECTED,
+        "deferred": Event.Type.DEFERRED,
+        "closed": Event.Type.CLOSED,
+    }.get(stage)
+    events = case.events.select_related("actor")
+    if event_type:
+        event = events.filter(event_type=event_type).order_by("-occurred_at").first()
+        if event:
+            return event.actor
+    if stage in {"advance_ab", "advance_wcs", "advance_dgfc"}:
+        target_step = {"advance_ab": 3, "advance_wcs": 4, "advance_dgfc": 5}[stage]
+        event = events.filter(event_type=Event.Type.ADVANCED, to_step=target_step).order_by("-occurred_at").first()
+        if event:
+            return event.actor
+    return fallback
 
 
 def current_case_email_stage(case) -> str:
@@ -299,12 +326,15 @@ def _manual_stage_context(*, case, stage: str, actor) -> tuple[str, dict[str, An
     config = stage_config.get(stage)
     if config is None:
         raise ValueError(f"Unsupported case email stage: {stage}")
+    historical_actor = _historical_stage_actor(case, stage, actor)
     context = {
         "case": _serialize(case),
-        "actor": _actor_context(actor),
+        "actor": _actor_context(historical_actor),
         "claim_id": str(case.uid)[:8],
         "action_taken": config["action"],
         "current_stage": config["current_stage"],
+        "action_code": stage,
+        "authorized_amount_xaf": case.amount_authorized or 0,
     }
     if stage == "amount_proposed":
         context["amount_xaf"] = case.amount_proposed

@@ -1,13 +1,16 @@
-Subject: Dossier {{ claim_id }} : {{ action_taken }} par {{ actor.actor_role }} {{ actor.actor_name }}
+Subject: Dossier {{ claim_id }} : {{ action_taken }} par {{ actor.actor_role }}
 
 Bonjour,
 
-Le dossier {{ claim_id }} : {{ action_taken }} par {{ actor.actor_role }} {{ actor.actor_name }}.
+Le dossier {{ claim_id }} a été {{ action_taken }} par {{ actor.actor_role }} {{ actor.actor_name }}, {{ actor.actor_email }}.
 
 Étape actuelle : {{ current_stage }}
 
 Numéro du dossier : {{ case.uid }}
 Requérant : {{ case.claimant_name }}
+{% if action_code == "approved" %}
+Montant autorisé : {{ authorized_amount_xaf }} FCFA
+{% endif %}
 
 Connectez-vous pour consulter le dossier :
 {{ frontend_url }}/cases/{{ case.uid }}
