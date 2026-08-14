@@ -248,6 +248,9 @@ class Disbursement(models.Model):
     with HTTP 400.
     """
 
+    id: int
+    proof_of_payment_id: int | None
+
     class RecipientKind(models.TextChoices):
         CLAIMANT = "CLAIMANT", "Claimant"
         HOSPITAL = "HOSPITAL", "Hospital / clinic"

@@ -17,6 +17,7 @@ export default function CBDashboard() {
   const draft = cases.filter((c) => c.status === "DRAFT");
   const inFlight = cases.filter((c) => c.status !== "DRAFT" && c.status !== "CLOSED");
   const closed = cases.filter((c) => c.status === "CLOSED" || c.status === "APPROVED");
+  const recentCases = [...cases].sort((a, b) => b.reported_at.localeCompare(a.reported_at));
 
   return (
     <div className="space-y-6">
@@ -37,9 +38,24 @@ export default function CBDashboard() {
       </header>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <KpiCard label={t("dash.cb.kpi.drafts", "Drafts")} value={draft.length} color="slate" />
-        <KpiCard label={t("dash.cb.kpi.in_progress", "In progress")} value={inFlight.length} color="yellow" />
-        <KpiCard label={t("dash.cb.kpi.closed", "Closed")} value={closed.length} color="emerald" />
+        <KpiCard
+          label={t("dash.cb.kpi.drafts", "Drafts")}
+          badgeLabel={t("dash.cb.kpi.draft_badge", "Draft")}
+          value={draft.length}
+          color="slate"
+        />
+        <KpiCard
+          label={t("dash.cb.kpi.in_progress", "In progress")}
+          badgeLabel={t("dash.cb.kpi.active_badge", "Active")}
+          value={inFlight.length}
+          color="yellow"
+        />
+        <KpiCard
+          label={t("dash.cb.kpi.closed", "Closed")}
+          badgeLabel={t("dash.cb.kpi.closed_badge", "Closed")}
+          value={closed.length}
+          color="emerald"
+        />
       </div>
 
       <section className="card p-0">
@@ -60,13 +76,23 @@ export default function CBDashboard() {
             {t("dash.cb.empty", "No cases yet. Click 'New case' to start.")}
           </div>
         )}
-        {data && cases.length > 0 && <CasesTable cases={cases} lang={lang} />}
+        {data && cases.length > 0 && <CasesTable cases={recentCases} lang={lang} />}
       </section>
     </div>
   );
 }
 
-function KpiCard({ label, value, color }: { label: string; value: number; color: "slate" | "yellow" | "emerald" }) {
+function KpiCard({
+  label,
+  badgeLabel,
+  value,
+  color,
+}: {
+  label: string;
+  badgeLabel: string;
+  value: number;
+  color: "slate" | "yellow" | "emerald";
+}) {
   const palette: Record<string, string> = {
     slate:   "bg-slate-50 text-slate-700 border-slate-200",
     yellow:  "bg-yellow-50 text-yellow-700 border-yellow-300",
@@ -77,7 +103,7 @@ function KpiCard({ label, value, color }: { label: string; value: number; color:
       <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</div>
       <div className="mt-2 flex items-end justify-between">
         <div className="text-3xl font-extrabold text-slate-900">{value}</div>
-        <span className={`chip border ${palette[color]}`}>{label.split(' ')[0]}</span>
+        <span className={`chip border ${palette[color]}`}>{badgeLabel}</span>
       </div>
     </div>
   );
@@ -92,12 +118,12 @@ function CasesTable({ cases, lang }: { cases: Case[]; lang: "en" | "fr" }) {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
             <tr>
-              <th className="px-5 py-3">UID</th>
-              <th className="px-5 py-3">{t("table.claimant", "Claimant")}</th>
-              <th className="px-5 py-3">{t("table.type", "Type")}</th>
-              <th className="px-5 py-3">{t("table.incident", "Incident")}</th>
-              <th className="px-5 py-3">{t("table.status", "Status")}</th>
-              <th className="px-5 py-3 text-right">{t("table.amount", "Amount")}</th>
+              <th scope="col" className="px-5 py-3">UID</th>
+              <th scope="col" className="px-5 py-3">{t("table.claimant", "Claimant")}</th>
+              <th scope="col" className="px-5 py-3">{t("table.type", "Type")}</th>
+              <th scope="col" className="px-5 py-3">{t("table.incident", "Incident")}</th>
+              <th scope="col" className="px-5 py-3">{t("table.status", "Status")}</th>
+              <th scope="col" className="px-5 py-3 text-right">{t("table.amount", "Amount")}</th>
             </tr>
           </thead>
           <tbody>
