@@ -260,6 +260,12 @@ def send_case_verified(*, case) -> None:
 def send_case_approved(*, case) -> None:
     """Notify the CB that a case has been fully approved."""
     from .tasks import do_send_email
+    from django.db.models import Sum
+
+    disbursed_amount = case.disbursements.filter(deleted_at__isnull=True).aggregate(
+        total=Sum("amount_xaf")
+    )["total"] or 0
+    authorized_amount = case.amount_authorized or 0
 
     if case.created_by:
         lang = getattr(case.created_by, "preferred_language", "fr") or "fr"
@@ -268,7 +274,13 @@ def send_case_approved(*, case) -> None:
                 notification_type="case_approved",
                 recipient_email=case.created_by.email,
                 language=lang,
-                template_context={"case": _serialize(case), "step": case.current_step},
+                template_context={
+                    "case": _serialize(case),
+                    "step": case.current_step,
+                    "authorized_amount_xaf": authorized_amount,
+                    "disbursed_amount_xaf": disbursed_amount,
+                    "remaining_amount_xaf": max(authorized_amount - disbursed_amount, 0),
+                },
             )
         except Exception:
             pass

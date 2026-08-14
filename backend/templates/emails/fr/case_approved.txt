@@ -6,6 +6,9 @@ Un nouveau dossier d'indemnisation HEC est arrivé à l'étape {{ step }} et né
 
 Requérant :    {{ case.claimant_name }}
 Type :         {{ case.case_type }}
+Montant autorisé : {{ authorized_amount_xaf }} XAF
+Montant décaissé : {{ disbursed_amount_xaf }} XAF
+Montant restant :  {{ remaining_amount_xaf }} XAF
 Incident le :  {{ case.incident_at }}
 Signalé le :   {{ case.reported_at }}
 SLA :          {{ case.sla_deadline|default:"-" }}

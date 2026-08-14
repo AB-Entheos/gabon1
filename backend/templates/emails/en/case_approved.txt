@@ -6,6 +6,9 @@ A new HEC compensation case has reached step {{ step }} and requires your review
 
 Claimant:    {{ case.claimant_name }}
 Type:        {{ case.case_type }}
+Authorized amount: {{ authorized_amount_xaf }} XAF
+Disbursed amount:  {{ disbursed_amount_xaf }} XAF
+Remaining amount:  {{ remaining_amount_xaf }} XAF
 Incident at: {{ case.incident_at }}
 Reported:    {{ case.reported_at }}
 SLA:         {{ case.sla_deadline|default:"-" }}
