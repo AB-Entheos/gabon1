@@ -1,22 +1,16 @@
-Subject: Décaissement enregistré pour le dossier {{ case.uid }}
+Subject: {{ amount_xaf }} FCFA décaissés pour le dossier {{ claim_id }}
 
 Bonjour,
 
-Un décaissement WCS a été enregistré pour le dossier HEC ci-dessous.
+Le WCS a décaissé {{ amount_xaf }} FCFA pour le dossier {{ claim_id }}.
 
 Requérant :           {{ case.claimant_name }}
 Type de dossier :     {{ case.case_type }}
-Décaissement :        {{ disbursement.amount_xaf }} XAF
-Bénéficiaire :        {{ disbursement.recipient_name }}
-Type de bénéficiaire : {{ disbursement.recipient_kind }}
-Objet :               {{ disbursement.purpose }}
-Date de paiement :    {{ disbursement.payment_date }}
-Référence :           {{ disbursement.payment_reference|default:"-" }}
-Enregistré par :      {{ disbursement.paid_by }}
-
-Total décaissé :      {{ disbursement.disbursed_total_xaf }} XAF
-Restant :             {{ disbursement.remaining_xaf }} XAF
-Autorisé :            {{ disbursement.authorized_xaf }} XAF
+Note du décaissement : {{ disbursement_note }}
+Effectué par : {{ actor.get_role_display|default:actor.role }}
+Montant autorisé : {{ authorized_amount_xaf }} FCFA
+Total décaissé : {{ total_disbursed_xaf }} FCFA
+Solde : {{ balance_xaf }} FCFA
 
 Ouvrir le dossier dans le tableau de bord :
 {{ frontend_url }}/cases/{{ case.uid }}

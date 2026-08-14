@@ -1,14 +1,14 @@
-Subject: Case {{ case.uid }} has been closed
+Subject: Case {{ claim_id }} has been closed
 
 Hello,
 
-Your HEC compensation case has been closed after successful payment.
+Case {{ claim_id }} has been closed and marked as complete by {{ actor.get_role_display|default:actor.role }}.
 
 Case details:
 - Case ID: {{ case.uid }}
 - Claimant: {{ case.claimant_name }}
 - Type: {{ case.get_case_type_display }}
-- Amount authorized: {{ case.amount_authorized|default:"-" }} XAF
+- Total disbursed amount: {{ total_disbursed_xaf }} FCFA
 
 You can view the full case history in the dashboard:
 {{ frontend_url }}/cases/{{ case.uid }}

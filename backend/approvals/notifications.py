@@ -42,21 +42,23 @@ def schedule_notifications(case, from_step: int | None, action: str = "", actor=
                           message={"en": en_message, "fr": fr_message},
                           kind=kind, case=case, payload={"step": case.current_step})
 
+    action_role = None
     if case.status == "SUBMITTED":
-        notify.send_case_submitted(case=case)
-    elif case.status == "AT_APPROVAL":
-        if action == "verify":
-            notify.send_case_verified(case=case)
-        notify.notify_approver(case=case, from_step=from_step)
-    elif case.status == "REJECTED":
-        notify.send_case_rejected(case=case, actor=actor)
-    elif case.status == "DEFERRED":
-        notify.send_case_deferred(case=case, actor=actor)
+        action_role = "AB"
+    elif case.status == "AT_APPROVAL" and action not in {"dgfc_propose_amount", "dgfap_authorize_amount"}:
+        action_role = {2: "AB", 3: "WCS", 4: "DGFC", 5: "DGFAP"}.get(case.current_step)
     elif case.status == "APPROVED":
-        notify.notify_approver(case=case, from_step=from_step)
-        notify.send_case_approved(case=case)
+        action_role = "WCS"
+
+    if case.status in {"SUBMITTED", "AT_APPROVAL", "APPROVED", "REJECTED", "DEFERRED"}:
+        notify.send_case_stage_update(
+            case=case,
+            actor=actor,
+            action=action,
+            action_role=action_role,
+        )
     elif case.status == "CLOSED":
-        notify.send_case_closed(case=case, actor=actor)
+        notify.send_case_closed_update(case=case, actor=actor)
 
 
 

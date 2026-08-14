@@ -1,8 +1,8 @@
-Subject: Montant proposé pour le dossier {{ case.uid }}
+Subject: Montant proposé : dossier {{ case.uid }}
 
 Bonjour,
 
-Un montant a été proposé pour le dossier d'indemnisation HEC {{ case.uid }}.
+Le dossier {{ case.uid }} a fait l'objet d'une proposition de montant par DGFC {{ actor.actor_name }}.
 
 Détails du dossier :
 - Requérant : {{ case.claimant_name }}

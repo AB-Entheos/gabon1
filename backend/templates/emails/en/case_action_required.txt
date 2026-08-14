@@ -1,0 +1,11 @@
+Subject: Action required: Case {{ claim_id }}
+
+Hello,
+
+Case {{ claim_id }} has been added to your review queue.
+Please log in to review and process the case.
+
+Current stage: {{ current_stage }}
+{{ frontend_url }}/cases/{{ case.uid }}
+
+HEC Emergency Fund

@@ -704,29 +704,30 @@ class CaseViewSet(ModelViewSet):
                 and user.has_any_role("CB", "DP")
                 and case.created_by_id == user.id
             )
-            or user.role == approver_role_for_step(case.current_step)
+            or (
+                case.current_step > 1
+                and user.role == approver_role_for_step(case.current_step)
+            )
         ):
             return Response(
                 {"detail": "Only the assigned reviewer or an administrator can resume this case."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        case.status = Case.Status.AT_APPROVAL
-        case.save(update_fields=["status"])
-        Event.objects.create(
-            case=case,
-            actor=request.user,
-            event_type=Event.Type.ADVANCED,
-            from_step=case.current_step,
-            to_step=case.current_step,
-            notes=request.data.get("notes", "Resumed after clarification."),
-            payload_hash=Event.compute_hash({"resumed": True}),
-            idempotency_key=request.headers.get("Idempotency-Key", ""),
-        )
+        try:
+            event = transition(
+                case,
+                "resume",
+                request.user,
+                notes=request.data.get("notes", "Resumed after clarification."),
+                idempotency_key=request.headers.get("Idempotency-Key", ""),
+            )
+        except StateError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(
             {
                 "status": case.status,
                 "current_step": case.current_step,
-                "event_id": None,
+                "event_id": event.id,
                 "to_role": approver_role_for_step(case.current_step),
             }
         )
@@ -1034,6 +1035,12 @@ class CaseViewSet(ModelViewSet):
             idempotency_key=request.headers.get("Idempotency-Key", ""),
         )
 
+
+        try:
+            from notifications.service import send_case_disbursement
+            send_case_disbursement(case=case, disbursement=disb, actor=request.user)
+        except Exception:
+            pass
         return Response(
             {
                 "id": disb.id,

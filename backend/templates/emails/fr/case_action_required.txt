@@ -1,0 +1,11 @@
+Subject: Action requise : dossier {{ claim_id }}
+
+Bonjour,
+
+Le dossier {{ claim_id }} a été ajouté à votre file de revue.
+Veuillez vous connecter pour examiner et traiter le dossier.
+
+Étape actuelle : {{ current_stage }}
+{{ frontend_url }}/cases/{{ case.uid }}
+
+Fonds d’urgence HEC

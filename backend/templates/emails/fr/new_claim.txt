@@ -1,16 +1,18 @@
-Subject: Nouveau dossier d'indemnisation HEC soumis
+Subject: Nouveau dossier créé : dossier {{ case.uid }}
 
 Bonjour,
 
-Un nouveau dossier a été soumis sur la plateforme du Fonds d'urgence HEC.
+Un nouveau dossier a été créé sur la plateforme du Fonds d'urgence HEC.
 
 Détails du dossier :
-- ID du dossier : {{ case.uid }}
+- Numéro du dossier : {{ case.uid }}
 - Requérant : {{ case.claimant_name }}
 - Type : {{ case.get_case_type_display }}
 - Village : {{ case.village|default:"-" }}
 - Incident le : {{ case.incident_at }}
 - Signalé le : {{ case.reported_at }}
+
+Créé par : {{ case.created_by_role }} {{ case.created_by_name }}
 
 Ouvrir le dossier dans le tableau de bord :
 {{ frontend_url }}/cases/{{ case.uid }}

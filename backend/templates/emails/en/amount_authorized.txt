@@ -2,12 +2,12 @@ Subject: Amount authorized for case {{ case.uid }} — final approval needed
 
 Hello,
 
-An amount has been authorized for HEC compensation case {{ case.uid }}.
+An amount has been authorized for case {{ case.uid }} by DGFAP {{ actor.actor_name }}.
 
 Case details:
 - Claimant: {{ case.claimant_name }}
 - Type: {{ case.get_case_type_display }}
-- Amount authorized: {{ amount_xaf }} XAF
+- Amount authorized: {{ amount_xaf }} FCFA
 
 This case now requires your final approval.
 

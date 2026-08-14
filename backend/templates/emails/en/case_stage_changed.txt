@@ -1,0 +1,15 @@
+Subject: Case {{ claim_id }}: {{ action_taken }} by {{ actor.actor_role }} {{ actor.actor_name }}
+
+Hello,
+
+Case {{ claim_id }}: {{ action_taken }} by {{ actor.actor_role }} {{ actor.actor_name }}.
+
+Current stage: {{ current_stage }}
+
+Case number: {{ case.uid }}
+Claimant: {{ case.claimant_name }}
+
+Log in to view the case:
+{{ frontend_url }}/cases/{{ case.uid }}
+
+HEC Emergency Fund

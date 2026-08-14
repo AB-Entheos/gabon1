@@ -1,13 +1,13 @@
-Subject: Amount proposed for case {{ case.uid }}
+Subject: Amount proposed: Case {{ case.uid }}
 
 Hello,
 
-An amount has been proposed for HEC compensation case {{ case.uid }}.
+Case {{ case.uid }} has had an amount proposed by DGFC {{ actor.actor_name }}.
 
 Case details:
 - Claimant: {{ case.claimant_name }}
 - Type: {{ case.get_case_type_display }}
-- Amount proposed: {{ amount_xaf }} XAF
+- Proposed amount: {{ amount_xaf }} FCFA
 
 Please review and authorize the amount in the dashboard:
 {{ frontend_url }}/cases/{{ case.uid }}

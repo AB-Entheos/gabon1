@@ -33,7 +33,7 @@
 - Production domain: `https://hec.ab-entheos.com`.
 - Production host: EC2 instance `i-088ca8e946a03d3a9`, deployed under `/opt/hec`.
 - Production services run with Docker Compose: PostgreSQL, Django backend, Celery worker, Celery beat, Redis, and Nginx frontend.
-- Production attachments are separate from PostgreSQL and must be preserved independently in the configured S3-compatible object store.
+- Production attachments are separate from PostgreSQL and must be preserved independently. The current production Compose deployment bind-mounts `backend/files` into the backend container; do not assume a database dump protects these files or that S3 is active.
 
 ## Repository Conventions
 
@@ -48,12 +48,12 @@
 ## Deployment Rules
 
 - GitHub Actions is the production deployment mechanism. Push only to `main` after local validation; do not deploy manually by SSH unless explicitly requested as an emergency fallback.
-- `.github/workflows/deploy.yml` builds the frontend and backend, creates a PostgreSQL dump before migrations, runs migrations, collects static files, and restarts Docker Compose services.
+- `.github/workflows/deploy.yml` is the active deployment path: it fetches and hard-resets `/opt/hec` to `origin/main`, builds the frontend and backend, runs migrations and static collection, invokes `seed_real_data` (currently with `|| true`), then recreates Docker Compose services and checks `/api/v1/health`. It does not currently create a PostgreSQL dump in the workflow; treat backup verification as a required deployment improvement, not an existing guarantee.
 - Never run `docker compose down -v`, delete `db-data`, reset the database, run demo seeding, or replace the production `.env` during a deployment.
 - Existing production users, villages, forms, cases, audit events, disbursements, and attachments must remain intact.
-- Before changing deployment or migration behavior, verify that the backup is non-empty and that migration failure stops before service restart.
+- Before changing deployment or migration behavior, add or verify a non-empty PostgreSQL backup and ensure migration failure stops before service restart. The current workflow has no pre-migration dump step, so do not claim this protection exists unless the workflow has been updated and validated.
 - Prefer backward-compatible migrations. Test migrations against a restored production backup when they modify workflow state.
-- After a push, monitor the GitHub Actions run and verify `https://hec.ab-entheos.com/api/v1/health` returns HTTP 200. Temporary 500 responses can occur while Docker images build and services restart.
+- After a push, monitor the GitHub Actions run and verify `https://hec.ab-entheos.com/api/v1/health` returns HTTP 200. Temporary 500 responses can occur while Docker images build and services restart. The deployment host is the EC2 instance `i-088ca8e946a03d3a9`; do not use the masked placeholder IP in production configuration.
 - Do not expose, copy, print, or commit `.env`, API keys, passwords, SSH keys, JWTs, or Resend credentials.
 
 ## Data Protection
@@ -79,6 +79,7 @@
 - Disbursed totals include active disbursements only; soft-deleted disbursements are excluded.
 - Desktop notification prompting is implemented in `frontend/src/components/NotificationCenter.tsx`.
 - Temporary HTTP 500 responses may appear while Docker images build and services restart; verify the health endpoint after deployment.
+- The production approval chain is CB/DP -> AB -> WCS -> DGFC -> DGFAP. Legacy scripts and demo fixtures may still mention Minister approval; do not use those references as the current workflow contract.
 
 ## Email Notifications
 
@@ -103,7 +104,7 @@ bun run build
 
 - `manage.py test` currently reports no Django tests in the repository; do not treat that as comprehensive coverage.
 - Review `git diff --check` and exclude local debug scripts, `.env`, generated files, and test artifacts from release commits unless explicitly needed.
-- Never claim a production deployment succeeded until the GitHub Actions run is successful and the health endpoint has been checked.
+- Never claim a production deployment succeeded until the GitHub Actions run is successful and the health endpoint has been checked. A successful workflow run alone is insufficient if the post-deploy health check was not observed.
 
 ## Safe Change Workflow
 

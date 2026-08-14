@@ -1,22 +1,16 @@
-Subject: Disbursement recorded for case {{ case.uid }}
+Subject: {{ amount_xaf }} FCFA disbursed for case {{ claim_id }}
 
 Hello,
 
-A WCS disbursement has been recorded for the HEC Emergency Fund case below.
+A WCS has disbursed {{ amount_xaf }} FCFA for case {{ claim_id }}.
 
 Claimant:        {{ case.claimant_name }}
 Case type:       {{ case.case_type }}
-Disbursement:    {{ disbursement.amount_xaf }} XAF
-Recipient:       {{ disbursement.recipient_name }}
-Recipient kind:  {{ disbursement.recipient_kind }}
-Purpose:         {{ disbursement.purpose }}
-Payment date:    {{ disbursement.payment_date }}
-Reference:       {{ disbursement.payment_reference|default:"-" }}
-Recorded by:     {{ disbursement.paid_by }}
-
-Total disbursed: {{ disbursement.disbursed_total_xaf }} XAF
-Remaining:       {{ disbursement.remaining_xaf }} XAF
-Authorized:      {{ disbursement.authorized_xaf }} XAF
+Disbursement note: {{ disbursement_note }}
+Disbursed by: {{ actor.get_role_display|default:actor.role }}
+Authorized amount: {{ authorized_amount_xaf }} FCFA
+Total disbursed: {{ total_disbursed_xaf }} FCFA
+Balance: {{ balance_xaf }} FCFA
 
 Open the case in the dashboard:
 {{ frontend_url }}/cases/{{ case.uid }}

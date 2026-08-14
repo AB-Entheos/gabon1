@@ -49,6 +49,8 @@ def _serialize(obj: Any) -> Any:
         return {
             "pk": obj.pk,
             "first_name": getattr(obj, "first_name", ""),
+            "last_name": getattr(obj, "last_name", ""),
+            "full_name": getattr(obj, "get_full_name", lambda: "")() or getattr(obj, "email", ""),
             "email": getattr(obj, "email", ""),
             "get_role_display": getattr(obj, "get_role_display", lambda: "")(),
             "get_preferred_language_display": getattr(obj, "get_preferred_language_display", lambda: "")(),
@@ -87,6 +89,8 @@ _TEMPLATE_DIR_MAP = {
     "desktop_notifications_enabled": "desktop_notifications_enabled",
     "desktop_notifications_disabled": "desktop_notifications_disabled",
     "disbursement_recorded": "disbursement_recorded",
+    "case_stage_changed": "case_stage_changed",
+    "case_action_required": "case_action_required",
 }
 
 
@@ -205,11 +209,154 @@ def send_new_claim(*, case, recipients=None) -> None:
                 notification_type="new_claim",
                 recipient_email=r.email,
                 language=lang,
-                template_context={"case": _serialize(case), "recipient": _serialize(r)},
+                template_context={
+                    "case": {
+                        **_serialize(case),
+                        "created_by_role": getattr(case.created_by, "get_role_display", lambda: "")(),
+                        "created_by_name": getattr(case.created_by, "get_full_name", lambda: "")()
+                        or getattr(case.created_by, "email", ""),
+                    },
+                    "recipient": _serialize(r),
+                },
             )
         except Exception:
             # Individual email failures must never block case creation.
             pass
+
+
+def _active_recipients(*, role=None):
+    from accounts.models import User
+
+    recipients = User.objects.filter(is_active=True).exclude(email="")
+    return recipients.filter(role=role) if role else recipients
+
+
+def _stage_name(case) -> str:
+    return {
+        "DRAFT": "Draft",
+        "SUBMITTED": "Submitted",
+        "AT_APPROVAL": {
+            2: "AB review",
+            3: "WCS review",
+            4: "DGFC review",
+            5: "DGFAP review",
+        }.get(case.current_step, "Approval review"),
+        "APPROVED": "Approved for payment",
+        "REJECTED": "Rejected",
+        "DEFERRED": "Deferred for clarification",
+        "CLOSED": "Closed",
+    }.get(case.status, case.status)
+
+
+def _actor_context(actor) -> dict[str, str]:
+    actor_data = _serialize(actor) or {}
+    role = getattr(actor, "get_role_display", lambda: getattr(actor, "role", ""))()
+    name = getattr(actor, "get_full_name", lambda: "")() or getattr(actor, "email", "")
+    actor_data.update({"actor_role": role, "actor_name": name})
+    return actor_data
+
+
+def send_case_stage_update(*, case, actor, action: str, action_role: str | None = None) -> None:
+    """Send one stage update to everyone and one action email to the assignees."""
+    from .tasks import do_send_email
+
+    case_data = _serialize(case)
+    actor_data = _actor_context(actor)
+    action_text = {
+        "submit": "initiated the approval workflow",
+        "verify": "verified the case",
+        "advance_ab": "forwarded the case",
+        "advance_wcs": "forwarded the case",
+        "advance_dgfc": "forwarded the case",
+        "advance_dgfap": "approved the case",
+        "reject": "rejected the case",
+        "defer_from_3": "deferred the case",
+        "defer_from_4": "deferred the case",
+        "defer_from_5": "deferred the case",
+    }.get(action, action.replace("_", " ").lower())
+    stage = "Approval workflow initiated - AB verification" if action == "submit" else _stage_name(case)
+    context = {
+        "case": case_data,
+        "actor": actor_data,
+        "claim_id": str(case.uid)[:8],
+        "action_taken": action_text,
+        "current_stage": stage,
+        "action_role": action_role or "",
+    }
+    recipients = set(_active_recipients(role=action_role)) if action_role else set()
+    if case.created_by and case.created_by.is_active and case.created_by.email:
+        recipients.add(case.created_by)
+    for recipient in recipients:
+        try:
+            do_send_email(
+                notification_type="case_stage_changed",
+                recipient_email=recipient.email,
+                language=getattr(recipient, "preferred_language", "fr") or "fr",
+                template_context={**context, "recipient": _serialize(recipient)},
+            )
+        except Exception:
+            logger.exception("Stage email failed for case %s to %s", case.uid, recipient.email)
+
+    if action_role:
+        for recipient in _active_recipients(role=action_role):
+            try:
+                do_send_email(
+                    notification_type="case_action_required",
+                    recipient_email=recipient.email,
+                    language=getattr(recipient, "preferred_language", "fr") or "fr",
+                    template_context={**context, "recipient": _serialize(recipient)},
+                )
+            except Exception:
+                logger.exception("Action email failed for case %s to %s", case.uid, recipient.email)
+
+
+def send_case_disbursement(*, case, disbursement, actor) -> None:
+    from django.db.models import Sum
+    from .tasks import do_send_email
+
+    total = case.disbursements.filter(deleted_at__isnull=True).aggregate(total=Sum("amount_xaf"))["total"] or 0
+    authorized = case.amount_authorized or 0
+    context = {
+        "case": _serialize(case),
+        "actor": _actor_context(actor),
+        "claim_id": str(case.uid)[:8],
+        "amount_xaf": disbursement.amount_xaf,
+        "disbursement_note": disbursement.notes or disbursement.purpose,
+        "authorized_amount_xaf": authorized,
+        "total_disbursed_xaf": total,
+        "balance_xaf": max(authorized - total, 0),
+    }
+    recipients = set(_active_recipients(role="WCS")) | set(_active_recipients(role="DGFC")) | set(_active_recipients(role="DGFAP"))
+    if case.created_by and case.created_by.is_active and case.created_by.email:
+        recipients.add(case.created_by)
+    for recipient in recipients:
+        try:
+            do_send_email(
+                notification_type="disbursement_recorded",
+                recipient_email=recipient.email,
+                language=getattr(recipient, "preferred_language", "fr") or "fr",
+                template_context={**context, "recipient": _serialize(recipient)},
+            )
+        except Exception:
+            logger.exception("Disbursement email failed for case %s to %s", case.uid, recipient.email)
+
+
+def send_case_closed_update(*, case, actor) -> None:
+    from django.db.models import Sum
+    from .tasks import do_send_email
+
+    total = case.disbursements.filter(deleted_at__isnull=True).aggregate(total=Sum("amount_xaf"))["total"] or 0
+    context = {"case": _serialize(case), "actor": _actor_context(actor), "claim_id": str(case.uid)[:8], "total_disbursed_xaf": total}
+    for recipient in _active_recipients(role="DGFAP"):
+        try:
+            do_send_email(
+                notification_type="case_closed",
+                recipient_email=recipient.email,
+                language=getattr(recipient, "preferred_language", "fr") or "fr",
+                template_context={**context, "recipient": _serialize(recipient)},
+            )
+        except Exception:
+            logger.exception("Closure email failed for case %s to %s", case.uid, recipient.email)
 
 
 def send_case_submitted(*, case) -> None:
@@ -349,7 +496,7 @@ def send_amount_proposed(*, case, actor=None) -> None:
     from accounts.models import User
     from .tasks import do_send_email
 
-    recipients = User.objects.filter(role="DGFAP", is_active=True)
+    recipients = User.objects.filter(role="DGFAP", is_active=True).exclude(email="")
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
         try:
@@ -360,7 +507,7 @@ def send_amount_proposed(*, case, actor=None) -> None:
                 template_context={
                     "case": _serialize(case),
                     "amount_xaf": case.amount_proposed,
-                    "actor": _serialize(actor),
+                    "actor": _actor_context(actor),
                 },
             )
         except Exception:
@@ -372,7 +519,7 @@ def send_amount_authorized(*, case, actor=None) -> None:
     from accounts.models import User
     from .tasks import do_send_email
 
-    recipients = User.objects.filter(role="WCS", is_active=True)
+    recipients = User.objects.filter(role="WCS", is_active=True).exclude(email="")
     for r in recipients:
         lang = getattr(r, "preferred_language", "fr") or "fr"
         try:
@@ -383,7 +530,7 @@ def send_amount_authorized(*, case, actor=None) -> None:
                 template_context={
                     "case": _serialize(case),
                     "amount_xaf": case.amount_authorized,
-                    "actor": _serialize(actor),
+                    "actor": _actor_context(actor),
                 },
             )
         except Exception:

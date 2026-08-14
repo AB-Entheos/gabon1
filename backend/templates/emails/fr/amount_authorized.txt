@@ -2,7 +2,7 @@ Subject: Montant autorisé pour le dossier {{ case.uid }} — approbation finale
 
 Bonjour,
 
-Un montant a été autorisé pour le dossier d'indemnisation HEC {{ case.uid }}.
+Un montant a été autorisé pour le dossier {{ case.uid }} par DGFAP {{ actor.actor_name }}.
 
 Détails du dossier :
 - Requérant : {{ case.claimant_name }}

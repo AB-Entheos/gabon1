@@ -113,11 +113,10 @@ def check_sla_breaches() -> dict[str, Any]:
     than its SLA deadline (medical=48h, burial=72h), send a reminder to
     the current approver group.
     """
-    from django.conf import settings as _s
-    from django.core.mail import send_mail
-    from django.template.loader import render_to_string
-    from django.utils import translation
+    from notifications.tasks import do_send_email
+    from accounts.models import User
     from cases.models import Case
+    from cases.state_machine import approver_role_for_step, StateError
 
     now = timezone.now()
     breached = Case.objects.filter(
@@ -136,20 +135,24 @@ def check_sla_breaches() -> dict[str, Any]:
         recipients = User.objects.filter(role=role, is_active=True)
         for r in recipients:
             lang = getattr(r, "preferred_language", "fr") or "fr"
-            with translation.override(lang):
-                ctx = {"case": case, "step": case.current_step, "role": role, "sla_deadline": case.sla_deadline}
-                try:
-                    email_body = render_to_string(f"emails/{lang}/case_verified.txt", ctx)
-                    send_mail(
-                        subject=f"[HEC] SLA reminder: Case {case.uid.hex[:8]} overdue",
-                        message=email_body,
-                        from_email=_s.DEFAULT_FROM_EMAIL,
-                        recipient_list=[r.email],
-                        fail_silently=False,
-                    )
-                    sent_count += 1
-                except Exception as e:
-                    logger.exception("SLA reminder failed for case %s to %s", case.uid, r.email)
+            try:
+                do_send_email(
+                    notification_type="case_action_required",
+                    recipient_email=r.email,
+                    language=lang,
+                    template_context={
+                        "case": {
+                            "uid": case.uid,
+                            "claimant_name": case.claimant_name,
+                        },
+                        "claim_id": str(case.uid)[:8],
+                        "current_stage": f"Step {case.current_step} - SLA overdue",
+                        "action_role": role,
+                    },
+                )
+                sent_count += 1
+            except Exception:
+                logger.exception("SLA reminder failed for case %s to %s", case.uid, r.email)
 
     logger.info("SLA check complete: %d breached cases, %d reminders sent", breached.count(), sent_count)
     return {"breached": breached.count(), "reminders_sent": sent_count}

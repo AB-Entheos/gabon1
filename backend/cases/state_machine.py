@@ -115,6 +115,15 @@ TRANSITIONS: dict[str, Transition] = {
         to_status=None,
         description="DGFAP authorizes the amount at step 5 (locks amount_authorized).",
     ),
+    "resume": Transition(
+        name="resume",
+        event_type=Event.Type.ADVANCED,
+        required_role=None,
+        from_step=None,
+        to_step=None,
+        to_status=Case.Status.AT_APPROVAL,
+        description="Resume a deferred case at its current step.",
+    ),
 
     "reject": Transition(
         name="reject",
@@ -337,12 +346,10 @@ def transition(
 
     # Schedule Celery notifications (if configured). In dev / CELERY_TASK_ALWAYS_EAGER=True
     # this fires synchronously inside the same request.
-    try:
-        from approvals.notifications import schedule_notifications
-        schedule_notifications(case, from_step=from_step, action=action, actor=actor)
-    except Exception:
-        # Notifications must NEVER block a state transition. Swallow errors.
-        pass
+    from approvals.notifications import schedule_notifications
+    transaction.on_commit(
+        lambda: schedule_notifications(case, from_step=from_step, action=action, actor=actor)
+    )
 
     return event
 

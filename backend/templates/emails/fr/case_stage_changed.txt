@@ -1,0 +1,15 @@
+Subject: Dossier {{ claim_id }} : {{ action_taken }} par {{ actor.actor_role }} {{ actor.actor_name }}
+
+Bonjour,
+
+Le dossier {{ claim_id }} : {{ action_taken }} par {{ actor.actor_role }} {{ actor.actor_name }}.
+
+Étape actuelle : {{ current_stage }}
+
+Numéro du dossier : {{ case.uid }}
+Requérant : {{ case.claimant_name }}
+
+Connectez-vous pour consulter le dossier :
+{{ frontend_url }}/cases/{{ case.uid }}
+
+Fonds d’urgence HEC
