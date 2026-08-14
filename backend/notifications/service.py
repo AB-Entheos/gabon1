@@ -256,6 +256,78 @@ def _actor_context(actor) -> dict[str, str]:
     return actor_data
 
 
+def send_manual_case_stage_email(*, case, stage: str, actor) -> dict[str, int]:
+    """Resend a selected case-stage notification at the request of a superadmin."""
+    from .tasks import do_send_email
+
+    stage_config = {
+        "created": {"action": "created the case", "current_stage": "Case created", "role": None},
+        "submitted": {"action": "initiated the approval workflow", "current_stage": "Approval workflow initiated - AB verification", "role": "AB"},
+        "verified": {"action": "verified the case", "current_stage": "AB review", "role": "AB"},
+        "advance_ab": {"action": "forwarded the case", "current_stage": "WCS review", "role": "WCS"},
+        "advance_wcs": {"action": "forwarded the case", "current_stage": "DGFC review", "role": "DGFC"},
+        "amount_proposed": {"action": "proposed an amount for the case", "current_stage": "DGFAP review", "role": "DGFAP"},
+        "advance_dgfc": {"action": "forwarded the case", "current_stage": "DGFAP review", "role": "DGFAP"},
+        "amount_authorized": {"action": "authorized the payment amount", "current_stage": "Payment preparation", "role": "WCS"},
+        "approved": {"action": "approved the case", "current_stage": "Approved for payment", "role": "WCS"},
+        "rejected": {"action": "rejected the case", "current_stage": "Rejected", "role": None},
+        "deferred": {"action": "deferred the case", "current_stage": "Deferred for clarification", "role": None},
+        "closed": {"action": "closed the case", "current_stage": "Closed", "role": None},
+    }
+    config = stage_config.get(stage)
+    if config is None:
+        raise ValueError(f"Unsupported case email stage: {stage}")
+
+    actor_data = _actor_context(actor)
+    context = {
+        "case": _serialize(case),
+        "actor": actor_data,
+        "claim_id": str(case.uid)[:8],
+        "action_taken": config["action"],
+        "current_stage": config["current_stage"],
+    }
+    recipients = list(_active_recipients())
+    action_recipients = list(_active_recipients(role=config["role"])) if config["role"] else []
+    sent = 0
+    failed = 0
+
+    notification_type = "new_claim" if stage == "created" else "case_stage_changed"
+    if stage == "amount_proposed":
+        notification_type = "amount_proposed"
+        context["amount_xaf"] = case.amount_proposed
+    elif stage == "amount_authorized":
+        notification_type = "amount_authorized"
+        context["amount_xaf"] = case.amount_authorized
+
+    for recipient in recipients:
+        try:
+            do_send_email(
+                notification_type=notification_type,
+                recipient_email=recipient.email,
+                language=getattr(recipient, "preferred_language", "fr") or "fr",
+                template_context={**context, "recipient": _serialize(recipient)},
+            )
+            sent += 1
+        except Exception:
+            failed += 1
+            logger.exception("Manual case email failed for case %s to %s", case.uid, recipient.email)
+
+    for recipient in action_recipients:
+        try:
+            do_send_email(
+                notification_type="case_action_required",
+                recipient_email=recipient.email,
+                language=getattr(recipient, "preferred_language", "fr") or "fr",
+                template_context={**context, "recipient": _serialize(recipient)},
+            )
+            sent += 1
+        except Exception:
+            failed += 1
+            logger.exception("Manual action email failed for case %s to %s", case.uid, recipient.email)
+
+    return {"sent": sent, "failed": failed}
+
+
 def send_case_stage_update(*, case, actor, action: str, action_role: str | None = None) -> None:
     """Send one stage update to everyone and one action email to the assignees."""
     from .tasks import do_send_email

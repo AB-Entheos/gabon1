@@ -294,6 +294,14 @@ export const hecApi = createApi({
         "Cases",
       ],
     }),
+    resendCaseStageEmail: build.mutation<{ stage: string; sent: number; failed: number }, { uid: string; stage: string }>({
+      query: ({ uid, stage }) => ({
+        url: `cases/${uid}/resend-stage-email`,
+        method: "POST",
+        body: { stage },
+      }),
+      invalidatesTags: (_r, _e, { uid }) => [{ type: "Case", id: uid }],
+    }),
     advanceCase: build.mutation<
       {
         status: string;
@@ -834,6 +842,7 @@ export const {
   useRestoreCaseMutation,
   useSubmitCaseMutation,
   useVerifyCaseMutation,
+  useResendCaseStageEmailMutation,
   useAdvanceCaseMutation,
   useRejectCaseMutation,
   useDeferCaseMutation,

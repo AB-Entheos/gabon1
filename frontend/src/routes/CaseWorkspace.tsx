@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck, CircleDollarSign, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck, CircleDollarSign, Loader2, Trash2, Send } from "lucide-react";
 import {
   useGetCaseQuery,
   useVerifyCaseMutation,
@@ -12,6 +12,7 @@ import {
   useResumeCaseMutation,
   useSetAmountMutation,
   useSubmitCaseMutation,
+  useResendCaseStageEmailMutation,
   useGetFormQuery,
   useSubmitFormMutation,
   useDeleteCaseMutation,
@@ -47,6 +48,7 @@ export default function CaseWorkspace() {
   const [resumeCase] = useResumeCaseMutation();
   const [setAmount] = useSetAmountMutation();
   const [submitCase] = useSubmitCaseMutation();
+  const [resendCaseStageEmail, { isLoading: resendingEmail }] = useResendCaseStageEmailMutation();
   const [deleteCaseMutation] = useDeleteCaseMutation();
   const [progressiveMissingSlots, setProgressiveMissingSlots] = useState<string[] | null>(null);
   const [, setProgressiveWarning] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export default function CaseWorkspace() {
 
   const isCB = caseData.created_by === user?.id;
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const isDeleted = caseData.status === "DELETED";
   const isCurrentApprover =
     caseData.status === "AT_APPROVAL" &&
@@ -93,6 +96,17 @@ export default function CaseWorkspace() {
       </div>
 
       <CasePipeline caseData={caseData} lang={lang} />
+
+      {isSuperAdmin && (
+        <ManualEmailResend
+          caseUid={caseData.uid}
+          busy={resendingEmail}
+          onResend={async (stage) => {
+            const result = await resendCaseStageEmail({ uid: caseData.uid, stage }).unwrap();
+            window.alert(`${result.sent} email(s) sent; ${result.failed} failed.`);
+          }}
+        />
+      )}
 
       {isDeleted && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -279,6 +293,38 @@ export default function CaseWorkspace() {
           />}
 
         </aside>
+      </div>
+    </div>
+  );
+}
+
+function ManualEmailResend({ busy, onResend }: { caseUid: string; busy: boolean; onResend: (stage: string) => Promise<void> }) {
+  const { t } = useTranslation();
+  const [stage, setStage] = useState("submitted");
+  return (
+    <div className="card border-amber-200 bg-amber-50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <div className="text-sm font-semibold text-amber-900">{t("case.manual_email.title", "Manually resend case email")}</div>
+          <div className="mt-1 text-xs text-amber-800">{t("case.manual_email.help", "Superadmin only. This sends the selected stage notification again to the configured recipients.")}</div>
+        </div>
+        <select value={stage} onChange={(e) => setStage(e.target.value)} className="input min-w-56" disabled={busy}>
+          <option value="created">Case created</option>
+          <option value="submitted">Approval workflow initiated</option>
+          <option value="verified">Case verified</option>
+          <option value="advance_ab">AB forwarded</option>
+          <option value="advance_wcs">WCS forwarded</option>
+          <option value="amount_proposed">Amount proposed</option>
+          <option value="advance_dgfc">DGFC forwarded</option>
+          <option value="amount_authorized">Amount authorized</option>
+          <option value="approved">Case approved</option>
+          <option value="rejected">Case rejected</option>
+          <option value="deferred">Case deferred</option>
+          <option value="closed">Case closed</option>
+        </select>
+        <button type="button" className="btn-primary" disabled={busy} onClick={() => void onResend(stage)}>
+          {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {busy ? t("common.sending", "Sending…") : t("case.manual_email.send", "Send email")}
+        </button>
       </div>
     </div>
   );

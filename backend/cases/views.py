@@ -359,6 +359,32 @@ class CaseViewSet(ModelViewSet):
             return CreateCaseSerializer
         return CaseSerializer
 
+    @action(detail=True, methods=["post"], url_path="resend-stage-email")
+    def resend_stage_email(self, request, uid=None):
+        """Superadmin-only manual resend for a selected case workflow stage."""
+        if not IsSuperAdmin().has_permission(request, self):
+            return Response({"detail": "Only SUPER_ADMIN may resend case emails."}, status=status.HTTP_403_FORBIDDEN)
+        stage = str(request.data.get("stage", "")).strip().lower()
+        allowed = {
+            "created", "submitted", "verified", "advance_ab", "advance_wcs",
+            "amount_proposed", "advance_dgfc", "amount_authorized", "approved",
+            "rejected", "deferred", "closed",
+        }
+        if stage not in allowed:
+            return Response({"detail": "Unsupported email stage."}, status=status.HTTP_400_BAD_REQUEST)
+        case = self.get_object()
+        from notifications.service import send_manual_case_stage_email
+
+        result = send_manual_case_stage_email(case=case, stage=stage, actor=request.user)
+        Event.objects.create(
+            case=case,
+            actor=request.user,
+            event_type=Event.Type.COMMENT,
+            notes=f"Manual email resend requested for stage: {stage}",
+            payload_hash=Event.compute_hash({"action": "resend_stage_email", "stage": stage, **result}),
+        )
+        return Response({"stage": stage, **result})
+
     def perform_create(self, serializer):
         u = self.request.user
         if not isinstance(u, User):
