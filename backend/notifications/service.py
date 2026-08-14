@@ -256,10 +256,32 @@ def _actor_context(actor) -> dict[str, str]:
     return actor_data
 
 
-def send_manual_case_stage_email(*, case, stage: str, actor) -> dict[str, int]:
-    """Resend a selected case-stage notification at the request of a superadmin."""
-    from .tasks import do_send_email
+def current_case_email_stage(case) -> str:
+    if case.status == "DRAFT":
+        return "created"
+    if case.status == "SUBMITTED":
+        return "submitted"
+    if case.status == "REJECTED":
+        return "rejected"
+    if case.status == "DEFERRED":
+        return "deferred"
+    if case.status == "CLOSED":
+        return "closed"
+    if case.status == "APPROVED":
+        return "approved"
+    if case.status == "AT_APPROVAL":
+        if case.current_step == 2:
+            return "verified"
+        if case.current_step == 3:
+            return "advance_ab"
+        if case.current_step == 4:
+            return "amount_proposed" if case.amount_proposed else "advance_wcs"
+        if case.current_step == 5:
+            return "amount_authorized" if case.amount_authorized else "advance_dgfc"
+    raise ValueError("No email stage is available for this case state")
 
+
+def _manual_stage_context(*, case, stage: str, actor) -> tuple[str, dict[str, Any], str | None]:
     stage_config = {
         "created": {"action": "created the case", "current_stage": "Case created", "role": None},
         "submitted": {"action": "initiated the approval workflow", "current_stage": "Approval workflow initiated - AB verification", "role": "AB"},
@@ -277,27 +299,43 @@ def send_manual_case_stage_email(*, case, stage: str, actor) -> dict[str, int]:
     config = stage_config.get(stage)
     if config is None:
         raise ValueError(f"Unsupported case email stage: {stage}")
-
-    actor_data = _actor_context(actor)
     context = {
         "case": _serialize(case),
-        "actor": actor_data,
+        "actor": _actor_context(actor),
         "claim_id": str(case.uid)[:8],
         "action_taken": config["action"],
         "current_stage": config["current_stage"],
     }
-    recipients = list(_active_recipients())
-    action_recipients = list(_active_recipients(role=config["role"])) if config["role"] else []
-    sent = 0
-    failed = 0
-
-    notification_type = "new_claim" if stage == "created" else "case_stage_changed"
     if stage == "amount_proposed":
-        notification_type = "amount_proposed"
         context["amount_xaf"] = case.amount_proposed
     elif stage == "amount_authorized":
-        notification_type = "amount_authorized"
         context["amount_xaf"] = case.amount_authorized
+    notification_type = "new_claim" if stage == "created" else "case_stage_changed"
+    if stage in {"amount_proposed", "amount_authorized"}:
+        notification_type = stage
+    return notification_type, context, config["role"]
+
+
+def preview_manual_case_stage_email(*, case, stage: str, actor, language: str) -> dict[str, str]:
+    from .tasks import render_email
+
+    notification_type, context, role = _manual_stage_context(case=case, stage=stage, actor=actor)
+    return {"stage": stage, "role": role or "ALL", "language": language, **render_email(
+        notification_type=notification_type,
+        language=language,
+        template_context=context,
+    )}
+
+
+def send_manual_case_stage_email(*, case, stage: str, actor) -> dict[str, int]:
+    """Resend a selected case-stage notification at the request of a superadmin."""
+    from .tasks import do_send_email
+
+    notification_type, context, role = _manual_stage_context(case=case, stage=stage, actor=actor)
+    recipients = list(_active_recipients())
+    action_recipients = list(_active_recipients(role=role)) if role else []
+    sent = 0
+    failed = 0
 
     for recipient in recipients:
         try:

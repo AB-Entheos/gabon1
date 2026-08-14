@@ -359,21 +359,24 @@ class CaseViewSet(ModelViewSet):
             return CreateCaseSerializer
         return CaseSerializer
 
-    @action(detail=True, methods=["post"], url_path="resend-stage-email")
+    @action(detail=True, methods=["get", "post"], url_path="resend-stage-email")
     def resend_stage_email(self, request, uid=None):
-        """Superadmin-only manual resend for a selected case workflow stage."""
+        """Superadmin-only preview/send for the case's detected workflow stage."""
         if not IsSuperAdmin().has_permission(request, self):
             return Response({"detail": "Only SUPER_ADMIN may resend case emails."}, status=status.HTTP_403_FORBIDDEN)
-        stage = str(request.data.get("stage", "")).strip().lower()
-        allowed = {
-            "created", "submitted", "verified", "advance_ab", "advance_wcs",
-            "amount_proposed", "advance_dgfc", "amount_authorized", "approved",
-            "rejected", "deferred", "closed",
-        }
-        if stage not in allowed:
-            return Response({"detail": "Unsupported email stage."}, status=status.HTTP_400_BAD_REQUEST)
         case = self.get_object()
-        from notifications.service import send_manual_case_stage_email
+        from notifications.service import current_case_email_stage, preview_manual_case_stage_email, send_manual_case_stage_email
+
+        try:
+            stage = current_case_email_stage(case)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        language = request.query_params.get("language") or getattr(request.user, "preferred_language", "fr") or "fr"
+        if language not in {"en", "fr"}:
+            return Response({"detail": "Language must be en or fr."}, status=status.HTTP_400_BAD_REQUEST)
+        if request.method == "GET":
+            return Response(preview_manual_case_stage_email(case=case, stage=stage, actor=request.user, language=language))
 
         result = send_manual_case_stage_email(case=case, stage=stage, actor=request.user)
         Event.objects.create(

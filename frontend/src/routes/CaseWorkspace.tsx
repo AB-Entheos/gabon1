@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck, CircleDollarSign, Loader2, Trash2, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, RotateCcw, AlertTriangle, ClipboardCheck, CircleDollarSign, Loader2, Trash2, Send, Mail, ShieldCheck } from "lucide-react";
 import {
   useGetCaseQuery,
   useVerifyCaseMutation,
@@ -101,8 +101,8 @@ export default function CaseWorkspace() {
         <ManualEmailResend
           caseUid={caseData.uid}
           busy={resendingEmail}
-          onResend={async (stage) => {
-            const result = await resendCaseStageEmail({ uid: caseData.uid, stage }).unwrap();
+          onResend={async () => {
+            const result = await resendCaseStageEmail(caseData.uid).unwrap();
             window.alert(`${result.sent} email(s) sent; ${result.failed} failed.`);
           }}
         />
@@ -298,34 +298,80 @@ export default function CaseWorkspace() {
   );
 }
 
-function ManualEmailResend({ busy, onResend }: { caseUid: string; busy: boolean; onResend: (stage: string) => Promise<void> }) {
+function ManualEmailResend({ caseUid, busy, onResend }: { caseUid: string; busy: boolean; onResend: () => Promise<void> }) {
   const { t } = useTranslation();
-  const [stage, setStage] = useState("submitted");
+  const [preview, setPreview] = useState<{ stage: string; role: string; language: string; subject: string; body: string } | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [confirmSend, setConfirmSend] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
+  async function loadPreview() {
+    setLoadingPreview(true);
+    setPreviewError(null);
+    try {
+      const token = (await import("@/store")).store.getState().auth.accessToken;
+      const response = await fetch(`/api/v1/cases/${caseUid}/resend-stage-email`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || "Unable to preview email");
+      }
+      setPreview(await response.json());
+    } catch (error) {
+      setPreviewError(error instanceof Error ? error.message : "Unable to preview email");
+    } finally {
+      setLoadingPreview(false);
+    }
+  }
+
   return (
-    <div className="card border-amber-200 bg-amber-50 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <div className="text-sm font-semibold text-amber-900">{t("case.manual_email.title", "Manually resend case email")}</div>
-          <div className="mt-1 text-xs text-amber-800">{t("case.manual_email.help", "Superadmin only. This sends the selected stage notification again to the configured recipients.")}</div>
+    <div className="overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 shadow-sm">
+      <div className="flex items-start gap-3 border-b border-amber-100 px-5 py-4">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700 ring-1 ring-amber-200">
+          <Mail size={19} />
         </div>
-        <select value={stage} onChange={(e) => setStage(e.target.value)} className="input min-w-56" disabled={busy}>
-          <option value="created">Case created</option>
-          <option value="submitted">Approval workflow initiated</option>
-          <option value="verified">Case verified</option>
-          <option value="advance_ab">AB forwarded</option>
-          <option value="advance_wcs">WCS forwarded</option>
-          <option value="amount_proposed">Amount proposed</option>
-          <option value="advance_dgfc">DGFC forwarded</option>
-          <option value="amount_authorized">Amount authorized</option>
-          <option value="approved">Case approved</option>
-          <option value="rejected">Case rejected</option>
-          <option value="deferred">Case deferred</option>
-          <option value="closed">Case closed</option>
-        </select>
-        <button type="button" className="btn-primary" disabled={busy} onClick={() => void onResend(stage)}>
-          {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {busy ? t("common.sending", "Sending…") : t("case.manual_email.send", "Send email")}
-        </button>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+            {t("case.manual_email.title", "Manually resend case email")}
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800"><ShieldCheck size={11} /> Superadmin</span>
+          </div>
+          <div className="mt-1 text-xs leading-5 text-slate-600">{t("case.manual_email.help", "The current email is detected automatically from this case's workflow stage. Preview it before sending.")}</div>
+        </div>
       </div>
+      <div className="grid gap-3 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div className="rounded-xl border border-amber-100 bg-white/80 px-4 py-3">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Detected stage</div>
+          <div className="mt-1 text-sm font-semibold text-slate-800">{preview?.stage || "Preview to detect current stage"}</div>
+          <div className="mt-1 text-xs text-slate-500">Recipients: {preview?.role || "determined automatically"}</div>
+        </div>
+        <div className="flex gap-2">
+          <button type="button" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 text-sm font-bold text-amber-800 shadow-sm transition hover:bg-amber-50 disabled:opacity-60" disabled={busy || loadingPreview} onClick={() => void loadPreview()}>
+            {loadingPreview ? <Loader2 size={17} className="animate-spin" /> : <Mail size={17} />} Preview draft
+          </button>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60" disabled={busy || !preview} onClick={() => setConfirmSend(true)}>
+            {busy ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />} {busy ? t("common.sending", "Sending…") : t("case.manual_email.send", "Send email")}
+          </button>
+        </div>
+      </div>
+      {previewError && <div className="mx-5 mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{previewError}</div>}
+      {preview && <div className="border-t border-amber-100 bg-white/70 px-5 py-4"><div className="text-xs font-bold uppercase tracking-wider text-slate-500">{preview.subject}</div><pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap font-sans text-sm leading-6 text-slate-700">{preview.body}</pre></div>}
+      {confirmSend && preview && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-email-title">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-900/10">
+            <div className="flex items-start gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700"><ShieldCheck size={20} /></div>
+              <div>
+                <h2 id="confirm-email-title" className="text-lg font-bold text-slate-900">Are you sure?</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">This will send the previewed email for <strong>{preview.stage}</strong> to <strong>{preview.role}</strong>. This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"><div className="font-semibold">{preview.subject}</div><div className="mt-1 text-xs text-slate-500">Case {caseUid}</div></div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" className="btn-secondary" disabled={busy} onClick={() => setConfirmSend(false)}>Cancel</button>
+              <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60" disabled={busy} onClick={async () => { setConfirmSend(false); await onResend(); }}><Send size={16} /> Confirm and send</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

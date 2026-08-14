@@ -12,7 +12,7 @@ from typing import Any
 import resend
 from celery import shared_task
 from django.conf import settings
-from django.template.loader import render_to_string
+from django.template.loader import get_template, render_to_string
 from django.utils import translation
 
 logger = logging.getLogger(__name__)
@@ -28,6 +28,21 @@ def _configure_resend() -> None:
         resend.api_key = api_key
 
 
+def render_email(*, notification_type: str, language: str = "fr", template_context: dict[str, Any] | None = None) -> dict[str, str]:
+    from notifications.service import _template_path
+
+    tpl_path = _template_path(notification_type, language)
+    ctx = dict(template_context or {})
+    ctx.setdefault("frontend_url", getattr(settings, "FRONTEND_URL", "https://hec.ab-entheos.com"))
+    with translation.override(language):
+        tpl = get_template(tpl_path)
+        raw = tpl.render(ctx)
+    lines = raw.strip().splitlines()
+    subject = lines[0].replace("Subject:", "", 1).strip() if lines and lines[0].startswith("Subject:") else f"[HEC] {notification_type.replace('_', ' ').title()}"
+    body = "\n".join(lines[1:]).strip() if lines and lines[0].startswith("Subject:") else raw
+    return {"subject": subject, "body": body}
+
+
 def do_send_email(
     *,
     notification_type: str,
@@ -40,24 +55,9 @@ def do_send_email(
     This is the core implementation used both by the Celery task and
     by synchronous callers (e.g. account creation welcome email).
     """
-    from notifications.service import _template_path
-
-    tpl_path = _template_path(notification_type, language)
-    ctx = dict(template_context or {})
-    ctx.setdefault("frontend_url", getattr(settings, "FRONTEND_URL", "https://hec.ab-entheos.com"))
-
-    with translation.override(language):
-        # All email templates already include {% autoescape off %} — just render directly.
-        from django.template.loader import get_template
-        tpl = get_template(tpl_path)
-        raw = tpl.render(ctx)
-        lines = raw.strip().splitlines()
-        if lines and lines[0].startswith("Subject:"):
-            subject = lines[0].replace("Subject:", "", 1).strip()
-            body = "\n".join(lines[1:]).strip()
-        else:
-            subject = f"[HEC] {notification_type.replace('_', ' ').title()}"
-            body = raw
+    rendered = render_email(notification_type=notification_type, language=language, template_context=template_context)
+    subject = rendered["subject"]
+    body = rendered["body"]
 
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "hec@ab-entheos.com")
     api_key = getattr(settings, "RESEND_API_KEY", "")

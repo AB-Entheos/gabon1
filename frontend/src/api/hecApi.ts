@@ -294,13 +294,12 @@ export const hecApi = createApi({
         "Cases",
       ],
     }),
-    resendCaseStageEmail: build.mutation<{ stage: string; sent: number; failed: number }, { uid: string; stage: string }>({
-      query: ({ uid, stage }) => ({
+    resendCaseStageEmail: build.mutation<{ stage: string; sent: number; failed: number }, string>({
+      query: (uid) => ({
         url: `cases/${uid}/resend-stage-email`,
         method: "POST",
-        body: { stage },
       }),
-      invalidatesTags: (_r, _e, { uid }) => [{ type: "Case", id: uid }],
+      invalidatesTags: (_r, _e, uid) => [{ type: "Case", id: uid }],
     }),
     advanceCase: build.mutation<
       {
