@@ -143,6 +143,8 @@ class Case(models.Model):
         blank=True,
         related_name="deleted_cases",
     )
+    deleted_from_status = models.CharField(max_length=16, blank=True, default="")
+    deleted_from_step = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ["-reported_at"]
@@ -178,6 +180,7 @@ class Event(models.Model):
         FILE_SUPERSEDED = "FILE_SUPERSEDED", "File replaced (old version retained for history)"
         CLOSED = "CLOSED", "Closed"
         CASE_DELETED = "CASE_DELETED", "Case deleted"
+        CASE_RESTORED = "CASE_RESTORED", "Case restored"
         COMMENT = "COMMENT", "Comment"
 
     case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name="events")

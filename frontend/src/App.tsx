@@ -7,40 +7,16 @@ import Login from "@/routes/Login";
 import ForgotPassword from "@/routes/ForgotPassword";
 import ResetPassword from "@/routes/ResetPassword";
 import CBDashboard from "@/routes/CBDashboard";
-import ApproverDashboard from "@/routes/ApproverDashboard";
-import DGFAPDashboard from "@/routes/DGFAPDashboard";
-import AdminDashboard from "@/routes/AdminDashboard";
 import CaseWorkspace from "@/routes/CaseWorkspace";
 import NewCase from "@/routes/NewCase";
-import DisbursementsPage from "@/routes/DisbursementsPage";
+import DisbursedPaymentsPage from "@/routes/DisbursedPaymentsPage";
 import StageDashboard from "@/routes/StageDashboard";
 import AdminPage from "@/routes/admin/AdminPage";
 import Profile from "@/routes/Profile";
 import NotificationHistory from "@/routes/NotificationHistory";
+import DeletedCasesPage from "@/routes/DeletedCasesPage";
 import type { RootState, AppDispatch } from "@/store";
 import { setUser, logout } from "@/store/authSlice";
-
-function HomeRouter() {
-  const { t } = useTranslation();
-  const user = useSelector((s: RootState) => s.auth.user);
-  const role = user?.role;
-  if (!role || !user) return <Navigate to="/login" replace />;
-  if (user.roles?.includes("SUPER_ADMIN")) return <AdminDashboard />;
-  if (user.roles?.includes("ADMIN")) return <AdminDashboard />;
-  if (user.roles?.includes("DGFAP")) return <DGFAPDashboard />;
-  switch (role) {
-    case "CB": return <CBDashboard />;
-    case "DP": return <CBDashboard />;
-    case "AB": return <ApproverDashboard step={2} title={t("dash.ab.title", "AB Entheos — Step 2")} subtitle={t("dash.ab.subtitle", "Operational validation.")} />;
-    case "WCS": return <ApproverDashboard step={3} title={t("dash.wcs.title", "WCS — Step 3")} subtitle={t("dash.wcs.subtitle", "Technical partner review.")} />;
-    case "DGFC": return <ApproverDashboard step={4} title={t("dash.dgfc.title", "DGFC — Step 4")} subtitle={t("dash.dgfc.subtitle", "Faune & contrôle review.")} />;
-    case "DGFAP": return <DGFAPDashboard />;
-    case "MINISTER": return <StageDashboard />;
-    case "ADMIN": return <AdminDashboard />;
-    case "SUPER_ADMIN": return <AdminDashboard />;
-    default: return <div>{t("dash.unknown_role", "Unknown role")}</div>;
-  }
-}
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const user = useSelector((s: RootState) => s.auth.user);
@@ -94,18 +70,18 @@ export default function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<HomeRouter />} />
+          <Route index element={<StageDashboard />} />
           <Route path="stages" element={<StageDashboard />} />
           <Route path="cases" element={<CBDashboard />} />
           <Route path="cases/new" element={<NewCase />} />
           <Route path="cases/:uid" element={<CaseWorkspace />} />
-          <Route path="committee" element={<HomeRouter />} />
-          <Route path="disbursements" element={<DisbursementsPage />} />
+          <Route path="committee" element={<Navigate to="/" replace />} />
+          <Route path="disbursements" element={<DisbursedPaymentsPage />} />
           <Route path="audit" element={<AdminPage kind="audit" />} />
           <Route path="reports" element={<AdminPage kind="reports" />} />
           <Route path="forms" element={<AdminPage kind="forms" />} />
-          <Route path="payments" element={<AdminPage kind="payments" />} />
           <Route path="users" element={<AdminPage kind="users" />} />
+          <Route path="deleted-cases" element={<DeletedCasesPage />} />
           <Route path="profile" element={<Profile />} />
           <Route path="notifications" element={<NotificationHistory />} />
           <Route path="closed" element={<AdminPage kind="closed" />} />

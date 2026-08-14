@@ -18,7 +18,6 @@ import {
   closeCase,
 } from "@/api/hecApi";
 import type { RootState } from "@/store";
-import { userHasRole } from "@/store/authSlice";
 import { StatusChip, RoleBadge } from "@/components/StatusChip";
 import { formatDateTime, formatXAF } from "@/api/format";
 import CasePipeline from "@/components/CasePipeline";
@@ -56,15 +55,13 @@ export default function CaseWorkspace() {
   if (!caseData) return <div className="p-6 text-rose-600">{t("case.not_found", "Case not found.")}</div>;
 
   const isCB = caseData.created_by === user?.id;
-  const userRoles = user?.roles ?? (user ? [user.role] : []);
-  const isSuperAdmin = userRoles.includes("SUPER_ADMIN");
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const isDeleted = caseData.status === "DELETED";
   const isCurrentApprover =
     caseData.status === "AT_APPROVAL" &&
-    (caseData.current_approver_role === user?.role ||
-      (caseData.current_approver_role !== null && userRoles.includes(caseData.current_approver_role as typeof userRoles[number])) ||
-      isSuperAdmin);
-  const isAdmin = userRoles.includes("ADMIN") || isSuperAdmin;
-  const isMinister = user?.role === "MINISTER";
+    (caseData.current_approver_role === user?.role || isAdmin);
+  const isAssignedReviewer =
+    caseData.status === "AT_APPROVAL" && caseData.current_approver_role === user?.role;
 
   async function onSubmitForm(payload: Record<string, unknown>) {
     if (!cbForm || !uid) return;
@@ -96,6 +93,12 @@ export default function CaseWorkspace() {
       </div>
 
       <CasePipeline caseData={caseData} lang={lang} />
+
+      {isDeleted && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          {t("case.deleted_read_only", "This case is deleted and is visible only to superadmins. Its related records and attachments were preserved.")}
+        </div>
+      )}
 
       {/* KYC Details Section */}
       <div className="card p-5">
@@ -224,12 +227,12 @@ export default function CaseWorkspace() {
             </div>
           </div>
 
-          <ActionPanel
+          {!isDeleted && <ActionPanel
             caseData={caseData}
             isCB={isCB}
             isCurrentApprover={isCurrentApprover}
+            isAssignedReviewer={isAssignedReviewer}
             isAdmin={isAdmin}
-            isSuperAdmin={isSuperAdmin}
             lang={lang}
             refetch={refetch}
             onVerify={async () => { await verifyCase(caseData.uid).unwrap(); void refetch(); }}
@@ -259,23 +262,21 @@ export default function CaseWorkspace() {
             onDelete={async () => {
               await deleteCaseMutation(caseData.uid).unwrap();
             }}
-          />
+          />}
         </div>
 
         <aside className="space-y-6">
           <CaseMetadata caseData={caseData} lang={lang} />
-          {!isMinister && (
-            <FileUploader
-              caseUid={caseData.uid}
-              accept="image/*,application/pdf"
-              capture="environment"
-              label={t("case.upload_evidence", "Upload evidence (camera)")}
-              showTypeInput={false}
-              attachToCase
-              showMetadataForm
-              requireSubmit
-            />
-          )}
+          {!isDeleted && <FileUploader
+            caseUid={caseData.uid}
+            accept="image/*,application/pdf"
+            capture="environment"
+            label={t("case.upload_evidence", "Upload evidence (camera)")}
+            showTypeInput={false}
+            attachToCase
+            showMetadataForm
+            requireSubmit
+          />}
 
         </aside>
       </div>
@@ -366,10 +367,10 @@ const ROLE_FOR_STEP: Record<number, string> = {
 };
 
 function ActionPanel({
-  caseData, isCB, isCurrentApprover, isAdmin, isSuperAdmin, lang, refetch,
+  caseData, isCB, isCurrentApprover, isAssignedReviewer, isAdmin, lang, refetch,
   onVerify, onSubmit, onAdvance, onReject, onDefer, onResume, onSetAmount, onDelete,
 }: {
-  caseData: any; isCB: boolean; isCurrentApprover: boolean; isAdmin: boolean; isSuperAdmin: boolean; lang: "en" | "fr";
+  caseData: any; isCB: boolean; isCurrentApprover: boolean; isAssignedReviewer: boolean; isAdmin: boolean; lang: "en" | "fr";
   refetch: () => void;
   onVerify: () => Promise<void>;
   onSubmit: () => Promise<void>;
@@ -398,7 +399,9 @@ function ActionPanel({
   const [error, setError] = useState<string | null>(null);
   const [amountSuccess, setAmountSuccess] = useState<string | null>(null);
 
-  const canDefer = isCurrentApprover && caseData.current_step >= 3 && !isCB;
+  if (caseData.status === "DELETED") return null;
+
+  const canDefer = isAssignedReviewer && caseData.current_step >= 3 && !isCB;
   const isDeferred = caseData.status === "DEFERRED";
   const canResume =
     isDeferred &&
@@ -482,7 +485,7 @@ function ActionPanel({
                 <CheckCircle2 size={16} />
                 {t("common.advance", "Approve & advance")}
               </button>
-              {user?.role !== "MINISTER" && (
+              {isAssignedReviewer && user?.role !== "MINISTER" && (
                 <button
                   className="btn-danger"
                   disabled={busy}
@@ -610,7 +613,7 @@ function ActionPanel({
             <div className="flex items-center gap-2 text-xs font-semibold text-amber-700">
               <ShieldAlert size={14} />
               {caseData.amount_authorized
-                  ? t("case.actions.amount_decider_authorized", "Amount authorized. Review and verify to approve.")
+                  ? t("case.actions.amount_decider_authorized", "Amount authorized. Review and approve for WCS payment processing.")
                 : t("case.actions.amount_decider", "You are the amount-decider. Review the proposed amount, authorize or propose a new amount, then verify.")}
             </div>
 
@@ -688,7 +691,7 @@ function ActionPanel({
                   data-testid="verify-and-send"
                 >
                   <CheckCircle2 size={16} />
-                    {t("case.verify_and_send", "Verify & Approve")}
+                    {t("case.verify_and_send", "Approve for WCS payment")}
                 </button>
               )}
               {canDefer && (
@@ -727,15 +730,7 @@ function ActionPanel({
         )}
         {isCB && caseData.status === "REJECTED" && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-            {t("case.rejected_note", "This case was rejected. Review the audit notes, update the case, then submit it again.")}
-            <button
-              className="btn-primary mt-3 w-full"
-              disabled={busy}
-              onClick={() => wrap(onSubmit)}
-              data-testid="resubmit-rejected-case"
-            >
-              {t("case.resubmit", "Resubmit case")}
-            </button>
+            {t("case.rejected_note", "This case was rejected. Contact AB Entheos for next steps.")}
           </div>
         )}
 
@@ -763,7 +758,7 @@ function ActionPanel({
           </div>
         )}
 
-        {caseData.status === "APPROVED" && userHasRole(user, "WCS") && (
+        {caseData.status === "APPROVED" && user?.role === "WCS" && (
           <div className="space-y-3">
             <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
               {t("case.approved_msg", "Approved. Awaiting payment confirmation.")}
@@ -790,7 +785,7 @@ function ActionPanel({
             </div>
           </div>
         )}
-        {caseData.status === "APPROVED" && !userHasRole(user, "WCS") && (
+        {caseData.status === "APPROVED" && user?.role !== "WCS" && (
           <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
             {t("case.approved_msg", "Approved. Awaiting payment confirmation.")}
           </p>
@@ -801,14 +796,14 @@ function ActionPanel({
           </p>
         )}
 
-        {isAdmin && !isSuperAdmin && !isCurrentApprover && !isCB && (
+        {isAdmin && user?.role !== "SUPER_ADMIN" && !isCurrentApprover && !isCB && (
           <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
             {t("case.admin_hint", "As an administrator you can view this case and add comments, but cannot act on it. Only the current approver role ({role}) can advance.")
               .replace("{role}", caseData.current_approver_role ?? "—")}
           </p>
         )}
 
-        {isAdmin && (
+        {isAdmin && user?.role === "SUPER_ADMIN" && (
           <div className="pt-2 border-t border-slate-100">
             <button
               className="btn-danger w-full"

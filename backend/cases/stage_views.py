@@ -36,22 +36,8 @@ def cases_stages(request):
     u: User = request.user
     qs = Case.objects.exclude(deleted_at__isnull=False)
 
-    if u.role in ("ADMIN", "SUPER_ADMIN"):
-        # Admins see everything
-        pass
-    elif u.role in ("CB", "DP"):
-        # Field reporters see only their own cases
-        qs = qs.filter(created_by=u)
-    else:
-        # Approvers see their own cases + cases at their step
-        from cases.state_machine import APPROVER_FOR_STEP
-        own = Q(created_by=u)
-        at_my_step = Q(
-            status__in=[Case.Status.AT_APPROVAL, Case.Status.SUBMITTED, Case.Status.DEFERRED],
-            current_step__in=[step for step, role in APPROVER_FOR_STEP.items() if role == u.role],
-        )
-        submitted = Q(status=Case.Status.SUBMITTED) if u.role == "AB" else Q()
-        qs = qs.filter(own | at_my_step | submitted)
+    # Stage counts use the same institution-wide visibility as the case list.
+    # The current user's role only controls which workflow actions are allowed.
 
     by_step = {str(s): qs.filter(
         status=Case.Status.AT_APPROVAL, current_step=s

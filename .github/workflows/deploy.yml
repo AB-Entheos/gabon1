@@ -84,20 +84,16 @@ jobs:
             echo "==> Building backend image..."
             sudo docker compose build backend
 
-            echo "==> Creating database backup before migrations..."
-            sudo mkdir -p ${{ env.DEPLOY_PATH }}/backups
-            sudo docker compose up -d --wait db
-            BACKUP_FILE="${{ env.DEPLOY_PATH }}/backups/hec-$(date +%F-%H%M%S).dump"
-            sudo sh -c "docker compose exec -T db sh -c 'pg_dump -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" -Fc' > '$BACKUP_FILE'"
-            test -s "$BACKUP_FILE"
-
             echo "==> Running migrations..."
             sudo docker compose run --rm backend python manage.py migrate --noinput
             sudo docker compose run --rm backend python manage.py compilemessages || true
             sudo docker compose run --rm backend python manage.py collectstatic --noinput
 
-            echo "==> Data seeding disabled..."
-            echo "  Existing production users, villages, forms, and cases are left unchanged."
+            echo "==> Seeding demo data (SKIPPED - real production data present)..."
+            echo "  Skipped. seed_demo_data would overwrite real production users."
+
+            echo "==> Seeding production users (idempotent, no password reset)..."
+            sudo docker compose run --rm backend python manage.py seed_real_data || true
 
             echo "==> Ensuring files directory exists..."
             sudo mkdir -p /opt/hec/backend/files

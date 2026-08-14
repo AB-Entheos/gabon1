@@ -94,6 +94,10 @@ export interface Case {
   sla_deadline: string | null;
   created_by: number;
   created_by_email: string;
+  deleted_at?: string | null;
+  deleted_by?: number | null;
+  deleted_from_status?: Case["status"] | "";
+  deleted_from_step?: number | null;
   current_approver_role: string | null;
   disbursement_summary?: {
     disbursed_xaf: number;
@@ -126,6 +130,32 @@ export interface CaseDetail extends Case {
     approaching_limit: boolean;
     count: number;
   };
+}
+
+export interface Disbursement {
+  id: number;
+  case_uid: string;
+  claimant_name: string;
+  case_type: "MEDICAL" | "BURIAL";
+  case_status: Case["status"];
+  village_name: string;
+  amount_xaf: number;
+  purpose: string;
+  recipient_kind: string;
+  recipient_kind_other: string;
+  recipient_name: string;
+  payment_date: string;
+  payment_reference: string;
+  proof_of_payment_id: number | null;
+  proof_of_payment?: {
+    id: number;
+    filename: string;
+    mime: string;
+    size_bytes: number;
+  } | null;
+  paid_by: string;
+  created_at: string;
+  notes: string;
 }
 
 export interface FormDefinition {
@@ -220,8 +250,16 @@ export const hecApi = createApi({
       }),
       providesTags: ["Cases"],
     }),
+    listDeletedCases: build.query<{ results: CaseDetail[]; count: number }, void>({
+      query: () => "deleted-cases",
+      providesTags: ["Cases"],
+    }),
+    listAllDisbursements: build.query<{ results: Disbursement[]; count: number }, void>({
+      query: () => "disbursements",
+      providesTags: ["Disbursements"],
+    }),
     getCase: build.query<CaseDetail, string>({
-      query: (uid) => `cases/${uid}`,
+      query: (uid) => ({ url: `cases/${uid}`, params: { include_deleted: "1" } }),
       providesTags: (_r, _e, uid) => [{ type: "Case", id: uid }],
     }),
     createCase: build.mutation<Case, Partial<Case>>({
@@ -234,6 +272,10 @@ export const hecApi = createApi({
         { type: "Case", id: uid },
         "Cases",
       ],
+    }),
+    restoreCase: build.mutation<CaseDetail, string>({
+      query: (uid) => ({ url: `cases/${uid}/restore`, method: "POST" }),
+      invalidatesTags: (_r, _e, uid) => [{ type: "Case", id: uid }, "Cases"],
     }),
     submitCase: build.mutation<{ status: string; event_id: number }, string>({
       query: (uid) => ({ url: `cases/${uid}/submit`, method: "POST" }),
@@ -784,9 +826,12 @@ export const {
   useNotifyDesktopEnabledMutation,
   useNotifyDesktopDisabledMutation,
   useListCasesQuery,
+  useListDeletedCasesQuery,
+  useListAllDisbursementsQuery,
   useGetCaseQuery,
   useCreateCaseMutation,
   useDeleteCaseMutation,
+  useRestoreCaseMutation,
   useSubmitCaseMutation,
   useVerifyCaseMutation,
   useAdvanceCaseMutation,

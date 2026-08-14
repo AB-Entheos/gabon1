@@ -90,8 +90,8 @@ print(f"[AB] advanced to step 3")
 
 # WCS at step 3: set amount and advance
 wcs = login("wcs@hec.local")
-req("POST", f"/cases/{uid}/amount", token=wcs, body={"amount_xaf": 1500000, "reason": "Full burial ceiling"})
-print(f"[WCS] set amount 1,500,000 XAF")
+req("POST", f"/cases/{uid}/amount", token=wcs, body={"amount_xaf": 3000000, "reason": "Full burial ceiling"})
+print(f"[WCS] set amount 3,000,000 XAF")
 
 req("POST", f"/cases/{uid}/advance", token=wcs, body={"note": "WCS review ok"})
 print(f"[WCS] advanced to step 4")

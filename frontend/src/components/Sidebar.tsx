@@ -4,16 +4,14 @@ import { useSelector } from "react-redux";
 import {
   LayoutDashboard,
   FileStack,
-  ClipboardList,
   ScrollText,
   BarChart3,
   FormInput,
-  Wallet,
   FilePlus,
-  Layers,
   ShieldCheck,
   CheckCircle2,
   Banknote,
+  Trash2,
   X,
 } from "lucide-react";
 import type { RootState } from "@/store";
@@ -28,17 +26,15 @@ type Item = {
 
 const ITEMS: Item[] = [
   { to: "/", icon: LayoutDashboard, key: "dashboard", roles: "all" },
-  { to: "/stages", icon: Layers, key: "stages", roles: "all" },
   { to: "/cases/new", icon: FilePlus, key: "new_case", roles: "all" },
   { to: "/cases", icon: FileStack, key: "cases", roles: "all" },
-  { to: "/queue", icon: ClipboardList, key: "committee", roles: ["AB", "WCS", "DGFC", "DGFAP", "SUPER_ADMIN"] },
-  { to: "/disbursements", icon: Banknote, key: "disbursements", roles: ["WCS"] as Role[] },
+  { to: "/disbursements", icon: Banknote, key: "disbursements", roles: "all" },
   { to: "/audit", icon: ScrollText, key: "audit", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
   { to: "/reports", icon: BarChart3, key: "reports", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
   { to: "/forms", icon: FormInput, key: "forms", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
-  { to: "/payments", icon: Wallet, key: "payments", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
   { to: "/closed", icon: CheckCircle2, key: "closed", roles: ["ADMIN", "SUPER_ADMIN"] as Role[] },
   { to: "/users", icon: ShieldCheck, key: "users", roles: ["SUPER_ADMIN"] as Role[] },
+  { to: "/deleted-cases", icon: Trash2, key: "deleted_cases", roles: ["SUPER_ADMIN"] as Role[] },
 ];
 
 function GabonFlag() {

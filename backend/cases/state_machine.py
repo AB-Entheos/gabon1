@@ -264,7 +264,7 @@ def transition(
 
     if t.required_role is not None and not actor.has_role(t.required_role):
         # Special cases: bypass role check
-        if actor.has_role("SUPER_ADMIN"):
+        if actor.has_any_role("ADMIN", "SUPER_ADMIN"):
             pass  # super admin can do anything
         elif t.name == "close" and actor.has_any_role("WCS", "ADMIN"):
             pass  # allowed
@@ -306,7 +306,7 @@ def transition(
         if case.status != Case.Status.AT_APPROVAL:
             raise StateError(_("Case is not at approval."))
         expected_role = ROLE_FOR_STEP.get(case.current_step)
-        if not actor.has_any_role(expected_role, "SUPER_ADMIN"):
+        if not actor.has_role(expected_role):
             raise StateError(_(f"Action '{action}' requires the current approver."))
 
     from_status = case.status

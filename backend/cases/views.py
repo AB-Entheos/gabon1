@@ -4,12 +4,13 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import serializers, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -128,6 +129,10 @@ class CaseSerializer(serializers.ModelSerializer):
             "current_approver_role",
             "disbursement_summary",
             "events",
+            "deleted_at",
+            "deleted_by",
+            "deleted_from_status",
+            "deleted_from_step",
         )
         read_only_fields = (
             "uid",
@@ -179,6 +184,16 @@ class CaseSerializer(serializers.ModelSerializer):
             return approver_role_for_step(obj.current_step)
         except StateError:
             return None
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSuperAdmin])
+def deleted_cases(request):
+    qs = Case.objects.select_related("village", "created_by", "deleted_by").filter(
+        deleted_at__isnull=False,
+        status=Case.Status.DELETED,
+    )
+    return Response({"results": CaseSerializer(qs, many=True).data, "count": qs.count()})
 
 
 class CreateCaseSerializer(serializers.ModelSerializer):
@@ -255,6 +270,52 @@ class DisbursementEditSerializer(serializers.Serializer):
     proof_of_payment_id = serializers.IntegerField(required=False, allow_null=True)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_disbursements(request):
+    """List all active disbursements with the associated case summary."""
+    items = []
+    queryset = Disbursement.objects.filter(
+        deleted_at__isnull=True,
+        case__deleted_at__isnull=True,
+    ).select_related("case", "case__village", "paid_by", "proof_of_payment")
+
+    for disbursement in queryset:
+        case = disbursement.case
+        proof_info = None
+        if disbursement.proof_of_payment:
+            proof_info = {
+                "id": disbursement.proof_of_payment.id,
+                "filename": disbursement.proof_of_payment.filename,
+                "mime": disbursement.proof_of_payment.mime,
+                "size_bytes": disbursement.proof_of_payment.size_bytes,
+            }
+        items.append(
+            {
+                "id": disbursement.id,
+                "case_uid": str(case.uid),
+                "claimant_name": case.claimant_name,
+                "case_type": case.case_type,
+                "case_status": case.status,
+                "village_name": case.village.name if case.village else case.village_name_text,
+                "amount_xaf": disbursement.amount_xaf,
+                "purpose": disbursement.purpose,
+                "recipient_kind": disbursement.recipient_kind,
+                "recipient_kind_other": disbursement.recipient_kind_other,
+                "recipient_name": disbursement.recipient_name,
+                "payment_date": disbursement.payment_date,
+                "payment_reference": disbursement.payment_reference,
+                "proof_of_payment_id": disbursement.proof_of_payment_id,
+                "proof_of_payment": proof_info,
+                "paid_by": disbursement.paid_by.email,
+                "created_at": disbursement.created_at,
+                "notes": disbursement.notes,
+            }
+        )
+
+    return Response({"results": items, "count": len(items)})
+
+
 # ----- ViewSet --------------------------------------------------------------
 
 
@@ -270,30 +331,21 @@ class CaseViewSet(ModelViewSet):
         u = self.request.user
         if not isinstance(u, User):
             return Case.objects.none()
-        qs = Case.objects.select_related("village", "created_by").exclude(
-            deleted_at__isnull=False,
-        )
-        # APPROVED cases are visible to everyone
-        approved = Q(status=Case.Status.APPROVED)
-        if u.has_any_role("ADMIN", "SUPER_ADMIN"):
+        qs = Case.objects.select_related("village", "created_by", "deleted_by")
+        include_deleted = self.action in {"retrieve", "restore"} and self.request.GET.get("include_deleted") == "1"
+        if not (include_deleted and u.has_role("SUPER_ADMIN")):
+            qs = qs.exclude(deleted_at__isnull=False)
+        if u.role in ("ADMIN", "SUPER_ADMIN"):
             # Admins see everything
             pass
-        elif u.has_any_role("CB", "DP"):
-            # Field reporters see their own cases + all APPROVED cases
-            qs = qs.filter(Q(created_by=u) | approved)
-        elif u.has_role("MINISTER"):
+        elif u.role == "MINISTER":
             # Ministers have institution-wide read-only visibility.
             qs = qs
         else:
-            # Approvers (AB, WCS, DGFC, DGFAP) see:
-            from cases.state_machine import APPROVER_FOR_STEP
-            own = Q(created_by=u)
-            steps = [step for step, role in APPROVER_FOR_STEP.items() if u.has_role(role)]
-            at_my_step = Q(status=Case.Status.AT_APPROVAL, current_step__in=steps)
-            submitted = Q(status=Case.Status.SUBMITTED) if u.has_role("AB") else Q()
-            deferred = Q(status=Case.Status.DEFERRED, current_step__in=steps)
-            terminal = Q(status__in=[Case.Status.APPROVED, Case.Status.CLOSED, Case.Status.REJECTED])
-            qs = qs.filter(own | at_my_step | submitted | deferred | terminal)
+            # All authenticated non-admin users may view non-deleted cases.
+            # Workflow action authorization remains enforced by each action
+            # endpoint and the state machine.
+            pass
         # Optional status filter (e.g. ?status=APPROVED)
         status_filter = self.request.GET.get("status")
         if status_filter:
@@ -348,7 +400,9 @@ class CaseViewSet(ModelViewSet):
         case.status = Case.Status.DELETED
         case.deleted_at = _tz.now()
         case.deleted_by = request.user
-        case.save(update_fields=["status", "deleted_at", "deleted_by"])
+        case.deleted_from_status = prev_status
+        case.deleted_from_step = prev_step
+        case.save(update_fields=["status", "deleted_at", "deleted_by", "deleted_from_status", "deleted_from_step"])
 
         Event.objects.create(
             case=case,
@@ -373,20 +427,57 @@ class CaseViewSet(ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=["post"], url_path="restore")
+    def restore(self, request, uid=None):
+        if not IsSuperAdmin().has_permission(request, self):
+            return Response({"detail": "Only SUPER_ADMIN may restore cases."}, status=status.HTTP_403_FORBIDDEN)
+        with transaction.atomic():
+            case = get_object_or_404(Case.objects.select_for_update(), uid=uid)
+            if case.deleted_at is None or case.status != Case.Status.DELETED:
+                return Response({"detail": "Case is not deleted."}, status=status.HTTP_400_BAD_REQUEST)
+            if not case.deleted_from_status or case.deleted_from_step is None:
+                return Response({"detail": "This legacy deleted case has no recoverable prior state."}, status=status.HTTP_409_CONFLICT)
+            previous_status = case.deleted_from_status
+            previous_step = case.deleted_from_step
+            case.status = previous_status
+            case.current_step = previous_step
+            case.deleted_at = None
+            case.deleted_by = None
+            case.save(update_fields=["status", "current_step", "deleted_at", "deleted_by"])
+            Event.objects.create(
+                case=case,
+                actor=request.user,
+                event_type=Event.Type.CASE_RESTORED,
+                from_step=previous_step,
+                to_step=previous_step,
+                notes=f"Case restored by super admin {request.user.email}. Was status={previous_status}, step={previous_step}.",
+                payload_hash=Event.compute_hash({"action": "case_restored", "case_uid": str(case.uid), "previous_status": previous_status, "previous_step": previous_step}),
+                idempotency_key=request.headers.get("Idempotency-Key", ""),
+            )
+        return Response(CaseSerializer(case).data)
+
     # ---- state transitions ----
     @action(detail=True, methods=["post"], url_path="submit")
     @with_idempotency
     def submit(self, request, uid=None):
         """CB submits a DRAFT case into the pipeline (DRAFT → SUBMITTED)."""
         case = self.get_object()
-        if case.status not in (Case.Status.DRAFT, Case.Status.REJECTED):
+        if not (
+            request.user.has_any_role("ADMIN", "SUPER_ADMIN")
+            or (
+                request.user.has_any_role("CB", "DP")
+                and case.created_by_id == request.user.id
+            )
+        ):
             return Response(
-                {"detail": "Only DRAFT or REJECTED cases can be submitted."},
+                {"detail": "Only the case creator or an administrator can submit this case."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if case.status != Case.Status.DRAFT:
+            return Response(
+                {"detail": "Only DRAFT cases can be submitted."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if case.status == Case.Status.REJECTED:
-            case.current_step = 1
-            case.save(update_fields=["current_step"])
         notes = (request.data.get("notes") or "").strip()
         try:
             event = transition(
@@ -406,6 +497,17 @@ class CaseViewSet(ModelViewSet):
     @with_idempotency
     def verify_case(self, request, uid=None):
         case = self.get_object()
+        if not (
+            request.user.has_any_role("ADMIN", "SUPER_ADMIN")
+            or (
+                request.user.has_any_role("CB", "DP")
+                and case.created_by_id == request.user.id
+            )
+        ):
+            return Response(
+                {"detail": "Only the case creator or an administrator can verify this case."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         notes = (request.data.get("notes") or "").strip()
         try:
             event = transition(
@@ -495,9 +597,14 @@ class CaseViewSet(ModelViewSet):
     def reject(self, request, uid=None):
         case = self.get_object()
         u = request.user
-        if u.has_any_role("CB", "DP", "MINISTER") and not u.has_any_role("AB", "WCS", "DGFC", "DGFAP", "SUPER_ADMIN"):
+        if getattr(u, "role", None) in ("CB", "DP", "MINISTER"):
             return Response(
                 {"detail": "This role cannot reject cases."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if getattr(u, "role", None) != approver_role_for_step(case.current_step):
+            return Response(
+                {"detail": "Only the assigned reviewer can reject this case."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         if case.status != Case.Status.AT_APPROVAL:
@@ -528,7 +635,7 @@ class CaseViewSet(ModelViewSet):
         """
         case = self.get_object()
         u = request.user
-        if u.has_any_role("CB", "DP", "MINISTER") and not u.has_any_role("AB", "WCS", "DGFC", "DGFAP", "SUPER_ADMIN"):
+        if getattr(u, "role", None) in ("CB", "DP", "MINISTER"):
             return Response(
                 {"detail": "This role cannot defer cases."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -537,6 +644,11 @@ class CaseViewSet(ModelViewSet):
             return Response(
                 {"detail": "Case is not at approval."},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        if getattr(u, "role", None) != approver_role_for_step(case.current_step):
+            return Response(
+                {"detail": "Only the assigned reviewer can defer this case."},
+                status=status.HTTP_403_FORBIDDEN,
             )
         notes = (request.data.get("notes") or "").strip()
         if not notes:
@@ -577,22 +689,25 @@ class CaseViewSet(ModelViewSet):
         resume a DEFERRED case to re-submit at step 1.
         """
         case = self.get_object()
-        if getattr(request.user, "role", None) == "MINISTER":
+        user = request.user
+        if getattr(user, "role", None) == "MINISTER":
             return Response({"detail": "Minister accounts are read-only."}, status=status.HTTP_403_FORBIDDEN)
         if case.status != Case.Status.DEFERRED:
             return Response(
                 {"detail": "Case is not deferred."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        user = request.user
-        is_admin = user.has_any_role("ADMIN", "SUPER_ADMIN")
-        is_previous_approver = user.has_role(approver_role_for_step(case.current_step))
-        is_field_reporter_at_start = (
-            case.current_step == 1 and user.has_any_role("CB", "DP")
-        )
-        if not (is_admin or is_previous_approver or is_field_reporter_at_start):
+        if not (
+            user.has_any_role("ADMIN", "SUPER_ADMIN")
+            or (
+                case.current_step == 1
+                and user.has_any_role("CB", "DP")
+                and case.created_by_id == user.id
+            )
+            or user.role == approver_role_for_step(case.current_step)
+        ):
             return Response(
-                {"detail": "Only the approver responsible for the deferred step may resume this case."},
+                {"detail": "Only the assigned reviewer or an administrator can resume this case."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         case.status = Case.Status.AT_APPROVAL
@@ -656,8 +771,8 @@ class CaseViewSet(ModelViewSet):
             return Response(
                 {
                     "amount_xaf": (
-                        f"Warning: Amount {amount:,} FCFA exceeds maximum limit for "
-                        f"{case.case_type}. Maximum available is {ceiling:,}"
+                        f"Amount {amount:,} FCFA exceeds ceiling {ceiling:,} FCFA "
+                        f"for case_type {case.case_type}."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -732,11 +847,9 @@ class CaseViewSet(ModelViewSet):
     @with_idempotency
     def close(self, request, uid=None):
         # WCS is the closer after DGFAP approval and payment processing.
-        # has_role() includes active additional role assignments, not only
-        # the user's primary role.
-        if not request.user.has_role("WCS"):
+        if getattr(request.user, "role", None) != "WCS":
             return Response(
-            {"detail": "Only an active WCS account may close a case (after payment confirmation)."},
+                {"detail": "Only WCS may close a case (after payment confirmation)."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         case = self.get_object()
@@ -800,7 +913,6 @@ class CaseViewSet(ModelViewSet):
             if d.proof_of_payment:
                 proof_info = {
                     "id": d.proof_of_payment.id,
-                    "submission_id": d.proof_of_payment.submission_id,
                     "filename": d.proof_of_payment.filename,
                     "mime": d.proof_of_payment.mime,
                     "size_bytes": d.proof_of_payment.size_bytes,
@@ -840,7 +952,7 @@ class CaseViewSet(ModelViewSet):
 
     def _record_disbursement(self, request, uid):
         from .models import Disbursement
-        if not request.user.has_role("WCS"):
+        if getattr(request.user, "role", None) != "WCS":
             return Response(
                 {"detail": "Only WCS may record disbursements."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -922,20 +1034,6 @@ class CaseViewSet(ModelViewSet):
             idempotency_key=request.headers.get("Idempotency-Key", ""),
         )
 
-        disb.disbursed_total_xaf = already + amount
-        disb.remaining_xaf = int(case.amount_authorized) - (already + amount)
-        disb.authorized_xaf = int(case.amount_authorized)
-        try:
-            from accounts.models import User
-            from notifications.service import send_disbursement_recorded
-            recipients = User.objects.filter(
-                is_active=True,
-                role__in=["AB", "WCS", "DGFC", "DGFAP", "ADMIN", "SUPER_ADMIN"],
-            )
-            send_disbursement_recorded(case=case, disbursement=disb, recipients=recipients)
-        except Exception:
-            pass
-
         return Response(
             {
                 "id": disb.id,
@@ -974,9 +1072,9 @@ class CaseViewSet(ModelViewSet):
         from .models import Disbursement
         from django.utils import timezone as _tz
 
-        if not request.user.has_any_role("WCS", "SUPER_ADMIN"):
+        if getattr(request.user, "role", None) != "WCS":
             return Response(
-            {"detail": "Only WCS or SUPER_ADMIN may modify disbursements."},
+                {"detail": "Only WCS may modify disbursements."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -1042,9 +1140,8 @@ class CaseViewSet(ModelViewSet):
         if "proof_of_payment_id" in updatable:
             new_proof_id = updatable["proof_of_payment_id"]
             if disb.proof_of_payment_id != new_proof_id:
-                old_proof_id = disb.proof_of_payment_id
                 disb.proof_of_payment_id = new_proof_id
-                changes.append(f"proof_of_payment_id: {old_proof_id} -> {new_proof_id}")
+                changes.append(f"proof_of_payment_id: {disb.proof_of_payment_id} -> {new_proof_id}")
 
         if not changes:
             return Response(
@@ -1127,9 +1224,9 @@ class CaseViewSet(ModelViewSet):
         from .models import Disbursement
         from forms.models import FormAttachment
 
-        if not request.user.has_any_role("WCS", "SUPER_ADMIN"):
+        if getattr(request.user, "role", None) != "WCS":
             return Response(
-            {"detail": "Only WCS or SUPER_ADMIN may attach proof of payment."},
+                {"detail": "Only WCS may attach proof of payment."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
